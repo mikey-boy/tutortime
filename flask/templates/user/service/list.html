@@ -1,0 +1,36 @@
+{% extends "home.html" %}
+
+{% block content %}
+    {% if session.get("username", None) != None %}
+        <div class="navigation-links subnavbar">
+            {% if status == 'draft' %}
+                <a href="{{ url_for('user_service_list', status='active')}}"><h4 class=>Active</h4></a>
+                <a href="{{ url_for('user_service_list', status='draft')}}"><h4 class="active-subnav-header">Draft</h4></a>
+                <a href="{{ url_for('user_service_list', status='paused')}}"><h4>Paused</h4></a>
+            {% elif status == 'paused' %}
+                <a href="{{ url_for('user_service_list', status='active')}}"><h4>Active</h4></a>
+                <a href="{{ url_for('user_service_list', status='draft')}}"><h4>Draft</h4></a>
+                <a href="{{ url_for('user_service_list', status='paused')}}"><h4 class="active-subnav-header">Paused</h4></a>
+            {% else %}
+                <a href="{{ url_for('user_service_list', status='active')}}"><h4 class="active-subnav-header">Active</h4></a>
+                <a href="{{ url_for('user_service_list', status='draft')}}"><h4>Draft</h4></a>
+                <a href="{{ url_for('user_service_list', status='paused')}}"><h4>Paused</h4></a>
+            {% endif %}
+            <a href="{{ url_for('user_service_create')}}"><button type="submit" id="create-service">New service</button></a>
+        </div>
+        <table>
+            <thead>
+                <th>Title</th>
+                <th>Description</th>
+            </thead>
+            {% for service in services %}
+                <tr>
+                    <td> {{ service[0] }} </td>
+                    <td> {{ service[1] }} </td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p><a href="{{ url_for('user_account_auth') }}">Login</a> or <a href="{{ url_for('user_account_create') }}">create an account</a> to start giving lessons on the site</p>
+    {% endif %}
+{% endblock %}

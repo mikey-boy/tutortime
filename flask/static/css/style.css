@@ -1,0 +1,104 @@
+:root {
+    --background: #2e3436;
+    --headers: #99C1F1;
+    --navbar: #808080;
+    --links: #A3BE8C;
+    --text: #E0E0E0;
+    --error-text: #b85757;
+    --login: #5095e9;
+    --signup: #85b75c;
+}
+
+html {
+	background-color: var(--background);
+}
+hr {
+	border-top: 1px solid var(--navbar);
+}
+head {
+    display: flex;
+}
+body {
+    color: var(--text);
+	width: 70%;
+	min-width: 700px;
+	max-width: 1500px;
+	margin: auto;
+    
+	font-family: monospace;
+    font-size:1rem;
+    line-height:1.54;
+    letter-spacing:-.02em;
+}
+a {
+    color: var(--links);
+}
+
+.login-container{
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+.login-box {
+    width: 300px;
+    background-color: var(--background);
+    padding: 30px;
+    padding-top: 0px;
+    border-radius: 5px;
+    border: 3px solid var(--headers);
+}
+.login-box input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    box-sizing: border-box;
+}
+.login-box button, .subnavbar button {
+    width: 100%;
+    padding: 10px;
+    color: #fff;
+    margin-top: 10px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+.navigation-links {
+    display: table;                                                         
+    width: 100%;                                                            
+    table-layout: fixed;                                                    
+}       
+.navigation-links a {
+    display: table-cell;
+	text-align: center;
+	text-decoration: none;
+    color: var(--headers);
+}
+.error-text {
+    color: var(--error-text);
+}
+.active-subnav-header {
+    border: 2px solid var(--links);
+    padding: 6px;
+    border-radius: 3px;
+}
+
+#login {
+    background-color: var(--login);
+    margin-bottom: 10px;
+}
+#signup {
+    background-color: var(--signup);
+}
+#create-service {
+    background-color: var(--signup);
+    max-width: 130px;
+}
+#logo {
+    width: 100%;
+    text-align: center;
+    font-family: Georgia, serif;
+    color: var(--headers);
+}

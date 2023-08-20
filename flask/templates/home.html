@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+{% block navbar %}
+<div class=navigation-links>
+    <a href="{{ url_for('service_list') }}"><h3>Take<br>lessons</h3></a>
+    <a href="{{ url_for('user_service_list', status='active') }}"><h3>Give<br>lessons</h3></a>
+    <a href="{{ url_for('resources') }}"><h3>Messages</h3></a>
+    <a href="{{ url_for('about') }}"><h3>About</h3></a>
+</div>
+<hr>
+{% endblock %}

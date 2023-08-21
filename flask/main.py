@@ -10,11 +10,6 @@ db = Database("db/user.sqlite", "db/service.sqlite")
 def root():
     return render_template("home.html")
 
-
-@app.route("/user/messages/list")
-def user_messages_list():
-    return render_template("user/messages/list.html")
-
 @app.route("/about")
 def about():
     return render_template("about.html")
@@ -64,7 +59,7 @@ def user_account_create():
 def user_service_list(status="active"):
     if "username" in session:
         services = db.get_services(session["username"], status)
-        return render_template("user/service/list.html", services = services, status=status)
+        return render_template("user/service/list.html", services = services, current_status=status, statuses=["active", "draft", "paused"])
     return render_template("user/service/list.html", status=status)
 
 @app.route("/user/service/create", methods = ["GET", "POST"])
@@ -81,3 +76,16 @@ def user_service_create():
             return ("user/service/create.html", failure_msg)
         db.add_service(session["username"], title, description)
         return user_service_list()
+
+@app.route("/user/service/delete/<int:service_id>")
+def user_service_delete(service_id):
+    db.remove_service(session["username"], service_id)
+    return user_service_list()
+
+@app.route("/user/messages/list")
+def user_messages_list():
+    return render_template("user/messages/list.html")
+
+@app.route("/user/calendar/list")
+def user_calendar_list():
+    return render_template("user/calendar/list.html")

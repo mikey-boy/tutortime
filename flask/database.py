@@ -78,19 +78,25 @@ class Database:
 
     def get_services(self, username:str, status: str):
         conn = sqlite3.connect(self.service_db)
+        conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        cursor.execute("SELECT title, description FROM services WHERE username = ? AND status = ?", (username, status))
+        cursor.execute("SELECT id, title, description FROM services WHERE username = ? AND status = ?", (username, status))
         result = cursor.fetchall()
         conn.close()
         return result
 
     def get_all_services(self):
         conn = sqlite3.connect(self.service_db)
+        conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         cursor.execute("SELECT title, description, username FROM services WHERE status = 'active'")
         result = cursor.fetchall()
         conn.close()
         return result
 
-    def remove_service(self):
-        pass
+    def remove_service(self, username:str, service_id:int):
+        conn = sqlite3.connect(self.service_db)
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM services WHERE username = ? AND id = ?", (username, service_id))
+        conn.commit()
+        conn.close()

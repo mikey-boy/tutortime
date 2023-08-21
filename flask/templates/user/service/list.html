@@ -2,31 +2,33 @@
 
 {% block content %}
     {% if session.get("username", None) != None %}
-        <div class="navigation-links subnavbar">
-            {% if status == 'draft' %}
-                <a href="{{ url_for('user_service_list', status='active')}}"><h4 class=>Active</h4></a>
-                <a href="{{ url_for('user_service_list', status='draft')}}"><h4 class="active-subnav-header">Draft</h4></a>
-                <a href="{{ url_for('user_service_list', status='paused')}}"><h4>Paused</h4></a>
-            {% elif status == 'paused' %}
-                <a href="{{ url_for('user_service_list', status='active')}}"><h4>Active</h4></a>
-                <a href="{{ url_for('user_service_list', status='draft')}}"><h4>Draft</h4></a>
-                <a href="{{ url_for('user_service_list', status='paused')}}"><h4 class="active-subnav-header">Paused</h4></a>
-            {% else %}
-                <a href="{{ url_for('user_service_list', status='active')}}"><h4 class="active-subnav-header">Active</h4></a>
-                <a href="{{ url_for('user_service_list', status='draft')}}"><h4>Draft</h4></a>
-                <a href="{{ url_for('user_service_list', status='paused')}}"><h4>Paused</h4></a>
-            {% endif %}
-            <a href="{{ url_for('user_service_create')}}"><button type="submit" id="create-service">New service</button></a>
-        </div>
-        <table>
+        <table class="nav-table">
             <thead>
+                <tr>
+                    {% for status in statuses %}
+                        {% if status == current_status %}
+                            <th><a href="{{ url_for('user_service_list', status=status)}}"><h4 class="active-subnav-header">{{ status.capitalize() }}</h4></a></th>
+                        {% else %}
+                            <th><a href="{{ url_for('user_service_list', status=status)}}"><h4 class=>{{ status.capitalize() }}</h4></a></th>
+                        {% endif %}
+                    {% endfor %}
+                    <th><a href="{{ url_for('user_service_create')}}"><button id="create-service">New service</button></a></th>
+                </tr>
+            </thead>
+        </table>
+        <table class="user-service-table">
+            <thead>
+                <th></th>
                 <th>Title</th>
                 <th>Description</th>
             </thead>
             {% for service in services %}
                 <tr>
-                    <td> {{ service[0] }} </td>
-                    <td> {{ service[1] }} </td>
+                    <td>
+                        <a href="{{ url_for('user_service_delete', service_id=service['id']) }}"><i class="fa-regular fa-trash-can"></i></a>
+                    </td>
+                    <td> {{ service["title"] }} </td>
+                    <td> {{ service["description"] }} </td>
                 </tr>
             {% endfor %}
         </table>

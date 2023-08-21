@@ -2,11 +2,22 @@
 
 {% block title %}Home{% endblock %}
 {% block navbar %}
-<div class=navigation-links>
-    <a href="{{ url_for('service_list') }}"><h3>Take<br>lessons</h3></a>
-    <a href="{{ url_for('user_service_list', status='active') }}"><h3>Give<br>lessons</h3></a>
-    <a href="{{ url_for('user_messages_list') }}"><h3>Messages</h3></a>
-    <a href="{{ url_for('about') }}"><h3>About</h3></a>
-</div>
+<table class=nav-table>
+    <thead>
+        <tr>
+            <th><a href="{{ url_for('service_list') }}"><h3>Take<br>lessons</h3></a></th>
+            <th><a href="{{ url_for('user_service_list', status='active') }}"><h3>Give<br>lessons</h3></a></th>
+            <th><a href="{{ url_for('about') }}"><h3>About</h3></a></th>
+            
+            {% if session.get("username", None) != None %}
+                <th>
+                    <a href="{{ url_for('user_calendar_list') }}"><i class="fa-regular fa-calendar-days fa-lg"></i></a>
+                    <a href="{{ url_for('user_messages_list') }}"><i class="fa-regular fa-paper-plane fa-lg"></i></a>
+                    <a><i class="fa-regular fa-user fa-lg"></i></a>
+                </th>
+            {% endif %}
+        </tr>
+    </thead>
+</table>
 <hr>
 {% endblock %}

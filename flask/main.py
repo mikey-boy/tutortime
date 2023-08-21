@@ -11,17 +11,18 @@ def root():
     return render_template("home.html")
 
 
-@app.route("/resources")
-def resources():
-    pass
+@app.route("/user/messages/list")
+def user_messages_list():
+    return render_template("user/messages/list.html")
 
 @app.route("/about")
 def about():
-    pass
+    return render_template("about.html")
 
 @app.route("/service/list")
 def service_list():
-    return render_template("/service/list.html")
+    services = db.get_all_services()
+    return render_template("service/list.html", services = services)
 
 @app.route("/user/account/auth", methods = ["GET", "POST"])
 def user_account_auth():

@@ -1,4 +1,13 @@
 {% extends "home.html" %}
 {% block content %}
-    <p>This is where the postings would go</p>
+    <div class="grid-container">
+        {% for service in services %}
+            <div class="post">
+                <img src="/static/img/terminal.jpg" alt="Post 1">
+                <h3>{{ service[0] }}</h3>
+                <p>{{ service[1] }}</p>
+                <p>Offered by: {{ service[2] }} </p>
+            </div>
+        {% endfor %}
+    </div>
 {% endblock %}

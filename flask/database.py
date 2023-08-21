@@ -81,10 +81,16 @@ class Database:
         cursor = conn.cursor()
         cursor.execute("SELECT title, description FROM services WHERE username = ? AND status = ?", (username, status))
         result = cursor.fetchall()
-        print(result)
         conn.close()
         return result
 
+    def get_all_services(self):
+        conn = sqlite3.connect(self.service_db)
+        cursor = conn.cursor()
+        cursor.execute("SELECT title, description, username FROM services WHERE status = 'active'")
+        result = cursor.fetchall()
+        conn.close()
+        return result
 
     def remove_service(self):
         pass

@@ -30,10 +30,40 @@ body {
     line-height:1.54;
     letter-spacing:-.02em;
 }
+table {
+    width: 100%;
+    margin: 0 auto;
+    padding: 10px;
+    border: 1px dashed var(--links);
+}
+th {
+    text-align: left;
+    color: #fff;
+    font-weight: bolder;
+}
 a {
     color: var(--links);
 }
+h1, h2, h3, h4, h5, h6 {
+    color: var(--headers);
+}
 
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    max-width: 1200px;
+    padding: 20px;
+}
+.post {
+    padding: 20px;
+    border-radius: 5px;
+    border: 1px dashed var(--links);
+}
+.post img {
+    max-width: 100%;
+    height: auto;
+}
 .login-container{
     position: absolute;
     top: 40%;
@@ -80,7 +110,7 @@ a {
     color: var(--error-text);
 }
 .active-subnav-header {
-    border: 2px solid var(--links);
+    border: 1.5px solid var(--links);
     padding: 6px;
     border-radius: 3px;
 }

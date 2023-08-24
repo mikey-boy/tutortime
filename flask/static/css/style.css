@@ -49,6 +49,7 @@ h1, h2, h3, h4, h5, h6 {
 .nav-table a {
 	text-decoration: none;
     color: whitesmoke;
+    position: relative;
 }
 .nav-table th {
     text-align: center;
@@ -128,6 +129,22 @@ h1, h2, h3, h4, h5, h6 {
 }
 #signup {
     background-color: var(--signup);
+}
+#popout {
+    position: fixed;
+    z-index: 1000;
+    width: 100px;
+    height: 100px;
+    top: 0px;
+    left: 0px;
+    background-color: blue;
+}
+.modal-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 5px;
+    position: fixed;
+    transform: translate(-50%, -50%);
 }
 #create-service {
     background-color: var(--signup);

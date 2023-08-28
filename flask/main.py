@@ -64,7 +64,12 @@ def user_account_create():
 @app.route("/user/service/list/<string:status>")
 def user_service_list(status="active"):
     if "username" in session:
-        services = db.get_services(session["username"], status)
+        if status == "active":
+            services = db.get_active_services(session["username"])
+        elif status == "paused":
+            services = db.get_paused_services(session["username"])
+        elif status == "draft":
+            services = db.get_draft_services(session["username"])
         return render_template("user/service/list.html", services = services, current_status=status, statuses=["active", "draft", "paused"])
     return render_template("user/service/list.html", status=status)
 
@@ -86,6 +91,33 @@ def user_service_create():
 @app.route("/user/service/delete/<int:service_id>")
 def user_service_delete(service_id):
     db.remove_service(session["username"], service_id)
+    return user_service_list()
+
+@app.route("/user/service/update/<int:service_id>", methods = ["GET", "POST"])
+def user_service_update(service_id):
+    if "username" not in session:
+        return render_template("user/account/login.html")
+    if request.method == "GET":
+        service = db.get_service_by_id(session["username"], service_id)
+        return render_template("user/service/update.html", service = service)
+    else:
+        title = request.form.get("title")
+        description = request.form.get("description")
+        db.update_service(session["username"], service_id, title, description)
+        return user_service_list()
+
+@app.route("/user/service/pause/<int:service_id>")
+def user_service_pause(service_id):
+    if "username" not in session:
+        return render_template("user/account/login.html")
+    db.pause_service(session["username"], service_id)
+    return user_service_list(status="paused")
+
+@app.route("/user/service/activate/<int:service_id>")
+def user_service_activate(service_id):
+    if "username" not in session:
+        return render_template("user/account/login.html")
+    db.activate_service(session["username"], service_id)
     return user_service_list()
 
 @app.route("/user/messages/list")

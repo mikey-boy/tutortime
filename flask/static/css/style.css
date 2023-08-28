@@ -71,8 +71,8 @@ h1, h2, h3, h4, h5, h6 {
     padding: 10px;
     border: 1px dashed var(--links);
 }
-.user-service-table td:first-child {
-    padding-right: 5px;
+.user-service-table td:last-child {
+    width: 70px;
 }
 .grid-container {
     display: grid;
@@ -125,6 +125,15 @@ h1, h2, h3, h4, h5, h6 {
 }
 .error-text {
     color: var(--error-text);
+}
+.fa-pen-to-square {
+    color: var(--headers);
+}
+.fa-circle-pause {
+    color: var(--navbar);
+}
+.fa-circle-play {
+    color: var(--links);
 }
 .fa-trash-can {
     color: var(--error-text);

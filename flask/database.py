@@ -9,6 +9,11 @@ def _crud(db:str, query: str):
     conn.commit()
     conn.close()
 
+class ServiceStatus:
+    ACTIVE = "active"
+    PAUSED = "paused"
+    DRAFT = "draft"
+
 class Database:
     def __init__(self, user_db: str, service_db: str):
         self.user_db = user_db
@@ -72,11 +77,11 @@ class Database:
     def add_service(self, username:str, title:str, description:str):
         conn = sqlite3.connect(self.service_db)
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO services (username, title, description, status, hoursGiven) VALUES(?, ?, ?, ?, ?)", (username, title, description, "active", 0))
+        cursor.execute("INSERT INTO services (username, title, description, status, hoursGiven) VALUES(?, ?, ?, ?, ?)", (username, title, description, ServiceStatus.ACTIVE, 0))
         conn.commit()
         conn.close()
 
-    def get_services(self, username:str, status: str):
+    def _get_services(self, username:str, status: str):
         conn = sqlite3.connect(self.service_db)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
@@ -85,11 +90,29 @@ class Database:
         conn.close()
         return result
 
+    def get_service_by_id(self, username:str, service_id:int):
+        conn = sqlite3.connect(self.service_db)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, title, description FROM services WHERE username = ? AND id = ?", (username, service_id))
+        result = cursor.fetchone()
+        conn.close()
+        return result
+
+    def get_active_services(self, username):
+        return self._get_services(username, ServiceStatus.ACTIVE)
+
+    def get_paused_services(self, username):
+        return self._get_services(username, ServiceStatus.PAUSED)
+
+    def get_draft_services(self, username):
+        return self._get_services(username, ServiceStatus.DRAFT)
+
     def get_all_services(self):
         conn = sqlite3.connect(self.service_db)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        cursor.execute("SELECT title, description, username FROM services WHERE status = 'active'")
+        cursor.execute("SELECT title, description, username FROM services WHERE status = ?", (ServiceStatus.ACTIVE,))
         result = cursor.fetchall()
         conn.close()
         return result
@@ -100,3 +123,27 @@ class Database:
         cursor.execute("DELETE FROM services WHERE username = ? AND id = ?", (username, service_id))
         conn.commit()
         conn.close()
+
+    def update_service(self, username:str, service_id:int, title:str, description:str):
+        conn = sqlite3.connect(self.service_db)
+        cursor = conn.cursor()
+        cursor.execute("UPDATE services SET title = ?, description = ? WHERE username = ? AND id = ?", (title, description, username, service_id))
+        conn.commit()
+        conn.close()
+
+
+    def _update_service_status(self, username:str, service_id:int, status:str):
+        conn = sqlite3.connect(self.service_db)
+        cursor = conn.cursor()
+        cursor.execute("UPDATE services SET status = ? WHERE username = ? AND id = ?", (status, username, service_id))
+        conn.commit()
+        conn.close()
+
+    def activate_service(self, username:str, service_id:int):
+        self._update_service_status(username, service_id, ServiceStatus.ACTIVE)
+
+    def pause_service(self, username:str, service_id:int):
+        self._update_service_status(username, service_id, ServiceStatus.PAUSED)
+    
+    def draft_service(self, username:str, service_id:int):
+        self._update_service_status(username, service_id, ServiceStatus.DRAFT)

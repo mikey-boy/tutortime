@@ -18,17 +18,24 @@
         </table>
         <table class="user-service-table">
             <thead>
-                <th></th>
                 <th>Title</th>
                 <th>Description</th>
+                <th></th>
+                <th></th>
             </thead>
             {% for service in services %}
                 <tr>
-                    <td>
-                        <a href="{{ url_for('user_service_delete', service_id=service['id']) }}"><i class="fa-regular fa-trash-can"></i></a>
-                    </td>
                     <td> {{ service["title"] }} </td>
                     <td> {{ service["description"] }} </td>
+                    <td>
+                        <a href="{{ url_for('user_service_update', service_id=service['id']) }}"><i class="fa-regular fa-pen-to-square"></i></a>
+                        {% if current_status == "active" %}
+                            <a href="{{ url_for('user_service_pause', service_id=service['id']) }}"><i class="fa-regular fa-circle-pause"></i></a>
+                        {% else %}
+                            <a href="{{ url_for('user_service_activate', service_id=service['id']) }}"><i class="fa-regular fa-circle-play"></i></a>
+                        {% endif %}
+                        <a href="{{ url_for('user_service_delete', service_id=service['id']) }}"><i class="fa-regular fa-trash-can"></i></a>
+                    </td>
                 </tr>
             {% endfor %}
         </table>

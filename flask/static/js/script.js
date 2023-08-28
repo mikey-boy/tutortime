@@ -1,10 +1,12 @@
-const trigger = document.querySelector('.popout-trigger');
-const popoutBox = document.getElementById('popout');
+const popout = document.getElementById('modal-popout');
+const trigger = document.getElementById('modal-popout-trigger');
 
-trigger.addEventListener('click', function(event) {
-    event.preventDefault();
-    if (popoutBox.style.display == 'none')
-        popoutBox.style.display = 'block';
-    else
-        popoutBox.style.display = 'none'
-});
+if (trigger != null) {
+    trigger.addEventListener('click', function(event) {
+        event.preventDefault();
+        if (popout.style.display == 'none')
+            popout.style.display = 'block';
+        else
+            popout.style.display = 'none'
+    });
+}

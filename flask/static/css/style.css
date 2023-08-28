@@ -21,7 +21,7 @@ head {
 body {
     color: var(--text);
 	width: 70%;
-	min-width: 700px;
+	/* min-width: 700px; */
 	max-width: 1500px;
 	margin: auto;
     
@@ -44,15 +44,27 @@ h1, h2, h3, h4, h5, h6 {
 .nav-table {
     width: 100%;
     margin: 0 auto;
-    table-layout: fixed;
 }
-.nav-table a {
+.nav-table a, .subnav-table a {
 	text-decoration: none;
     color: whitesmoke;
     position: relative;
 }
-.nav-table th {
+.nav-table th, .subnav-table th {
     text-align: center;
+}
+.nav-table th:last-child {
+    width: 125px;
+}
+.subnav-table {
+    width: 100%;
+    margin: 0 auto;
+    table-layout: fixed;
+}
+.active-subnav-header {
+    border: 1.5px solid var(--links);
+    padding: 6px;
+    border-radius: 3px;
 }
 .user-service-table {
     width: 100%;
@@ -100,7 +112,7 @@ h1, h2, h3, h4, h5, h6 {
     border-radius: 3px;
     box-sizing: border-box;
 }
-.login-box button, .nav-table button {
+.login-box button, .subnav-table button {
     width: 100%;
     color: #fff;
     border: none;
@@ -114,13 +126,11 @@ h1, h2, h3, h4, h5, h6 {
 .error-text {
     color: var(--error-text);
 }
-.active-subnav-header {
-    border: 1.5px solid var(--links);
-    padding: 6px;
-    border-radius: 3px;
-}
 .fa-trash-can {
     color: var(--error-text);
+}
+.modal-container {
+    position: relative;
 }
 
 #login {
@@ -130,21 +140,26 @@ h1, h2, h3, h4, h5, h6 {
 #signup {
     background-color: var(--signup);
 }
-#popout {
-    position: fixed;
-    z-index: 1000;
-    width: 100px;
-    height: 100px;
-    top: 0px;
-    left: 0px;
-    background-color: blue;
+#modal-popout {
+    position: absolute;
+    z-index: 100;
+    padding: 5px;
+    top: 7px;
+    right: 23px;
+    text-align: left;
+    background-color: var(--background);
+    border: 1.5px solid var(--links);
+    border-radius: 3px;
 }
-.modal-content {
-    background-color: white;
-    padding: 20px;
-    border-radius: 5px;
-    position: fixed;
-    transform: translate(-50%, -50%);
+#modal-popout ul {
+    list-style-type: none;
+    padding-left: 10px;
+    padding-right: 10px;
+    margin: 0px;
+}
+#modal-popout ul li {
+    padding-top: 10px;
+    padding-bottom: 10px;
 }
 #create-service {
     background-color: var(--signup);

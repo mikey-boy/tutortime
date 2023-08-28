@@ -19,12 +19,12 @@ def service_list():
     services = db.get_all_services()
     return render_template("service/list.html", services = services)
 
-@app.route("/user/account/auth", methods = ["GET", "POST"])
-def user_account_auth():
+@app.route("/user/account/login", methods = ["GET", "POST"])
+def user_account_login():
     if request.method == "GET":
         if "username" in session:
             return render_template("home.html")
-        return render_template("user/account/auth.html")
+        return render_template("user/account/login.html")
     else:
         username = request.form.get("username")
         password = request.form.get("password")
@@ -33,9 +33,15 @@ def user_account_auth():
                 failure_msg = "Please provide a username and password"
             else:
                 failure_msg = "Invalid credentials, try again"
-            return render_template("user/account/auth.html", failure_msg = failure_msg)
+            return render_template("user/account/login.html", failure_msg = failure_msg)
         session["username"] = request.form.get("username")
         return render_template("home.html")
+
+@app.route("/user/account/logout")
+def user_account_logout():
+    if "username" in session:
+        del session["username"]
+    return render_template("home.html")
 
 @app.route("/user/account/create", methods = ["GET", "POST"])
 def user_account_create():
@@ -65,7 +71,7 @@ def user_service_list(status="active"):
 @app.route("/user/service/create", methods = ["GET", "POST"])
 def user_service_create():
     if "username" not in session:
-        return render_template("user/account/auth.html")
+        return render_template("user/account/login.html")
     if request.method == "GET":
         return render_template("user/service/create.html")
     else: 

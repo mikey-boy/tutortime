@@ -9,18 +9,23 @@
             <th><a href="{{ url_for('user_service_list', status='active') }}"><h3>Give<br>lessons</h3></a></th>
             <th><a href="{{ url_for('about') }}"><h3>About</h3></a></th>
             
+            <th>
             {% if session.get("username", None) != None %}
-                <th>
-                    <a href="{{ url_for('user_calendar_list') }}"><i class="fa-regular fa-calendar-days fa-lg"></i></a>
-                    <a href="{{ url_for('user_messages_list') }}"><i class="fa-regular fa-paper-plane fa-lg"></i></a>
-                    <a href="" class="popout-trigger"><i class="fa-regular fa-user fa-lg"></i></a>
-                    <div style="display:none;" id="popout">
-                        <div class="modal-content">
-                            <p>This is the modal content.</p>
-                        </div>
+                <a href="{{ url_for('user_calendar_list') }}"><i class="fa-regular fa-calendar-days fa-lg"></i></a>
+                <a href="{{ url_for('user_messages_list') }}"><i class="fa-regular fa-paper-plane fa-lg"></i></a>
+                <a href="" id="modal-popout-trigger"><i class="fa-regular fa-user fa-lg"></i></a>
+                <div class="modal-container">
+                    <div id="modal-popout" style="display: none">
+                        <ul>
+                            <li><a href="#">Profile</a></li>
+                            <li><a href="{{ url_for('user_account_logout') }}">Logout</a></li>
+                        </ul>
                     </div>
-                </th>
+                </div>
+            {% else %}
+                <a href="{{ url_for('user_account_login') }}"><i class="fa-regular fa-user fa-lg"></i></a>
             {% endif %}
+            </th>
         </tr>
     </thead>
 </table>

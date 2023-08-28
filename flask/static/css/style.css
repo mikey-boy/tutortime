@@ -21,7 +21,7 @@ head {
 body {
     color: var(--text);
 	width: 70%;
-	/* min-width: 700px; */
+	min-width: 700px;
 	max-width: 1500px;
 	margin: auto;
     

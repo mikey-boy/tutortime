@@ -1,6 +1,7 @@
 import sqlite3
 import os.path
 import hashlib
+from enum import StrEnum, auto
 
 def _crud(db:str, query: str):
     conn = sqlite3.connect(db)
@@ -9,10 +10,17 @@ def _crud(db:str, query: str):
     conn.commit()
     conn.close()
 
-class ServiceStatus:
-    ACTIVE = "active"
-    PAUSED = "paused"
-    DRAFT = "draft"
+class ServiceStatus(StrEnum):
+    ACTIVE = auto()
+    PAUSED = auto()
+    DRAFT = auto() 
+
+class ServiceCategory(StrEnum):
+    LANGUAGE = auto()
+    MUSIC = auto()
+    SOFTWARE = auto()
+    WELLNESS = auto()
+    OTHER = auto()
 
 class Database:
     def __init__(self, user_db: str, service_db: str):
@@ -31,6 +39,7 @@ class Database:
                 username TEXT,
                 title TEXT, 
                 description TEXT,
+                category TEXT,
                 status TEXT,
                 hoursGiven INTEGER
             )
@@ -74,21 +83,23 @@ class Database:
             conn.commit()
             conn.close()
 
-    def add_service(self, username:str, title:str, description:str):
-        conn = sqlite3.connect(self.service_db)
-        cursor = conn.cursor()
-        cursor.execute("INSERT INTO services (username, title, description, status, hoursGiven) VALUES(?, ?, ?, ?, ?)", (username, title, description, ServiceStatus.ACTIVE, 0))
-        conn.commit()
-        conn.close()
+    def add_service(self, username:str, title:str, description:str, category:str):
+        if category in iter(ServiceCategory):
+            conn = sqlite3.connect(self.service_db)
+            cursor = conn.cursor()
+            cursor.execute("INSERT INTO services (username, title, description, category, status, hoursGiven) VALUES(?, ?, ?, ?, ?, ?)", (username, title, description, category, ServiceStatus.ACTIVE, 0))
+            conn.commit()
+            conn.close()
 
-    def _get_services(self, username:str, status: str):
-        conn = sqlite3.connect(self.service_db)
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
-        cursor.execute("SELECT id, title, description FROM services WHERE username = ? AND status = ?", (username, status))
-        result = cursor.fetchall()
-        conn.close()
-        return result
+    def get_services_by_status(self, username:str, status: str):
+        if status in iter(ServiceStatus):
+            conn = sqlite3.connect(self.service_db)
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute("SELECT id, title, description FROM services WHERE username = ? AND status = ?", (username, status))
+            result = cursor.fetchall()
+            conn.close()
+            return result
 
     def get_service_by_id(self, username:str, service_id:int):
         conn = sqlite3.connect(self.service_db)
@@ -99,23 +110,25 @@ class Database:
         conn.close()
         return result
 
-    def get_active_services(self, username):
-        return self._get_services(username, ServiceStatus.ACTIVE)
-
-    def get_paused_services(self, username):
-        return self._get_services(username, ServiceStatus.PAUSED)
-
-    def get_draft_services(self, username):
-        return self._get_services(username, ServiceStatus.DRAFT)
-
     def get_all_services(self):
         conn = sqlite3.connect(self.service_db)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        cursor.execute("SELECT title, description, username FROM services WHERE status = ?", (ServiceStatus.ACTIVE,))
+        cursor.execute("SELECT title, description, username FROM services WHERE status = ?", (ServiceStatus.ACTIVE.value,))
         result = cursor.fetchall()
         conn.close()
         return result
+    
+    def get_all_services_by_category(self, category:str):
+        if category in iter(ServiceCategory):
+            conn = sqlite3.connect(self.service_db)
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute("SELECT title, description, username FROM services WHERE status = ? AND category = ?", (ServiceStatus.ACTIVE.value, category))
+            result = cursor.fetchall()
+            conn.close()
+            return result
+        return self.get_all_services()
 
     def remove_service(self, username:str, service_id:int):
         conn = sqlite3.connect(self.service_db)
@@ -140,10 +153,10 @@ class Database:
         conn.close()
 
     def activate_service(self, username:str, service_id:int):
-        self._update_service_status(username, service_id, ServiceStatus.ACTIVE)
+        self._update_service_status(username, service_id, ServiceStatus.ACTIVE.value)
 
     def pause_service(self, username:str, service_id:int):
-        self._update_service_status(username, service_id, ServiceStatus.PAUSED)
+        self._update_service_status(username, service_id, ServiceStatus.PAUSED.value)
     
     def draft_service(self, username:str, service_id:int):
-        self._update_service_status(username, service_id, ServiceStatus.DRAFT)
+        self._update_service_status(username, service_id, ServiceStatus.DRAFT.value)

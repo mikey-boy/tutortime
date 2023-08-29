@@ -1,4 +1,4 @@
-from flask import Flask, session, render_template, request
+from flask import Flask, session, render_template, request, jsonify
 from database import Database
 
 app = Flask(__name__)
@@ -14,10 +14,17 @@ def root():
 def about():
     return render_template("about.html")
 
-@app.route("/service/list")
-def service_list():
-    services = db.get_all_services()
-    return render_template("service/list.html", services = services)
+
+@app.route("/api/service/list/<string:category>")
+def api_service_list(category="all"):
+    services = db.get_all_services_by_category(category)
+    json_services = [dict(service) for service in services]
+    return jsonify(json_services)
+
+@app.route("/service/list/<string:category>")
+def service_list(category="all"):
+    services = db.get_all_services_by_category(category)
+    return render_template("service/list.html", services = services, category = category)
 
 @app.route("/user/account/login", methods = ["GET", "POST"])
 def user_account_login():
@@ -64,12 +71,7 @@ def user_account_create():
 @app.route("/user/service/list/<string:status>")
 def user_service_list(status="active"):
     if "username" in session:
-        if status == "active":
-            services = db.get_active_services(session["username"])
-        elif status == "paused":
-            services = db.get_paused_services(session["username"])
-        elif status == "draft":
-            services = db.get_draft_services(session["username"])
+        services = db.get_services_by_status(session["username"], status)
         return render_template("user/service/list.html", services = services, current_status=status, statuses=["active", "draft", "paused"])
     return render_template("user/service/list.html", status=status)
 
@@ -82,10 +84,11 @@ def user_service_create():
     else: 
         title = request.form.get("title")
         description = request.form.get("description")
+        category = request.form.get("category")
         if title is None or description is None:
             failure_msg = "Please provide all the required fields"
             return ("user/service/create.html", failure_msg)
-        db.add_service(session["username"], title, description)
+        db.add_service(session["username"], title, description, category)
         return user_service_list()
 
 @app.route("/user/service/delete/<int:service_id>")

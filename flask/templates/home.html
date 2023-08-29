@@ -5,7 +5,7 @@
 <table class=nav-table>
     <thead>
         <tr>
-            <th><a href="{{ url_for('service_list') }}"><h3>Take<br>lessons</h3></a></th>
+            <th><a href="{{ url_for('service_list', category='all') }}"><h3>Take<br>lessons</h3></a></th>
             <th><a href="{{ url_for('user_service_list', status='active') }}"><h3>Give<br>lessons</h3></a></th>
             <th><a href="{{ url_for('about') }}"><h3>About</h3></a></th>
             

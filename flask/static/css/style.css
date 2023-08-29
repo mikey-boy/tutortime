@@ -112,7 +112,7 @@ h1, h2, h3, h4, h5, h6 {
     border-radius: 3px;
     box-sizing: border-box;
 }
-.login-box button, .subnav-table button {
+.login-box button, .subnav-table button, .service-creation-box button {
     width: 100%;
     color: #fff;
     border: none;
@@ -122,6 +122,39 @@ h1, h2, h3, h4, h5, h6 {
 }
 .login-box button {
     margin-top: 10px;
+}
+.service-creation-box {
+    border: 1px dashed var(--links);
+    padding: 25px;
+    margin: 20px;
+    box-sizing: border-box;
+}
+.service-creation-box td {
+    padding-bottom: 30px;
+}
+.service-creation-box td:first-child {
+    vertical-align: top;
+    padding-right: 10px;
+    min-width: 140px;
+    font-weight: bold;
+}
+.service-creation-box table {
+    width: 100%;
+}
+.service-creation-box textarea {
+    width: 100%;
+    box-sizing: border-box;
+}
+.service-creation-box select, .service-category-box select {
+    padding: 5px;
+    min-width: 200px;
+}
+.service-category-box label {
+    font-weight: bold;
+}
+.service-category-box {
+    margin-top: 20px;
+    margin-left: 20px;
 }
 .error-text {
     color: var(--error-text);
@@ -173,6 +206,19 @@ h1, h2, h3, h4, h5, h6 {
 #create-service {
     background-color: var(--signup);
     max-width: 130px;
+}
+#create-service-button {
+    max-width: 250px;
+    background-color: var(--signup);
+}
+#create-service-button-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 15px;
+}
+#service-title {
+    resize: none;
+    font-size: 1rem;
 }
 #logo {
     width: 100%;

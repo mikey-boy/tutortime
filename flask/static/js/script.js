@@ -116,7 +116,6 @@ $(document).ready(function() {
         });
     }
 
-
     window.onpopstate = (event) => {
         var path = document.location.pathname;
         if (path.startsWith('/service/list/')) {

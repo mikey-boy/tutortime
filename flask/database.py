@@ -105,7 +105,7 @@ class Database:
         conn = sqlite3.connect(self.service_db)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        cursor.execute("SELECT id, title, description FROM services WHERE username = ? AND id = ?", (username, service_id))
+        cursor.execute("SELECT id, title, description, category, status FROM services WHERE username = ? AND id = ?", (username, service_id))
         result = cursor.fetchone()
         conn.close()
         return result
@@ -137,12 +137,13 @@ class Database:
         conn.commit()
         conn.close()
 
-    def update_service(self, username:str, service_id:int, title:str, description:str):
+    def update_service(self, username:str, service_id:int, title:str, description:str, category:str):
         conn = sqlite3.connect(self.service_db)
         cursor = conn.cursor()
-        cursor.execute("UPDATE services SET title = ?, description = ? WHERE username = ? AND id = ?", (title, description, username, service_id))
+        cursor.execute("UPDATE services SET title = ?, description = ?, category = ? WHERE username = ? AND id = ?", (title, description, category, username, service_id))
         conn.commit()
         conn.close()
+        return self.get_service_by_id(username, service_id)
 
 
     def _update_service_status(self, username:str, service_id:int, status:str):

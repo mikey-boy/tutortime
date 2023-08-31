@@ -3,7 +3,11 @@
 {% block title %}Signup{% endblock %}
 {% block content %}
 <div class="service-creation-box">
+    {% if service.get('title') == None %}
     <form action="{{ url_for('user_service_create') }}" method="POST">
+    {% else %}
+    <form action="{{ url_for('user_service_update', service_id=service.id) }}" method="POST">
+    {% endif %}
         <table>
             <tbody>
                 <tr>
@@ -11,7 +15,7 @@
                         <label for="title">Title:</label>
                     </td>
                     <td>
-                        <textarea id="service-title" rows="1" cols="120" name="title" required></textarea>
+                        <textarea id="service-title" rows="1" cols="120" name="title" required>{{ service.get('title', '') }}</textarea>
                     </td>
                 </tr>
                 <tr>
@@ -19,7 +23,7 @@
                         <label for="description">Description:</label>
                     </td>
                     <td>
-                        <textarea id="service-description" rows="7" cols="120" name="description" required></textarea>
+                        <textarea id="service-description" rows="7" cols="120" name="description" required>{{ service.get('description', '') }}</textarea>
                     </td>
                 </tr>
                 <tr>
@@ -28,12 +32,41 @@
                     </td>
                     <td>
                         <select name="category" required>
-                            <option value="" disabled selected>Select a category</option>
-                            <option value="language">Language learning</option>
-                            <option value="software">Software development</option>
-                            <option value="music">Music lessons</option>
-                            <option value="wellness">Wellness (i.e. meditation, yoga)</option>
-                            <option value="other">Other</option>
+                            {% if service.get('category') == None %}
+                                <option value="" disabled selected>Select a category</option>
+                            {% else %}
+                                <option value="" disabled>Select a category</option>
+                            {% endif %}
+                            
+                            {% if service.get('category') == 'language' %}
+                                <option value="language" selected>Language learning</option>
+                            {% else %}
+                                <option value="language">Language learning</option>
+                            {% endif %}
+                            
+                            {% if service.get('category') == 'software' %}
+                                <option value="software" selected>Software development</option>
+                            {% else %}
+                                <option value="software">Software development</option>
+                            {% endif %}
+
+                            {% if service.get('category') == 'music' %}
+                                <option value="music" selected>Music lessons</option>
+                            {% else %}
+                                <option value="music">Music lessons</option>
+                            {% endif %}
+
+                            {% if service.get('category') == 'wellness' %}
+                                <option value="wellness" selected>Wellness (i.e. meditation, yoga)</option>
+                            {% else %}
+                                <option value="wellness">Wellness (i.e. meditation, yoga)</option>
+                            {% endif %}
+                            
+                            {% if service.get('category') == 'other' %}
+                                <option value="other" selected>Other</option>
+                            {% else %}
+                                <option value="other">Other</option>
+                            {% endif %}
                         </select>
                     </td>
                 </tr>
@@ -44,7 +77,11 @@
             </tbody>
         </table>
         <div id="create-service-button-container">
-            <button type="submit" id="create-service-button">Create service</button>
+            {% if service %}
+                <button type="submit" id="create-service-button">Update service</button>
+            {% else %}
+                <button type="submit" id="create-service-button">Create service</button>
+            {% endif %}
         </div>
     </form>
 </div>

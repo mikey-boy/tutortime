@@ -3,22 +3,13 @@
     <div class="service-category-box">
         <label for="category">Category: </label>
         <select name="category" id="service-category-dropdown">
-            <option value="{{ url_for('api_service_list', category='all') }}">All</option>
-            <option value="{{ url_for('api_service_list', category='language') }}">Language learning</option>
-            <option value="{{ url_for('api_service_list', category='software') }}">Software development</option>
-            <option value="{{ url_for('api_service_list', category='music') }}">Music lessons</option>
-            <option value="{{ url_for('api_service_list', category='wellness') }}">Wellness (i.e. meditation, yoga)</option>
-            <option value="{{ url_for('api_service_list', category='other') }}">Other</option>
+            <option value="{{ url_for('service_list', category='all') }}">All</option>
+            <option value="{{ url_for('service_list', category='language') }}">Language learning</option>
+            <option value="{{ url_for('service_list', category='software') }}">Software development</option>
+            <option value="{{ url_for('service_list', category='music') }}">Music lessons</option>
+            <option value="{{ url_for('service_list', category='wellness') }}">Wellness (i.e. meditation, yoga)</option>
+            <option value="{{ url_for('service_list', category='other') }}">Other</option>
         </select>
     </div>
-    <div id="services-board" class="grid-container">
-        {% for service in services %}
-            <div class="post">
-                <img src="/static/img/terminal.jpg" alt="Post 1">
-                <h3>{{ service[0] }}</h3>
-                <p>{{ service[1] }}</p>
-                <p>Offered by: {{ service[2] }} </p>
-            </div>
-        {% endfor %}
-    </div>
+    <div id="services-board" class="grid-container"></div>
 {% endblock %}

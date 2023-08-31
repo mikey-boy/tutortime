@@ -18,7 +18,7 @@ def about():
 def user_account_login():
     if request.method == "GET":
         if "username" in session:
-            return render_template("home.html")
+            return redirect('/user/service/list/active')
         return render_template("user/account/login.html")
     else:
         username = request.form.get("username")
@@ -30,7 +30,7 @@ def user_account_login():
                 failure_msg = "Invalid credentials, try again"
             return render_template("user/account/login.html", failure_msg = failure_msg)
         session["username"] = request.form.get("username")
-        return render_template("home.html")
+        return redirect('/user/service/list/active')
 
 @app.route("/user/account/logout")
 def user_account_logout():
@@ -73,13 +73,14 @@ def api_user_service_list(status="active"):
         services = db.get_services_by_status(session["username"], status)
         json_services = [dict(service) for service in services]
         return jsonify(json_services)
+    return jsonify([])
 
 @app.route("/user/service/list/<string:status>")
 def user_service_list(status="active"):
     if "username" in session:
         services = db.get_services_by_status(session["username"], status)
         return render_template("user/service/list.html", services = services)
-    return render_template("user/service/list.html", status=status)
+    return render_template("user/service/list.html")
 
 @app.route("/user/service/create", methods = ["GET", "POST"])
 def user_service_create():

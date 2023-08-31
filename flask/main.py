@@ -1,4 +1,4 @@
-from flask import Flask, session, render_template, request, jsonify
+from flask import Flask, session, render_template, request, jsonify, redirect
 from database import Database
 
 app = Flask(__name__)
@@ -13,18 +13,6 @@ def root():
 @app.route("/about")
 def about():
     return render_template("about.html")
-
-
-@app.route("/api/service/list/<string:category>")
-def api_service_list(category="all"):
-    services = db.get_all_services_by_category(category)
-    json_services = [dict(service) for service in services]
-    return jsonify(json_services)
-
-@app.route("/service/list/<string:category>")
-def service_list(category="all"):
-    services = db.get_all_services_by_category(category)
-    return render_template("service/list.html", services = services, category = category)
 
 @app.route("/user/account/login", methods = ["GET", "POST"])
 def user_account_login():
@@ -68,11 +56,29 @@ def user_account_create():
         session["username"] = username
         return render_template("home.html")
 
+@app.route("/api/service/list/<string:category>")
+def api_service_list(category="all"):
+    services = db.get_all_services_by_category(category)
+    json_services = [dict(service) for service in services]
+    return jsonify(json_services)
+
+@app.route("/service/list/<string:category>")
+def service_list(category="all"):
+    services = db.get_all_services_by_category(category)
+    return render_template("service/list.html")
+
+@app.route("/api/user/service/list/<string:status>")
+def api_user_service_list(status="active"):
+    if "username" in session:
+        services = db.get_services_by_status(session["username"], status)
+        json_services = [dict(service) for service in services]
+        return jsonify(json_services)
+
 @app.route("/user/service/list/<string:status>")
 def user_service_list(status="active"):
     if "username" in session:
         services = db.get_services_by_status(session["username"], status)
-        return render_template("user/service/list.html", services = services, current_status=status, statuses=["active", "draft", "paused"])
+        return render_template("user/service/list.html", services = services)
     return render_template("user/service/list.html", status=status)
 
 @app.route("/user/service/create", methods = ["GET", "POST"])
@@ -114,14 +120,14 @@ def user_service_pause(service_id):
     if "username" not in session:
         return render_template("user/account/login.html")
     db.pause_service(session["username"], service_id)
-    return user_service_list(status="paused")
+    return redirect('/user/service/list/paused')
 
 @app.route("/user/service/activate/<int:service_id>")
 def user_service_activate(service_id):
     if "username" not in session:
         return render_template("user/account/login.html")
     db.activate_service(session["username"], service_id)
-    return user_service_list()
+    return redirect('/user/service/list/active')
 
 @app.route("/user/messages/list")
 def user_messages_list():

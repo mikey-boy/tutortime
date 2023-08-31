@@ -2,42 +2,23 @@
 
 {% block content %}
     {% if session.get("username", None) != None %}
-        <table class="subnav-table">
+        <table id="user-service-nav">
             <thead>
                 <tr>
-                    {% for status in statuses %}
-                        {% if status == current_status %}
-                            <th><a href="{{ url_for('user_service_list', status=status)}}"><h4 class="active-subnav-header">{{ status.capitalize() }}</h4></a></th>
-                        {% else %}
-                            <th><a href="{{ url_for('user_service_list', status=status)}}"><h4 class=>{{ status.capitalize() }}</h4></a></th>
-                        {% endif %}
-                    {% endfor %}
+                    <th><h4><a class="user-service-status" href="{{ url_for('user_service_list', status='active')}}">Active</a></h4></th>
+                    <th><h4><a class="user-service-status" href="{{ url_for('user_service_list', status='draft')}}">Draft</a></h4></th>
+                    <th><h4><a class="user-service-status" href="{{ url_for('user_service_list', status='paused')}}">Paused</a></h4></th>
                     <th><a href="{{ url_for('user_service_create')}}"><button id="create-service">New service</button></a></th>
                 </tr>
             </thead>
         </table>
-        <table class="user-service-table">
+        <table id="user-service-table">
             <thead>
                 <th>Title</th>
                 <th>Description</th>
                 <th></th>
-                <th></th>
             </thead>
-            {% for service in services %}
-                <tr>
-                    <td> {{ service["title"] }} </td>
-                    <td> {{ service["description"] }} </td>
-                    <td>
-                        <a href="{{ url_for('user_service_update', service_id=service['id']) }}"><i class="fa-regular fa-pen-to-square"></i></a>
-                        {% if current_status == "active" %}
-                            <a href="{{ url_for('user_service_pause', service_id=service['id']) }}"><i class="fa-regular fa-circle-pause"></i></a>
-                        {% else %}
-                            <a href="{{ url_for('user_service_activate', service_id=service['id']) }}"><i class="fa-regular fa-circle-play"></i></a>
-                        {% endif %}
-                        <a href="{{ url_for('user_service_delete', service_id=service['id']) }}"><i class="fa-regular fa-trash-can"></i></a>
-                    </td>
-                </tr>
-            {% endfor %}
+            <tbody></tbody>
         </table>
     {% else %}
         <p><a href="{{ url_for('user_account_login') }}">Login</a> or <a href="{{ url_for('user_account_create') }}">create an account</a> to start giving lessons on the site</p>

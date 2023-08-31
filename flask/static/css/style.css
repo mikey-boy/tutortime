@@ -45,18 +45,18 @@ h1, h2, h3, h4, h5, h6 {
     width: 100%;
     margin: 0 auto;
 }
-.nav-table a, .subnav-table a {
+.nav-table a {
 	text-decoration: none;
     color: whitesmoke;
     position: relative;
 }
-.nav-table th, .subnav-table th {
+.nav-table th, #user-service-nav th {
     text-align: center;
 }
 .nav-table th:last-child {
     width: 125px;
 }
-.subnav-table {
+#user-service-nav {
     width: 100%;
     margin: 0 auto;
     table-layout: fixed;
@@ -66,13 +66,19 @@ h1, h2, h3, h4, h5, h6 {
     padding: 6px;
     border-radius: 3px;
 }
-.user-service-table {
+#user-service-table {
     width: 100%;
     padding: 10px;
     border: 1px dashed var(--links);
 }
-.user-service-table td:last-child {
+#user-service-table td:last-child {
     width: 70px;
+}
+.user-service-status {
+    text-decoration: none;
+    color: var(--headers);
+    display: block;
+    width: 100%;
 }
 .grid-container {
     display: grid;
@@ -112,7 +118,7 @@ h1, h2, h3, h4, h5, h6 {
     border-radius: 3px;
     box-sizing: border-box;
 }
-.login-box button, .subnav-table button, .service-creation-box button {
+.login-box button, #user-service-nav button, .service-creation-box button {
     width: 100%;
     color: #fff;
     border: none;

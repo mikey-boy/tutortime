@@ -228,6 +228,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 #logo {
     width: 100%;
+	text-decoration: none;
     text-align: center;
     font-family: Georgia, serif;
     color: var(--headers);

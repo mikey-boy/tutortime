@@ -8,7 +8,7 @@ db = Database("db/user.sqlite", "db/service.sqlite")
 
 @app.route("/")
 def root():
-    return render_template("home.html")
+    return service_list()
 
 @app.route("/about")
 def about():
@@ -30,13 +30,13 @@ def user_account_login():
                 failure_msg = "Invalid credentials, try again"
             return render_template("user/account/login.html", failure_msg = failure_msg)
         session["username"] = request.form.get("username")
-        return redirect('/user/service/list/active')
+        return redirect('/service/list/')
 
 @app.route("/user/account/logout")
 def user_account_logout():
     if "username" in session:
         del session["username"]
-    return service_list()
+    return redirect('/service/list/')
 
 @app.route("/user/account/create", methods = ["GET", "POST"])
 def user_account_create():

@@ -36,7 +36,7 @@ def user_account_login():
 def user_account_logout():
     if "username" in session:
         del session["username"]
-    return render_template("home.html")
+    return service_list()
 
 @app.route("/user/account/create", methods = ["GET", "POST"])
 def user_account_create():
@@ -62,10 +62,11 @@ def api_service_list(category="all"):
     json_services = [dict(service) for service in services]
     return jsonify(json_services)
 
-@app.route("/service/list/<string:category>")
-def service_list(category="all"):
-    services = db.get_all_services_by_category(category)
-    return render_template("service/list.html")
+@app.route("/service/list/")
+def service_list():
+    services = db.get_all_services()
+    json_services = [dict(service) for service in services]
+    return render_template("service/list.html", services=json_services)
 
 @app.route("/api/user/service/list/<string:status>")
 def api_user_service_list(status="active"):
@@ -79,7 +80,7 @@ def api_user_service_list(status="active"):
 def user_service_list(status="active"):
     if "username" in session:
         services = db.get_services_by_status(session["username"], status)
-        return render_template("user/service/list.html", services = services)
+        return render_template("user/service/list.html", services=services, status=status)
     return render_template("user/service/list.html")
 
 @app.route("/user/service/create", methods = ["GET", "POST"])
@@ -123,14 +124,14 @@ def user_service_pause(service_id):
     if "username" not in session:
         return render_template("user/account/login.html")
     db.pause_service(session["username"], service_id)
-    return redirect('/user/service/list/paused')
+    return redirect('/user/service/list/active')
 
 @app.route("/user/service/activate/<int:service_id>")
 def user_service_activate(service_id):
     if "username" not in session:
         return render_template("user/account/login.html")
     db.activate_service(session["username"], service_id)
-    return redirect('/user/service/list/active')
+    return redirect('/user/service/list/paused')
 
 @app.route("/user/messages/list")
 def user_messages_list():

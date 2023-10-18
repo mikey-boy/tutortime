@@ -1,15 +1,26 @@
 {% extends "home.html" %}
 {% block content %}
-    <div class="service-category-box">
-        <label for="category">Category: </label>
-        <select name="category" id="service-category-dropdown">
-            <option value="{{ url_for('service_list', category='all') }}">All</option>
-            <option value="{{ url_for('service_list', category='language') }}">Language learning</option>
-            <option value="{{ url_for('service_list', category='software') }}">Software development</option>
-            <option value="{{ url_for('service_list', category='music') }}">Music lessons</option>
-            <option value="{{ url_for('service_list', category='wellness') }}">Wellness (i.e. meditation, yoga)</option>
-            <option value="{{ url_for('service_list', category='other') }}">Other</option>
-        </select>
+    <div x-data="{  category: 'all' }">
+        <div class="service-category-box">
+            <label>Category: </label>
+            <select x-model="category">
+                <option value="all">All</option>
+                <option value="language">Language learning</option>
+                <option value="software">Software development</option>
+                <option value="music">Music lessons</option>
+                <option value="wellness">Wellness (i.e. meditation, yoga)</option>
+                <option value="other">Other</option>
+            </select>
+        </div>
+        <div class="grid-container">
+            {% for service in services %}
+                <div class="post" x-show="'{{ service.category }}' == category || 'all' == category" >
+                    <img src="/static/img/terminal.jpg" alt="Post 1">
+                    <h3>{{ service.title }}</h3>
+                    <p>{{ service.description }}</p>
+                    <p>{{ service.username }}</p>
+                </div>
+            {% endfor %}
+        </div>
     </div>
-    <div id="services-board" class="grid-container"></div>
 {% endblock %}

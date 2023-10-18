@@ -63,7 +63,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 .active-subnav-header {
     border: 1.5px solid var(--links);
-    padding: 6px;
+    padding: 8px 0px;
     border-radius: 3px;
 }
 #user-service-table {

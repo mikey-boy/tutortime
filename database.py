@@ -13,7 +13,6 @@ def _crud(db:str, query: str):
 class ServiceStatus(StrEnum):
     ACTIVE = auto()
     PAUSED = auto()
-    DRAFT = auto() 
 
 class ServiceCategory(StrEnum):
     LANGUAGE = auto()
@@ -114,7 +113,7 @@ class Database:
         conn = sqlite3.connect(self.service_db)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        cursor.execute("SELECT title, description, username FROM services WHERE status = ?", (ServiceStatus.ACTIVE.value,))
+        cursor.execute("SELECT category, title, description, username FROM services WHERE status = ?", (ServiceStatus.ACTIVE.value,))
         result = cursor.fetchall()
         conn.close()
         return result
@@ -158,6 +157,3 @@ class Database:
 
     def pause_service(self, username:str, service_id:int):
         self._update_service_status(username, service_id, ServiceStatus.PAUSED.value)
-    
-    def draft_service(self, username:str, service_id:int):
-        self._update_service_status(username, service_id, ServiceStatus.DRAFT.value)

@@ -9,15 +9,15 @@ class ImageServer:
         self.image_folder = image_folder
 
     def store_image(self, image: FileStorage) -> dict:
-        if image.filename != '':
-            filename_on_server = str(uuid.uuid4())
-            image.save(os.path.join(self.image_folder, filename_on_server))
-            return {'filename': image.filename, 'filenameOnServer': filename_on_server}
+        filename_on_server = str(uuid.uuid4())
+        image.save(os.path.join(self.image_folder, filename_on_server))
+        return {'filename': image.filename, 'filenameOnServer': filename_on_server}
 
     def store_images(self, images: list[FileStorage]) -> list[dict]:
         files = []
         for image in images:
-            files.append(self.store_image(image))
+            if image.filename != '':
+                files.append(self.store_image(image))
         return files
     
     def remove_image(self, image: str):

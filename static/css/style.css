@@ -96,6 +96,34 @@ h1, h2, h3, h4, h5, h6 {
     max-width: 100%;
     height: auto;
 }
+.post .flex-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.post div img {
+    height: 240px;
+    border-radius: 3px;
+}
+.post div .next-image {
+    position: absolute;
+    top: 50%;
+    right: 15px;
+}
+.post div .prev-image {
+    position: absolute;
+    top: 50%;
+    left: 15px;
+}
+.post div .next-image i, .post div .prev-image i {
+    background-color: var(--background);
+    border-radius: 55%;
+    opacity: 65%;
+}
+.post div .next-image i:hover, .post div .prev-image i:hover {
+    opacity: 95%;
+}
 .login-container{
     position: absolute;
     top: 40%;

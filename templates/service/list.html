@@ -14,8 +14,22 @@
         </div>
         <div class="grid-container">
             {% for service in services %}
-                <div class="post" x-show="'{{ service.category }}' == category || 'all' == category" >
-                    <img src="/static/img/terminal.jpg" alt="Post 1">
+                <div class="post" x-show="'{{ service.category }}' == category || 'all' == category" x-data="{ image: 0 }">
+                    {% if service['images'] == [] %}
+                        <img src="/static/img/terminal.jpg" alt="Default thumbnail">
+                    {% else %}
+                        <div class="flex-container">
+                            <div>
+                                {% if service.images|length > 1 %}
+                                    <a href="" class="prev-image" @click.prevent="image = image == 0 ? {{ service.images|length }} - 1 : (image - 1)"><i class="fa-regular fa-circle-left fa-2x"></i></a>
+                                    <a href="" class="next-image" @click.prevent="image = (image + 1) % {{ service.images|length }}"><i class="fa-regular fa-circle-right fa-2x"></i></a>
+                                {% endif %}
+                                {% for i in range(service.images|length) %}
+                                        <img x-show="image == {{ i }}" src="/static/uploads/{{ service.images[i].filenameOnServer }}" alt="{{ service.images[i].filename }}">
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
                     <h3>{{ service.title }}</h3>
                     <p>{{ service.description }}</p>
                     <p>{{ service.username }}</p>

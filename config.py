@@ -1,1 +1,5 @@
 SECRET_KEY = "racecar"
+IMAGE_FOLDER = "static/uploads"
+DB_FOLDER = "db"
+USER_DB = "user.sqlite"
+SERVICE_DB = "service.sqlite"

@@ -1,10 +1,12 @@
 from flask import Flask, session, render_template, request, jsonify, redirect
 from database import Database
+from image_server import ImageServer
 
 app = Flask(__name__)
 app.config.from_object('config')
 
-db = Database("db/user.sqlite", "db/service.sqlite") 
+db = Database(db_folder=app.config['DB_FOLDER'], user_db=app.config['USER_DB'], service_db=app.config['SERVICE_DB']) 
+image_server = ImageServer(image_folder=app.config['IMAGE_FOLDER'])
 
 @app.route("/")
 def root():
@@ -60,12 +62,18 @@ def user_account_create():
 def api_service_list(category="all"):
     services = db.get_all_services_by_category(category)
     json_services = [dict(service) for service in services]
+    for json_service in json_services:
+        images = db.get_images_by_service_id(json_service['id'])
+        json_service['images'] = [{'filenameOnServer': image['filenameOnServer'], 'filename': image['filename']} for image in images]
     return jsonify(json_services)
 
 @app.route("/service/list/")
 def service_list():
     services = db.get_all_services()
     json_services = [dict(service) for service in services]
+    for json_service in json_services:
+        images = db.get_images_by_service_id(json_service['id'])
+        json_service['images'] = [{'filenameOnServer': image['filenameOnServer'], 'filename': image['filename']} for image in images]
     return render_template("service/list.html", services=json_services)
 
 @app.route("/api/user/service/list/<string:status>")
@@ -93,15 +101,20 @@ def user_service_create():
         title = request.form.get("title")
         description = request.form.get("description")
         category = request.form.get("category")
-        if title is None or description is None:
+        if title is None or description is None or category is None:
             failure_msg = "Please provide all the required fields"
             return ("user/service/create.html", failure_msg)
-        db.add_service(session["username"], title, description, category)
+        
+        images = request.files.getlist("images")
+        files = image_server.store_images(images)
+        db.add_service(session["username"], title, description, category, files)
         return redirect('/user/service/list/active')
 
 @app.route("/user/service/delete/<int:service_id>")
 def user_service_delete(service_id):
     result = db.get_service_by_id(session["username"], service_id)
+    images = db.get_images_by_service_id(service_id)
+    image_server.remove_images(images)
     db.remove_service(session["username"], service_id)
     return redirect(f'/user/service/list/{result["status"]}')
 
@@ -113,10 +126,15 @@ def user_service_update(service_id):
         service = db.get_service_by_id(session["username"], service_id)
         return render_template("user/service/create.html", service = dict(service))
     else:
+        old_images = db.get_images_by_service_id(service_id)
+        image_server.remove_images(old_images)
+
         title = request.form.get("title")
         description = request.form.get("description")
         category = request.form.get("category")
-        result = db.update_service(session["username"], service_id, title, description, category)
+        images = request.files.getlist("images")
+        files = image_server.store_images(images)
+        result = db.update_service(session["username"], service_id, title, description, category, files)
         return redirect(f'/user/service/list/{result["status"]}')
 
 @app.route("/user/service/pause/<int:service_id>")

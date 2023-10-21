@@ -1,5 +1,5 @@
 import sqlite3
-import os.path
+import os
 import hashlib
 from enum import StrEnum, auto
 
@@ -22,9 +22,11 @@ class ServiceCategory(StrEnum):
     OTHER = auto()
 
 class Database:
-    def __init__(self, user_db: str, service_db: str):
-        self.user_db = user_db
-        self.service_db = service_db
+    def __init__(self, db_folder: str, user_db: str, service_db: str):
+        os.makedirs(db_folder, exist_ok=True)
+        
+        self.service_db = os.path.join(db_folder, service_db)
+        self.user_db = os.path.join(db_folder, user_db)
 
         user_schema = """
             CREATE TABLE IF NOT EXISTS users (
@@ -43,9 +45,18 @@ class Database:
                 hoursGiven INTEGER
             )
         """
+        image_schema = """
+            CREATE TABLE IF NOT EXISTS images (
+                imageId INTEGER PRIMARY KEY,
+                serviceId INTEGER,
+                filename TEXT,
+                filenameOnServer TEXT
+            )
+        """
         
         _crud(self.user_db, user_schema)
         _crud(self.service_db, service_schema)
+        _crud(self.service_db, image_schema)
 
     def user_exists(self, username: str):
         conn = sqlite3.connect(self.user_db)
@@ -82,11 +93,23 @@ class Database:
             conn.commit()
             conn.close()
 
-    def add_service(self, username:str, title:str, description:str, category:str):
+    def get_images_by_service_id(self, id: str):
+        conn = sqlite3.connect(self.service_db)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("SELECT filename, filenameOnServer FROM images WHERE serviceId = ?", (id,))
+        result = cursor.fetchall()
+        conn.close()
+        return result
+
+    def add_service(self, username:str, title:str, description:str, category:str, images: list):
         if category in iter(ServiceCategory):
             conn = sqlite3.connect(self.service_db)
             cursor = conn.cursor()
             cursor.execute("INSERT INTO services (username, title, description, category, status, hoursGiven) VALUES(?, ?, ?, ?, ?, ?)", (username, title, description, category, ServiceStatus.ACTIVE, 0))
+            service_id = cursor.lastrowid
+            for image in images:
+                cursor.execute("INSERT INTO images (serviceId, filename, filenameOnServer) VALUES (?, ?, ?)", (service_id, image['filename'], image['filenameOnServer']))
             conn.commit()
             conn.close()
 
@@ -108,12 +131,21 @@ class Database:
         result = cursor.fetchone()
         conn.close()
         return result
+    
+    def get_images_by_service_id(self, service_id:int):
+        conn = sqlite3.connect(self.service_db)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("SELECT filename, filenameOnServer FROM images WHERE serviceId = ?", (service_id,))
+        result = cursor.fetchall()
+        conn.close()
+        return result
 
     def get_all_services(self):
         conn = sqlite3.connect(self.service_db)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        cursor.execute("SELECT category, title, description, username FROM services WHERE status = ?", (ServiceStatus.ACTIVE.value,))
+        cursor.execute("SELECT id, category, title, description, username FROM services WHERE status = ?", (ServiceStatus.ACTIVE.value,))
         result = cursor.fetchall()
         conn.close()
         return result
@@ -123,7 +155,7 @@ class Database:
             conn = sqlite3.connect(self.service_db)
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
-            cursor.execute("SELECT title, description, username FROM services WHERE status = ? AND category = ?", (ServiceStatus.ACTIVE.value, category))
+            cursor.execute("SELECT id, title, description, username FROM services WHERE status = ? AND category = ?", (ServiceStatus.ACTIVE.value, category))
             result = cursor.fetchall()
             conn.close()
             return result
@@ -133,13 +165,18 @@ class Database:
         conn = sqlite3.connect(self.service_db)
         cursor = conn.cursor()
         cursor.execute("DELETE FROM services WHERE username = ? AND id = ?", (username, service_id))
+        cursor.execute("DELETE FROM images WHERE serviceId = ?", (service_id,)) # TODO Am I able to delete images of a different user?
         conn.commit()
         conn.close()
 
-    def update_service(self, username:str, service_id:int, title:str, description:str, category:str):
+    def update_service(self, username:str, service_id:int, title:str, description:str, category:str, images:list):
         conn = sqlite3.connect(self.service_db)
         cursor = conn.cursor()
         cursor.execute("UPDATE services SET title = ?, description = ?, category = ? WHERE username = ? AND id = ?", (title, description, category, username, service_id))
+        # Delete images and reupload them on update, probably should be improved
+        cursor.execute("DELETE FROM images WHERE serviceId = ?", (service_id,)) # TODO Am I able to delete images of a different user?
+        for image in images:
+            cursor.execute("INSERT INTO images (serviceId, filename, filenameOnServer) VALUES (?, ?, ?)", (service_id, image['filename'], image['filenameOnServer']))
         conn.commit()
         conn.close()
         return self.get_service_by_id(username, service_id)

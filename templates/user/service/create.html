@@ -4,9 +4,9 @@
 {% block content %}
 <div class="service-creation-box">
     {% if service.get('title') == None %}
-    <form action="{{ url_for('user_service_create') }}" method="POST">
+    <form action="{{ url_for('user_service_create') }}" method="POST" enctype="multipart/form-data">
     {% else %}
-    <form action="{{ url_for('user_service_update', service_id=service.id) }}" method="POST">
+    <form action="{{ url_for('user_service_update', service_id=service.id) }}" method="POST" enctype="multipart/form-data">
     {% endif %}
         <table>
             <tbody>
@@ -72,7 +72,7 @@
                 </tr>
                 <tr>
                     <td>Upload images:</td>
-                    <td><input type="file" accept="image/png, image/jpeg" /></td>
+                    <td><input type="file" name="images" accept="image/png, image/jpeg" multiple/></td>
                 </tr>
             </tbody>
         </table>

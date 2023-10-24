@@ -1,5 +1,6 @@
 :root {
     --background: #2e3436;
+    --table-highlight: #3e4648;
     --headers: #99C1F1;
     --navbar: #808080;
     --links: #A3BE8C;
@@ -91,38 +92,80 @@ h1, h2, h3, h4, h5, h6 {
     padding: 20px;
     border-radius: 5px;
     border: 1px dashed var(--links);
+    margin-top: 25px;
+    max-width: 1000px;
 }
-.post img {
-    max-width: 100%;
-    height: auto;
+.post > h2 {
+    margin-top: 0px;
 }
-.post .flex-container {
-    position: relative;
+.post a {
+    text-decoration: none;
+}
+.post .post-truncated-description {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.availability-flex-container {
     display: flex;
-    align-items: center;
-    justify-content: center;
+    flex-wrap: wrap;
 }
-.post div img {
-    height: 240px;
-    border-radius: 3px;
+.availability-flex-container > div:first-child {
+    flex: 1;
 }
-.post div .next-image {
+.availability-flex-container > div:nth-child(2) {
+    flex: 2;
+    min-width: 340px;
+}
+.image-container {
+    position: relative;
+}
+.image-container img{
+    width: 340px;
+    height: 190px;
+}
+.image-container .next-image {
     position: absolute;
     top: 50%;
     right: 15px;
 }
-.post div .prev-image {
+.image-container .prev-image {
     position: absolute;
     top: 50%;
     left: 15px;
 }
-.post div .next-image i, .post div .prev-image i {
+.image-container .next-image > i, .image-container .prev-image > i {
     background-color: var(--background);
     border-radius: 55%;
     opacity: 65%;
 }
-.post div .next-image i:hover, .post div .prev-image i:hover {
+.image-container .next-image > i:hover, .image-container .prev-image i:hover {
     opacity: 95%;
+}
+.availability-table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 10px;
+}
+.availability-table tr {
+    text-align: center;
+}
+.availability-table tbody tr:hover {
+    background-color: var(--table-highlight);
+}
+.availability-table tbody tr td:first-child {
+    text-align: right;
+    width: 85px;
+}
+.availability-table .fa-square-check {
+    color: var(--links);
+}
+.flex-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 .login-container{
     position: absolute;
@@ -163,10 +206,10 @@ h1, h2, h3, h4, h5, h6 {
     margin: 20px;
     box-sizing: border-box;
 }
-.service-creation-box td {
+.service-creation-box table.service-creation-table > tbody > tr > td {
     padding-bottom: 30px;
 }
-.service-creation-box td:first-child {
+.service-creation-box table.service-creation-table > tbody > tr > td:first-child {
     vertical-align: top;
     padding-right: 10px;
     min-width: 140px;

@@ -1,0 +1,75 @@
+
+{% extends "home.html" %}
+{% block content %}
+    <div class="flex-container">
+        <div class="post single-post" x-data="{ image: 0 }">
+            <h2>{{ service.title }}</h2>
+            <p>offered by: {{ service.username }}</p>
+            <div class="availability-flex-container">
+                <span class="image-container">
+                    {% if service['images'] == [] %}
+                        <img src="/static/img/terminal.jpg" alt="Default thumbnail">
+                    {% else %}
+                            {% for i in range(service.images|length) %}
+                                <img x-show="image == {{ i }}" src="/static/uploads/{{ service.images[i].filenameOnServer }}" alt="{{ service.images[i].filename }}">
+                            {% endfor %}
+                            {% if service.images|length > 1 %}
+                                <a href="" class="prev-image" @click.prevent="image = image == 0 ? {{ service.images|length }} - 1 : (image - 1)"><i class="fa-regular fa-circle-left fa-2x"></i></a>
+                                <a href="" class="next-image" @click.prevent="image = (image + 1) % {{ service.images|length }}"><i class="fa-regular fa-circle-right fa-2x"></i></a>
+                            {% endif %}
+                    {% endif %}
+                </span>
+                <div>
+                    <p style="text-align: center;"><b>Availability:</b></p>
+                    <table class="availability-table">
+                        <thead>
+                            <tr>
+                                <td>   </td>
+                                <td>Mon</td>
+                                <td>Tue</td>
+                                <td>Wed</td>
+                                <td>Thu</td>
+                                <td>Fri</td>
+                                <td>Sat</td>
+                                <td>Sun</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>morning</td>
+                                {% for i in range(7) %}
+                                    {% if i|string ~ "-0" in service.available %}
+                                        <td><i class="fa-regular fa-square-check"></i></td>
+                                    {% else  %}
+                                        <td><i class="fa-regular fa-square"></i></td>
+                                    {% endif %}
+                                {% endfor %}
+                            </tr>
+                            <tr>
+                                <td>afternoon</td>
+                                {% for i in range(7) %}
+                                    {% if i|string ~ "-1" in service.available %}
+                                        <td><i class="fa-regular fa-square-check"></i></td>
+                                    {% else  %}
+                                        <td><i class="fa-regular fa-square"></i></td>
+                                    {% endif %}
+                                {% endfor %}
+                            </tr>
+                            <tr>
+                                <td>evening</td>
+                                {% for i in range(7) %}
+                                    {% if i|string ~ "-2" in service.available %}
+                                        <td><i class="fa-regular fa-square-check"></i></td>
+                                    {% else  %}
+                                        <td><i class="fa-regular fa-square"></i></td>
+                                    {% endif %}
+                                {% endfor %}
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <p class="post-description">{{ service.description }}</p>
+        </div>
+    </div>
+{% endblock %}

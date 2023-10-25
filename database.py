@@ -30,25 +30,37 @@ class Database:
 
         user_schema = """
             CREATE TABLE IF NOT EXISTS users (
-                username TEXT PRIMARY KEY,
+                id INTEGER PRIMARY KEY,
+                username TEXT,
                 password TEXT
             )
             """
         service_schema = """
             CREATE TABLE IF NOT EXISTS services (
                 id INTEGER PRIMARY KEY,
+                userId INTEGER,
                 username TEXT,
                 title TEXT, 
                 description TEXT,
                 category TEXT,
                 availability INTEGER,
                 status TEXT,
-                hoursGiven INTEGER
+                durationMinutes INTEGER
+            )
+        """
+        booking_schema = """
+            CREATE TABLE IF NOT EXISTS bookings (
+                id INTEGER PRIMARY KEY,
+                serviceId INTEGER,
+                tutorId INTEGER,
+                studentId INTEGER,
+                datetime TEXT,
+                durationMinutes INTEGER
             )
         """
         image_schema = """
             CREATE TABLE IF NOT EXISTS images (
-                imageId INTEGER PRIMARY KEY,
+                id INTEGER PRIMARY KEY,
                 serviceId INTEGER,
                 filename TEXT,
                 filenameOnServer TEXT
@@ -58,6 +70,7 @@ class Database:
         _crud(self.user_db, user_schema)
         _crud(self.service_db, service_schema)
         _crud(self.service_db, image_schema)
+        _crud(self.service_db, booking_schema)
 
     def user_exists(self, username: str):
         conn = sqlite3.connect(self.user_db)
@@ -66,6 +79,17 @@ class Database:
         result = cursor.fetchone()
         conn.close()
         return result is not None
+    
+    def get_user_id(self, username: str):
+        conn = sqlite3.connect(self.user_db)
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM users WHERE username = ?", (username,))
+        result = cursor.fetchone()
+        print(result)
+        conn.close()
+        if result:
+            return result[0]
+        return -1
         
     def verify_login(self, username: str, password: str):
         conn = sqlite3.connect(self.user_db)
@@ -82,9 +106,11 @@ class Database:
             conn = sqlite3.connect(self.user_db)
             cursor = conn.cursor()
             encoded_pass = hashlib.sha256(password.encode()).hexdigest()
-            cursor.execute("INSERT INTO users VALUES(?, ?)", (username, encoded_pass))
+            cursor.execute("INSERT INTO users (username, password) VALUES(?, ?)", (username, encoded_pass))
+            user_id = cursor.lastrowid
             conn.commit()
             conn.close()
+            return user_id
 
     def remove_user(self, username:str):
         if self.user_exists(username):
@@ -103,11 +129,11 @@ class Database:
         conn.close()
         return result
 
-    def add_service(self, username:str, title:str, description:str, category:str, availability:int, images: list):
+    def add_service(self, username:str, userId:int, title:str, description:str, category:str, availability:int, images: list):
         if category in iter(ServiceCategory):
             conn = sqlite3.connect(self.service_db)
             cursor = conn.cursor()
-            cursor.execute("INSERT INTO services (username, title, description, category, availability, status, hoursGiven) VALUES(?, ?, ?, ?, ?, ?, ?)", (username, title, description, category, availability, ServiceStatus.ACTIVE, 0))
+            cursor.execute("INSERT INTO services (username, userId, title, description, category, availability, status, durationMinutes) VALUES(?, ?, ?, ?, ?, ?, ?, ?)", (username, userId, title, description, category, availability, ServiceStatus.ACTIVE, 0))
             service_id = cursor.lastrowid
             for image in images:
                 cursor.execute("INSERT INTO images (serviceId, filename, filenameOnServer) VALUES (?, ?, ?)", (service_id, image['filename'], image['filenameOnServer']))
@@ -128,7 +154,7 @@ class Database:
         conn = sqlite3.connect(self.service_db)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        cursor.execute("SELECT id, title, description, category, availability, status, username FROM services WHERE id = ?", (service_id,))
+        cursor.execute("SELECT id, userId, title, description, category, availability, status, username FROM services WHERE id = ?", (service_id,))
         result = cursor.fetchone()
         conn.close()
         return result
@@ -195,3 +221,10 @@ class Database:
 
     def pause_service(self, username:str, service_id:int):
         self._update_service_status(username, service_id, ServiceStatus.PAUSED.value)
+
+    def add_booking(self, service_id:int, tutor_id:int, student_id:int, datetime:str, duration:int):
+        conn = sqlite3.connect(self.service_db)
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO bookings (serviceId, tutorId, studentId, datetime, durationMinutes) VALUES(?, ?, ?, ?, ?)", (service_id, tutor_id, student_id, datetime, duration))
+        conn.commit()
+        conn.close()

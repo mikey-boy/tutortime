@@ -32,7 +32,8 @@ def user_account_login():
             else:
                 failure_msg = "Invalid credentials, try again"
             return render_template("user/account/login.html", failure_msg = failure_msg)
-        session["username"] = request.form.get("username")
+        session["username"] = username
+        session["userId"] = db.get_user_id(username)
         return redirect('/service/list/')
 
 @app.route("/user/account/logout")
@@ -55,8 +56,9 @@ def user_account_create():
             return render_template("failed_user/account/create.html")
         if db.user_exists(username):
             return render_template("user_exists.html")
-        db.add_user(username, password)
+        user_id = db.add_user(username, password)
         session["username"] = username
+        session["userId"] = user_id
         return render_template("home.html")
 
 @app.route("/api/service/list/<string:category>")
@@ -85,6 +87,16 @@ def service_list(service_id=None):
             images = db.get_images_by_service_id(json_service['id'])
             json_service['images'] = [{'filenameOnServer': image['filenameOnServer'], 'filename': image['filename']} for image in images]
         return render_template("service/list.html", services=json_services)
+
+@app.route("/service/booking/create/<int:service_id>", methods = ["POST"])
+def service_booking_create(service_id):
+    if "userId" in session:
+        service = db.get_service_by_id(service_id)
+        datetime = request.form.get("datetime")
+        duration = request.form.get("duration")
+        db.add_booking(service["id"], service["userId"], session["userId"], datetime, duration)
+        return render_template("home.html")
+
 
 @app.route("/api/user/service/list/<string:status>")
 def api_user_service_list(status="active"):
@@ -118,7 +130,7 @@ def user_service_create():
         availability = availability_to_int(request.form.keys())
         images = request.files.getlist("images")
         files = image_server.store_images(images)
-        db.add_service(session["username"], title, description, category, availability, files)
+        db.add_service(session["username"], session["userId"], title, description, category, availability, files)
         return redirect('/user/service/list/active')
 
 @app.route("/user/service/delete/<int:service_id>")

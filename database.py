@@ -45,7 +45,7 @@ class Database:
                 category TEXT,
                 availability INTEGER,
                 status TEXT,
-                durationMinutes INTEGER
+                totalMinutes INTEGER
             )
         """
         booking_schema = """
@@ -133,7 +133,7 @@ class Database:
         if category in iter(ServiceCategory):
             conn = sqlite3.connect(self.service_db)
             cursor = conn.cursor()
-            cursor.execute("INSERT INTO services (username, userId, title, description, category, availability, status, durationMinutes) VALUES(?, ?, ?, ?, ?, ?, ?, ?)", (username, userId, title, description, category, availability, ServiceStatus.ACTIVE, 0))
+            cursor.execute("INSERT INTO services (username, userId, title, description, category, availability, status, totalMinutes) VALUES(?, ?, ?, ?, ?, ?, ?, ?)", (username, userId, title, description, category, availability, ServiceStatus.ACTIVE, 0))
             service_id = cursor.lastrowid
             for image in images:
                 cursor.execute("INSERT INTO images (serviceId, filename, filenameOnServer) VALUES (?, ?, ?)", (service_id, image['filename'], image['filenameOnServer']))
@@ -228,3 +228,24 @@ class Database:
         cursor.execute("INSERT INTO bookings (serviceId, tutorId, studentId, datetime, durationMinutes) VALUES(?, ?, ?, ?, ?)", (service_id, tutor_id, student_id, datetime, duration))
         conn.commit()
         conn.close()
+
+    def get_bookings_for_user(self, user_id:int):
+        conn = sqlite3.connect(self.service_db)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        sql = """
+        SELECT 
+            tutorId, studentId, datetime, durationMinutes, services.title, services.username
+        FROM 
+            bookings 
+        INNER JOIN
+            services
+        ON
+            bookings.serviceId = services.id  
+        WHERE
+            tutorId = ? OR studentId = ?
+        """
+        cursor.execute(sql, (user_id, user_id))
+        result = cursor.fetchall()
+        conn.close()
+        return result

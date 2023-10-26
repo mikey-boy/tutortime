@@ -251,6 +251,80 @@ h1, h2, h3, h4, h5, h6 {
 .modal-container {
     position: relative;
 }
+.calendar {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(7, minmax(120px, 1fr));
+    grid-template-rows: 50px;
+    grid-auto-rows: 120px;
+    overflow: auto;
+    border-left: 1px solid rgba(166, 168, 179, 0.12);
+}
+.day {
+    padding: 14px 20px;
+    border-bottom: 1px solid rgba(166, 168, 179, 0.12);
+    border-right: 1px solid rgba(166, 168, 179, 0.12);
+}
+.day:nth-of-type(n + 1):nth-of-type(-n + 7) {
+    grid-row: 2;
+}
+.day:nth-of-type(n + 8):nth-of-type(-n + 14) {
+    grid-row: 3;
+}
+.day:nth-of-type(n + 15):nth-of-type(-n + 21) {
+    grid-row: 4;
+}
+.day:nth-of-type(n + 22):nth-of-type(-n + 28) {
+    grid-row: 5;
+}
+.day:nth-of-type(n + 29):nth-of-type(-n + 35) {
+    grid-row: 6;
+}
+.day:nth-of-type(7n + 1) {
+    grid-column: 1 / 1;
+}
+.day:nth-of-type(7n + 2) {
+    grid-column: 2 / 2;
+}
+.day:nth-of-type(7n + 3) {
+    grid-column: 3 / 3;
+}
+.day:nth-of-type(7n + 4) {
+    grid-column: 4 / 4;
+}
+.day:nth-of-type(7n + 5) {
+    grid-column: 5 / 5;
+}
+.day:nth-of-type(7n + 6) {
+    grid-column: 6 / 6
+    }
+.day:nth-of-type(7n + 7) {
+    grid-column: 7 / 7;
+}
+.day-name {
+    font-size: 12px;
+    text-transform: uppercase;
+    text-align: center;
+    line-height: 50px;
+    font-weight: 500;
+    border-bottom: 1px solid rgba(166, 168, 179, 0.12);
+    border-top: 1px solid rgba(166, 168, 179, 0.12);
+}
+.day-name:nth-of-type(7n + 7) {
+    border-right: 1px solid rgba(166, 168, 179, 0.12);
+}
+.task {
+    border-left-width: 3px;
+    padding: 8px 12px;
+    margin: 10px;
+    border-left-style: solid;
+    font-size: 14px;
+    position: relative;
+    background: #fef0db;
+    align-self: center;
+    color: #fc9b10;
+    margin-top: -5px;
+}
 
 #login {
     background-color: var(--login);

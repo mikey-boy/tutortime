@@ -2,6 +2,8 @@ from flask import Flask, session, render_template, request, jsonify, redirect
 from database import Database
 from image_server import ImageServer
 from utils import availability_to_int, availability_to_list
+from datetime import datetime, date
+from dateutil.relativedelta import relativedelta
 
 app = Flask(__name__)
 app.config.from_object('config')
@@ -188,4 +190,26 @@ def user_messages_list():
 
 @app.route("/user/calendar/list")
 def user_calendar_list():
-    return render_template("user/calendar/list.html")
+    if "username" not in session:
+        return render_template("user/calendar/list.html", services = [])
+    rows = db.get_bookings_for_user(session["userId"])
+
+    services = [dict(row) for row in rows]
+    for service in services:
+        dt = datetime.strptime(service["datetime"], "%Y-%m-%dT%H:%M")
+        offset = date(dt.year, dt.month, 1).weekday() 
+        service["row"] = ((dt.day + offset) // 7) + 2
+        service["column"] = (dt.day + offset) % 7
+
+    calendars = []
+    today = date.today()
+    # for i in range(-12, 13):
+    for i in range(2):
+        d = today - relativedelta(months=i)
+        tmp = {}
+        tmp["offset"] = date(d.year, d.month, 1).weekday()
+        tmp["month"] = d.month
+        tmp["year"] = d.year
+        calendars.append(tmp)
+    print(calendars)
+    return render_template("user/calendar/list.html", services = services, calendars=calendars)

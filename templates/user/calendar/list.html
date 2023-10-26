@@ -1,4 +1,24 @@
 {% extends "home.html" %}
 {% block content %}
-    <p>This is where your calendar would go</p>
+
+    {% for calendar in calendars %}
+        <div class="calendar">
+            <span class="day-name">Mon</span> 
+            <span class="day-name">Tue</span> 
+            <span class="day-name">Wed</span> 
+            <span class="day-name">Thu</span> 
+            <span class="day-name">Fri</span> 
+            <span class="day-name">Sat</span> 
+            <span class="day-name">Sun</span>
+            {% for i in range(calendar.offset) %}
+                <div class="day day-disabled"></div>
+            {% endfor %}
+            {% for i in range(1,31) %}
+                <div class="day">{{ i }}</div>
+            {% endfor %}
+            {% for service in services %}
+                <section class="task" style="grid-row: {{ service.row }}; grid-column: {{ service.column }}">{{ service.title }}</section>
+            {% endfor %} 
+        </div>
+    {% endfor %}
 {% endblock %}

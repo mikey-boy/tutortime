@@ -4,6 +4,7 @@ from image_server import ImageServer
 from utils import availability_to_int, availability_to_list
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
+import calendar
 
 app = Flask(__name__)
 app.config.from_object('config')
@@ -192,24 +193,38 @@ def user_messages_list():
 def user_calendar_list():
     if "username" not in session:
         return render_template("user/calendar/list.html", services = [])
+    
     rows = db.get_bookings_for_user(session["userId"])
-
     services = [dict(row) for row in rows]
     for service in services:
-        dt = datetime.strptime(service["datetime"], "%Y-%m-%dT%H:%M")
-        offset = date(dt.year, dt.month, 1).weekday() 
-        service["row"] = ((dt.day + offset) // 7) + 2
-        service["column"] = (dt.day + offset) % 7
+        service["dt"] = datetime.strptime(service["datetime"], "%Y-%m-%dT%H:%M")
+        if session["userId"] == service["tutorId"]: 
+            service["tutorName"] = session["username"]
+            service["studentName"] = db.get_username(service["studentId"])
+        else:
+            service["tutorName"] = db.get_username(service["tutorId"])
+            service["studentName"] = session["username"]
 
-    calendar = []
-    months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+    cal = []
     today = date.today()
     for i in range(-12,13):
-        d = today + relativedelta(months=i)
-        info = {}
-        info["year"] = d.year
-        info["month"] = months[d.month-1]
-        info["offset"] = date(d.year, d.month, 1).weekday()
-        calendar.append(info)
+        cur_month = today + relativedelta(months=i)
+        monthrange = calendar.monthrange(cur_month.year, cur_month.month)
+        tmp = {}
+        tmp["year"] = cur_month.year
+        tmp["month_name"] = calendar.month_name[cur_month.month]
+        tmp["month_offset"] = monthrange[0]
+        tmp["month_length"] = monthrange[1]
+        tmp["services"] = []
+        for service in services:
+            if cur_month.month == service["dt"].month and cur_month.year == service["dt"].year:
+                tmp2 = {}
+                tmp2["row"] = ((service["dt"].day + monthrange[0]) // 7) + 2
+                tmp2["column"] = (service["dt"].day + monthrange[0]) % 7
+                tmp2["title"] = service["title"]
+                tmp2["is_tutor"] = service["tutorName"] == session["username"]
+                tmp["services"].append(tmp2)
 
-    return render_template("user/calendar/list.html", services = services, calendar=calendar)
+        cal.append(tmp)
+
+    return render_template("user/calendar/list.html", services = services, calendar=cal, today=today.day)

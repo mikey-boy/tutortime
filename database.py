@@ -85,11 +85,20 @@ class Database:
         cursor = conn.cursor()
         cursor.execute("SELECT id FROM users WHERE username = ?", (username,))
         result = cursor.fetchone()
-        print(result)
         conn.close()
         if result:
             return result[0]
         return -1
+    
+    def get_username(self, user_id: int):
+        conn = sqlite3.connect(self.user_db)
+        cursor = conn.cursor()
+        cursor.execute("SELECT username FROM users WHERE id = ?", (user_id,))
+        result = cursor.fetchone()
+        conn.close()
+        if result:
+            return result[0]
+        return ""
         
     def verify_login(self, username: str, password: str):
         conn = sqlite3.connect(self.user_db)
@@ -235,7 +244,7 @@ class Database:
         cursor = conn.cursor()
         sql = """
         SELECT 
-            tutorId, studentId, datetime, durationMinutes, services.title, services.username
+            tutorId, studentId, datetime, durationMinutes, services.title
         FROM 
             bookings 
         INNER JOIN

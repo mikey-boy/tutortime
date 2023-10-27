@@ -251,6 +251,16 @@ h1, h2, h3, h4, h5, h6 {
 .modal-container {
     position: relative;
 }
+.calendar-control {
+    font-weight: bolder;
+    font-size: 20px;
+    margin: 20px;
+}
+.calendar-control span {
+    display: inline-block;
+    text-align: center;
+    width: 110px;
+}
 .calendar {
     display: grid;
     width: 100%;

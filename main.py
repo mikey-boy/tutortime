@@ -201,15 +201,15 @@ def user_calendar_list():
         service["row"] = ((dt.day + offset) // 7) + 2
         service["column"] = (dt.day + offset) % 7
 
-    calendars = []
+    calendar = []
+    months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
     today = date.today()
-    # for i in range(-12, 13):
-    for i in range(2):
-        d = today - relativedelta(months=i)
-        tmp = {}
-        tmp["offset"] = date(d.year, d.month, 1).weekday()
-        tmp["month"] = d.month
-        tmp["year"] = d.year
-        calendars.append(tmp)
-    print(calendars)
-    return render_template("user/calendar/list.html", services = services, calendars=calendars)
+    for i in range(-12,13):
+        d = today + relativedelta(months=i)
+        info = {}
+        info["year"] = d.year
+        info["month"] = months[d.month-1]
+        info["offset"] = date(d.year, d.month, 1).weekday()
+        calendar.append(info)
+
+    return render_template("user/calendar/list.html", services = services, calendar=calendar)

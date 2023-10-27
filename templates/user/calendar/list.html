@@ -1,24 +1,35 @@
 {% extends "home.html" %}
 {% block content %}
-
-    {% for calendar in calendars %}
-        <div class="calendar">
-            <span class="day-name">Mon</span> 
-            <span class="day-name">Tue</span> 
-            <span class="day-name">Wed</span> 
-            <span class="day-name">Thu</span> 
-            <span class="day-name">Fri</span> 
-            <span class="day-name">Sat</span> 
-            <span class="day-name">Sun</span>
-            {% for i in range(calendar.offset) %}
-                <div class="day day-disabled"></div>
+    <div x-data="{ month: 12 }">
+        <div class="calendar-control">
+            <a href="" x-show="month != 0" @click.prevent="month = month == 0 ? month : month - 1"><i class="fa-solid fa-chevron-left"></i></a>
+            {% for i in range(calendar|length) %}
+                <span x-show="month == {{ i }}">{{ calendar[i]["month"] }}</span>
             {% endfor %}
-            {% for i in range(1,31) %}
-                <div class="day">{{ i }}</div>
+            <a href="" x-show="month != 24" @click.prevent="month = month == 24 ? month : month + 1"><i class="fa-solid fa-chevron-right"></i></a>
+            {% for i in range(calendar|length) %}
+                <span x-show="month == {{ i }}">{{ calendar[i]["year"] }}</span>
             {% endfor %}
-            {% for service in services %}
-                <section class="task" style="grid-row: {{ service.row }}; grid-column: {{ service.column }}">{{ service.title }}</section>
-            {% endfor %} 
         </div>
-    {% endfor %}
+        {% for i in range(calendar|length) %}
+            <div class="calendar" x-show="month == {{ i }}">
+                <span class="day-name">Mon</span> 
+                <span class="day-name">Tue</span> 
+                <span class="day-name">Wed</span> 
+                <span class="day-name">Thu</span> 
+                <span class="day-name">Fri</span> 
+                <span class="day-name">Sat</span> 
+                <span class="day-name">Sun</span>
+                {% for i in range(calendar[i].offset) %}
+                    <div class="day day-disabled"></div>
+                {% endfor %}
+                {% for i in range(1,31) %}
+                    <div class="day">{{ i }}</div>
+                {% endfor %}
+                {% for service in services %}
+                    <section class="task" style="grid-row: {{ service.row }}; grid-column: {{ service.column }}">{{ service.title }}</section>
+                {% endfor %} 
+            </div>
+        {% endfor %}
+    </div>
 {% endblock %}

@@ -256,10 +256,20 @@ h1, h2, h3, h4, h5, h6 {
     font-size: 20px;
     margin: 20px;
 }
-.calendar-control span {
+.calendar-control-date {
     display: inline-block;
     text-align: center;
     width: 110px;
+}
+.calendar-control-legend {
+    float: right;
+}
+.calendar-control-legend-tutor {
+    color: #fc9b10;
+    margin: 15px; 
+}
+.calendar-control-legend-student {
+    color: var(--login);
 }
 .calendar {
     display: grid;
@@ -327,10 +337,10 @@ h1, h2, h3, h4, h5, h6 {
     background-color: var(--links);
 }
 .task {
-    border-left-width: 3px;
+    border: 2px solid;
+    border-radius: 3px;
     padding: 8px 12px;
     margin: 10px;
-    border-left-style: solid;
     font-size: 14px;
     position: relative;
     background: #fef0db;

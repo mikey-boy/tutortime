@@ -29,18 +29,37 @@
                 {% endfor %}
                 {% for j in range(1,calendar[i]["month_length"]+1) %}
                     {% if i == 12 and j == today %}
-                        <div class="day day-today">{{ j }}</div>
+                        <div class="day day-today">
                     {% else %}
-                        <div class="day">{{ j }}</div>
+                        <div class="day">
                     {% endif %}
+                            {{ j }}
+                            {% for service in calendar[i]["services"] %}
+                                {% if service.day == j %}
+                                        <div class="calendar-task-container" x-data="{ modal: false }">
+                                        {% if service.is_tutor %}
+                                            <button class="task task-tutor" x-on:click="modal = ! modal">
+                                        {% else %}
+                                            <button class="task task-student" x-on:click="modal = ! modal">
+                                        {% endif %}
+                                                <b>{{ service.start_time }} - {{ service.end_time }}</b><br>{{ service.title }}
+                                            </button>
+                                            {% if (j + calendar[i]["month_offset"] - 1) % 7 < 4 %}
+                                                <span class="calendar-task-modal-left" x-show="modal">
+                                            {% else %}
+                                                <span class="calendar-task-modal-right" x-show="modal">
+                                            {% endif %}
+                                                    <h3>{{ service.title }}</h3>
+                                                    <p>Time: {{ service.start_time }} - {{ service.end_time }}</p>
+                                                    <p>Description: {{ service.description }}</p>
+                                                    <p>Tutor: {{ service.tutorName }}</p>
+                                                    <p>Student: {{ service.studentName }}</p>
+                                                </span>
+                                        </div> 
+                                {% endif %}
+                            {% endfor %} 
+                        </div>
                 {% endfor %}
-                {% for service in calendar[i]["services"] %}
-                    {% if service.is_tutor %}
-                        <section class="task task-tutor" style="grid-row: {{ service.row }}; grid-column: {{ service.column }}">{{ service.title }}</section>
-                    {% else %}
-                        <section class="task task-student" style="grid-row: {{ service.row }}; grid-column: {{ service.column }}">{{ service.title }}</section>
-                    {% endif %}
-                {% endfor %} 
             </div>
         {% endfor %}
     </div>

@@ -244,7 +244,7 @@ class Database:
         cursor = conn.cursor()
         sql = """
         SELECT 
-            tutorId, studentId, datetime, durationMinutes, services.title
+            tutorId, studentId, datetime, durationMinutes, services.title, services.description
         FROM 
             bookings 
         INNER JOIN
@@ -253,6 +253,8 @@ class Database:
             bookings.serviceId = services.id  
         WHERE
             tutorId = ? OR studentId = ?
+        ORDER BY
+            datetime
         """
         cursor.execute(sql, (user_id, user_id))
         result = cursor.fetchall()

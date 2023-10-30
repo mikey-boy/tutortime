@@ -210,21 +210,21 @@ def user_calendar_list():
     for i in range(-12,13):
         cur_month = today + relativedelta(months=i)
         monthrange = calendar.monthrange(cur_month.year, cur_month.month)
-        tmp = {}
-        tmp["year"] = cur_month.year
-        tmp["month_name"] = calendar.month_name[cur_month.month]
-        tmp["month_offset"] = monthrange[0]
-        tmp["month_length"] = monthrange[1]
-        tmp["services"] = []
+        month = {}
+        month["year"] = cur_month.year
+        month["month_name"] = calendar.month_name[cur_month.month]
+        month["month_offset"] = monthrange[0]
+        month["month_length"] = monthrange[1]
+        month["services"] = []
         for service in services:
             if cur_month.month == service["dt"].month and cur_month.year == service["dt"].year:
-                tmp2 = {}
-                tmp2["row"] = ((service["dt"].day + monthrange[0]) // 7) + 2
-                tmp2["column"] = (service["dt"].day + monthrange[0]) % 7
-                tmp2["title"] = service["title"]
-                tmp2["is_tutor"] = service["tutorName"] == session["username"]
-                tmp["services"].append(tmp2)
+                service["day"] = service["dt"].day
+                service["start_time"] =  datetime.strftime(service["dt"], "%H:%M")
+                service["end_time"] =  datetime.strftime(service["dt"] + relativedelta(minutes=service["durationMinutes"]), "%H:%M")
+                service["title"] = service["title"]
+                service["is_tutor"] = service["tutorName"] == session["username"]
+                month["services"].append(service)
 
-        cal.append(tmp)
+        cal.append(month)
 
     return render_template("user/calendar/list.html", services = services, calendar=cal, today=today.day)

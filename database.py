@@ -244,7 +244,7 @@ class Database:
         cursor = conn.cursor()
         sql = """
         SELECT 
-            tutorId, studentId, datetime, durationMinutes, services.title, services.description
+            bookings.id, bookings.tutorId, bookings.studentId, bookings.datetime, bookings.durationMinutes, services.title, services.description, services.id as serviceId
         FROM 
             bookings 
         INNER JOIN

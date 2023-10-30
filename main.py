@@ -195,15 +195,15 @@ def user_calendar_list():
         return render_template("user/calendar/list.html", services = [])
     
     rows = db.get_bookings_for_user(session["userId"])
-    services = [dict(row) for row in rows]
-    for service in services:
-        service["dt"] = datetime.strptime(service["datetime"], "%Y-%m-%dT%H:%M")
-        if session["userId"] == service["tutorId"]: 
-            service["tutorName"] = session["username"]
-            service["studentName"] = db.get_username(service["studentId"])
+    bookings = [dict(row) for row in rows]
+    for booking in bookings:
+        booking["dt"] = datetime.strptime(booking["datetime"], "%Y-%m-%dT%H:%M")
+        if session["userId"] == booking["tutorId"]: 
+            booking["tutorName"] = session["username"]
+            booking["studentName"] = db.get_username(booking["studentId"])
         else:
-            service["tutorName"] = db.get_username(service["tutorId"])
-            service["studentName"] = session["username"]
+            booking["tutorName"] = db.get_username(booking["tutorId"])
+            booking["studentName"] = session["username"]
 
     cal = []
     today = date.today()
@@ -215,16 +215,16 @@ def user_calendar_list():
         month["month_name"] = calendar.month_name[cur_month.month]
         month["month_offset"] = monthrange[0]
         month["month_length"] = monthrange[1]
-        month["services"] = []
-        for service in services:
-            if cur_month.month == service["dt"].month and cur_month.year == service["dt"].year:
-                service["day"] = service["dt"].day
-                service["start_time"] =  datetime.strftime(service["dt"], "%H:%M")
-                service["end_time"] =  datetime.strftime(service["dt"] + relativedelta(minutes=service["durationMinutes"]), "%H:%M")
-                service["title"] = service["title"]
-                service["is_tutor"] = service["tutorName"] == session["username"]
-                month["services"].append(service)
+        month["bookings"] = []
+        for booking in bookings:
+            if cur_month.month == booking["dt"].month and cur_month.year == booking["dt"].year:
+                booking["day"] = booking["dt"].day
+                booking["start_time"] =  datetime.strftime(booking["dt"], "%H:%M")
+                booking["end_time"] =  datetime.strftime(booking["dt"] + relativedelta(minutes=booking["durationMinutes"]), "%H:%M")
+                booking["title"] = booking["title"]
+                booking["is_tutor"] = booking["tutorName"] == session["username"]
+                month["bookings"].append(booking)
 
         cal.append(month)
 
-    return render_template("user/calendar/list.html", services = services, calendar=cal, today=today.day)
+    return render_template("user/calendar/list.html", bookings = bookings, calendar=cal, today=today.day)

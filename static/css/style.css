@@ -281,7 +281,7 @@ button {
     grid-template-rows: 50px;
     grid-auto-rows: minmax(120px, auto);
     overflow: auto;
-    border-left: 1px solid rgba(166, 168, 179, 0.12);
+    padding-bottom: 210px;
 }
 .day {
     padding: 10px;
@@ -304,6 +304,7 @@ button {
     grid-row: 6;
 }
 .day:nth-of-type(7n + 1) {
+    border-left: 1px solid rgba(166, 168, 179, 0.12);
     grid-column: 1 / 1;
 }
 .day:nth-of-type(7n + 2) {
@@ -339,32 +340,43 @@ button {
 .day-today {
     background-color: var(--links);
 }
-.calendar-task-container {
+.calendar-booking-container {
     position: relative;
 }
-.calendar-task-modal-left {
+.calendar-booking-modal {
     position: absolute;
     z-index: 100;
-    padding: 5px;
-    top: 0px;
+    padding-left: 10px;
+    top: -10px;
+    width: 250px;
+    background-color: var(--background);
+    border: 2px solid var(--links);
+    border-radius: 3px;
+}
+.calendar-booking-modal > button {
+    float: right;
+    background-color: var(--background);
+    color: var(--navbar);
+    margin: 15px 8px;
+    border: none;
+}
+.calendar-booking-modal > a {
+    text-decoration: none;
+}
+.calendar-booking-modal-left {
     left: 105%;
-    width: 250px;
-    background-color: var(--background);
-    border: 1.5px solid var(--links);
-    border-radius: 3px;
 }
-.calendar-task-modal-right {
-    position: absolute;
-    z-index: 100;
-    padding: 5px;
-    top: 0px;
+.calendar-booking-modal-right {
     right: 105%;
-    width: 250px;
-    background-color: var(--background);
-    border: 1.5px solid var(--links);
-    border-radius: 3px;
 }
-.task {
+.truncated-text {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.booking {
     display: block;
     text-decoration: none;
     border: 2px solid;
@@ -374,14 +386,14 @@ button {
     font-size: 14px;
     background: #fef0db;
 }
-.day button.task {
+.day button.booking {
     width: 100%;
     text-align: left;
 }
-.task-tutor {
+.booking-tutor {
     color: #fc9b10;
 }
-.task-student {
+.booking-student {
     color: var(--login);
 }
 

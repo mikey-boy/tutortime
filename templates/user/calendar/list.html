@@ -16,7 +16,7 @@
             </span>
         </div>
         {% for i in range(calendar|length) %}
-            <div class="calendar" x-show="month == {{ i }}">
+            <div class="calendar" x-data="{ modal: -1 }" x-show="month == {{ i }}">
                 <span class="day-name">Mon</span> 
                 <span class="day-name">Tue</span> 
                 <span class="day-name">Wed</span> 
@@ -34,28 +34,29 @@
                         <div class="day">
                     {% endif %}
                             {{ j }}
-                            {% for service in calendar[i]["services"] %}
-                                {% if service.day == j %}
-                                        <div class="calendar-task-container" x-data="{ modal: false }">
-                                        {% if service.is_tutor %}
-                                            <button class="task task-tutor" x-on:click="modal = ! modal">
+                            {% for booking in calendar[i]["bookings"] %}
+                                {% if booking.day == j %}
+                                    <div class="calendar-booking-container">
+                                    {% if booking.is_tutor %}
+                                        <button class="booking booking-tutor" x-on:click="modal = modal == {{ booking.id }} ? -1 : {{ booking.id }}">
+                                    {% else %}
+                                        <button class="booking booking-student" x-on:click="modal = modal == {{ booking.id }} ? -1 : {{ booking.id }}">
+                                    {% endif %}
+                                            <b>{{ booking.start_time }} - {{ booking.end_time }}</b><br>{{ booking.title }}
+                                        </button>
+                                        {% if (j + calendar[i]["month_offset"] - 1) % 7 < 5 %}
+                                            <span class="calendar-booking-modal calendar-booking-modal-left" x-show="modal == {{ booking.id }}">
                                         {% else %}
-                                            <button class="task task-student" x-on:click="modal = ! modal">
+                                            <span class="calendar-booking-modal calendar-booking-modal-right" x-show="modal == {{ booking.id }}">
                                         {% endif %}
-                                                <b>{{ service.start_time }} - {{ service.end_time }}</b><br>{{ service.title }}
-                                            </button>
-                                            {% if (j + calendar[i]["month_offset"] - 1) % 7 < 4 %}
-                                                <span class="calendar-task-modal-left" x-show="modal">
-                                            {% else %}
-                                                <span class="calendar-task-modal-right" x-show="modal">
-                                            {% endif %}
-                                                    <h3>{{ service.title }}</h3>
-                                                    <p>Time: {{ service.start_time }} - {{ service.end_time }}</p>
-                                                    <p>Description: {{ service.description }}</p>
-                                                    <p>Tutor: {{ service.tutorName }}</p>
-                                                    <p>Student: {{ service.studentName }}</p>
-                                                </span>
-                                        </div> 
+                                                <button x-on:click="modal = -1"><i class="fa-regular fa-circle-xmark fa-xl"></i></button>
+                                                <a href="{{ url_for('service_list', service_id=booking.serviceId) }}"><h3 class="truncated-text">{{ booking.title }}</h3></a>
+                                                <p>Time: {{ booking.start_time }} - {{ booking.end_time }}</p>
+                                                <p class="truncated-text">Description: {{ booking.description }}</p>
+                                                <p>Tutor: {{ booking.tutorName }}</p>
+                                                <p>Student: {{ booking.studentName }}</p>
+                                            </span>
+                                    </div> 
                                 {% endif %}
                             {% endfor %} 
                         </div>

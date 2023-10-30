@@ -38,9 +38,9 @@
                                 {% if booking.day == j %}
                                     <div class="calendar-booking-container">
                                     {% if booking.is_tutor %}
-                                        <button class="booking booking-tutor" x-on:click="modal = modal == {{ booking.id }} ? -1 : {{ booking.id }}">
+                                        <button class="calendar-booking calendar-booking-tutor" x-on:click="modal = modal == {{ booking.id }} ? -1 : {{ booking.id }}">
                                     {% else %}
-                                        <button class="booking booking-student" x-on:click="modal = modal == {{ booking.id }} ? -1 : {{ booking.id }}">
+                                        <button class="calendar-booking calendar-booking-student" x-on:click="modal = modal == {{ booking.id }} ? -1 : {{ booking.id }}">
                                     {% endif %}
                                             <b>{{ booking.start_time }} - {{ booking.end_time }}</b><br>{{ booking.title }}
                                         </button>

@@ -1,4 +1,5 @@
 from flask import Flask, session, render_template, request, jsonify, redirect
+from sassutils.wsgi import SassMiddleware
 from database import Database
 from image_server import ImageServer
 from utils import availability_to_int, availability_to_list
@@ -8,6 +9,7 @@ import calendar
 
 app = Flask(__name__)
 app.config.from_object('config')
+app.wsgi_app = SassMiddleware(app.wsgi_app, {__name__: ('static/scss', 'static/css', '/static/css')})
 
 db = Database(db_folder=app.config['DB_FOLDER'], user_db=app.config['USER_DB'], service_db=app.config['SERVICE_DB']) 
 image_server = ImageServer(image_folder=app.config['IMAGE_FOLDER'])

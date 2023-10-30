@@ -162,3 +162,4 @@ cython_debug/
 # Project specific
 db
 static/uploads
+static/css

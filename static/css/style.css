@@ -41,6 +41,9 @@ a {
 h1, h2, h3, h4, h5, h6 {
     color: var(--headers);
 }
+button {
+    cursor: pointer;
+}
 
 .nav-table {
     width: 100%;
@@ -250,6 +253,148 @@ h1, h2, h3, h4, h5, h6 {
 }
 .modal-container {
     position: relative;
+}
+.calendar-control {
+    font-weight: bolder;
+    font-size: 20px;
+    margin: 20px;
+}
+.calendar-control-date {
+    display: inline-block;
+    text-align: center;
+    width: 110px;
+}
+.calendar-control-legend {
+    float: right;
+}
+.calendar-control-legend-tutor {
+    color: #fc9b10;
+    margin: 15px; 
+}
+.calendar-control-legend-student {
+    color: var(--login);
+}
+.calendar {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(7, 1fr);
+    grid-template-rows: 50px;
+    grid-auto-rows: minmax(120px, auto);
+    overflow: auto;
+    padding-bottom: 210px;
+}
+.day {
+    padding: 10px;
+    border-bottom: 1px solid rgba(166, 168, 179, 0.12);
+    border-right: 1px solid rgba(166, 168, 179, 0.12);
+}
+.day:nth-of-type(n + 1):nth-of-type(-n + 7) {
+    grid-row: 2;
+}
+.day:nth-of-type(n + 8):nth-of-type(-n + 14) {
+    grid-row: 3;
+}
+.day:nth-of-type(n + 15):nth-of-type(-n + 21) {
+    grid-row: 4;
+}
+.day:nth-of-type(n + 22):nth-of-type(-n + 28) {
+    grid-row: 5;
+}
+.day:nth-of-type(n + 29):nth-of-type(-n + 35) {
+    grid-row: 6;
+}
+.day:nth-of-type(7n + 1) {
+    border-left: 1px solid rgba(166, 168, 179, 0.12);
+    grid-column: 1 / 1;
+}
+.day:nth-of-type(7n + 2) {
+    grid-column: 2 / 2;
+}
+.day:nth-of-type(7n + 3) {
+    grid-column: 3 / 3;
+}
+.day:nth-of-type(7n + 4) {
+    grid-column: 4 / 4;
+}
+.day:nth-of-type(7n + 5) {
+    grid-column: 5 / 5;
+}
+.day:nth-of-type(7n + 6) {
+    grid-column: 6 / 6
+    }
+.day:nth-of-type(7n + 7) {
+    grid-column: 7 / 7;
+}
+.day-name {
+    font-size: 12px;
+    text-transform: uppercase;
+    text-align: center;
+    line-height: 50px;
+    font-weight: 500;
+    border-bottom: 1px solid rgba(166, 168, 179, 0.12);
+    border-top: 1px solid rgba(166, 168, 179, 0.12);
+}
+.day-name:nth-of-type(7n + 7) {
+    border-right: 1px solid rgba(166, 168, 179, 0.12);
+}
+.day-today {
+    background-color: var(--links);
+}
+.calendar-booking-container {
+    position: relative;
+}
+.calendar-booking-modal {
+    position: absolute;
+    z-index: 100;
+    padding-left: 10px;
+    top: -10px;
+    width: 250px;
+    background-color: var(--background);
+    border: 2px solid var(--links);
+    border-radius: 3px;
+}
+.calendar-booking-modal > button {
+    float: right;
+    background-color: var(--background);
+    color: var(--navbar);
+    margin: 15px 8px;
+    border: none;
+}
+.calendar-booking-modal > a {
+    text-decoration: none;
+}
+.calendar-booking-modal-left {
+    left: 105%;
+}
+.calendar-booking-modal-right {
+    right: 105%;
+}
+.truncated-text {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.booking {
+    display: block;
+    text-decoration: none;
+    border: 2px solid;
+    border-radius: 3px;
+    margin: 5px 0px;
+    padding: 2px 10px;
+    font-size: 14px;
+    background: #fef0db;
+}
+.day button.booking {
+    width: 100%;
+    text-align: left;
+}
+.booking-tutor {
+    color: #fc9b10;
+}
+.booking-student {
+    color: var(--login);
 }
 
 #login {

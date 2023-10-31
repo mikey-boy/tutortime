@@ -2,13 +2,13 @@
 
 {% block title %}Signup{% endblock %}
 {% block content %}
-<div class="service-creation-box">
+<div class="service-creation">
     {% if service.get('title') == None %}
     <form action="{{ url_for('user_service_create') }}" method="POST" enctype="multipart/form-data">
     {% else %}
     <form action="{{ url_for('user_service_update', service_id=service.id) }}" method="POST" enctype="multipart/form-data">
     {% endif %}
-        <table class="service-creation-table">
+        <table class="service-creation-form">
             <tbody>
                 <tr>
                     <td>

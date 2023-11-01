@@ -2,11 +2,11 @@
 {% block content %}
     <div x-data="{ month: 12 }">
         <div class="calendar-control">
-            <a href="" x-show="month != 0" @click.prevent="month = month == 0 ? month : month - 1"><i class="fa-solid fa-chevron-left"></i></a>
+            <button x-show="month != 0" @click="month = month == 0 ? month : month - 1"><i class="fa-solid fa-chevron-left fa-xl"></i></button>
             {% for i in range(calendar|length) %}
                 <span class="calendar-control-date" x-show="month == {{ i }}">{{ calendar[i]["month_name"] }}</span>
             {% endfor %}
-            <a href="" x-show="month != 24" @click.prevent="month = month == 24 ? month : month + 1"><i class="fa-solid fa-chevron-right"></i></a>
+            <button x-show="month != 24" @click="month = month == 24 ? month : month + 1"><i class="fa-solid fa-chevron-right fa-xl"></i></button>
             {% for i in range(calendar|length) %}
                 <span class="calendar-control-date" x-show="month == {{ i }}">{{ calendar[i]["year"] }}</span>
             {% endfor %}

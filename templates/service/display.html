@@ -14,8 +14,8 @@
                                 <img x-show="image == {{ i }}" src="/static/uploads/{{ service.images[i].filenameOnServer }}" alt="{{ service.images[i].filename }}">
                             {% endfor %}
                             {% if service.images|length > 1 %}
-                                <a href="" class="image-container-prev" @click.prevent="image = image == 0 ? {{ service.images|length }} - 1 : (image - 1)"><i class="fa-regular fa-circle-left fa-2x"></i></a>
-                                <a href="" class="image-container-next" @click.prevent="image = (image + 1) % {{ service.images|length }}"><i class="fa-regular fa-circle-right fa-2x"></i></a>
+                                <button class="image-prev" @click="image = image == 0 ? {{ service.images|length }} - 1 : (image - 1)"><i class="fa-regular fa-circle-left fa-2x"></i></button>
+                                <button class="image-next" @click="image = (image + 1) % {{ service.images|length }}"><i class="fa-regular fa-circle-right fa-2x"></i></button>
                             {% endif %}
                     {% endif %}
                 </span>

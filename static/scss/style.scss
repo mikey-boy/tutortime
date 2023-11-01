@@ -36,9 +36,9 @@ head {
 }
 body {
     color: var(--text);
-	width: 70%;
-	min-width: 700px;
-	max-width: 1500px;
+	width: 80%;
+	min-width: 720px;
+	max-width: 1440px;
 	margin: auto;
     
 	font-family: monospace;
@@ -89,35 +89,40 @@ button {
 }
 .post-grid-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
-    max-width: 1200px;
-    padding: 20px;
+    gap: 25px;
+    grid-template-columns: repeat(auto-fill, 340px);
+    padding-bottom: 100px;
+
+    .post {
+        width: 300px;
+    }
 }
 .post-flex-container {
     display: flex;
     align-items: center;
     justify-content: center;
-
+    
     .availability-flex-container {
         display: flex;
         flex-wrap: wrap;
-     
+        
         > div:first-child {
             flex: 1;
         }
         > div:nth-child(2) {
             flex: 2;
-            min-width: 340px;
+            min-width: 400px;
         }
+    }
+    .post {
+        max-width: 850px;
+        margin-top: 25px;
     }
 }
 .post {
     padding: 20px;
     border-radius: 5px;
     border: 1px dashed var(--links);
-    margin-top: 25px;
-    max-width: 1000px;
 
     h2 {
         margin-top: 0px;
@@ -127,8 +132,8 @@ button {
     position: relative;
 
     img {
-        width: 340px;
-        height: 190px;
+        width: 300px;
+        height: 170px;
     }
     button {
         position: absolute;
@@ -375,8 +380,7 @@ button {
     }
 }
 #service-category-box {
-    margin-top: 20px;
-    margin-left: 20px;
+    margin: 25px 10px;
     
     select {
         padding: 5px;

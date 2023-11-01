@@ -2,8 +2,10 @@
     --background: #2e3436;
     --background-light: #3e4648;
     --background-lighter: #808080;
+    --background-booking: #fef0db;
     --headers: #99C1F1;
     --login: #5095e9;
+    --tutor: #fc9b10;
     --links: #A3BE8C;
     --signup: #85b75c;
     --text-white: #fff;
@@ -211,7 +213,7 @@ button {
         float: right;
         
         &-tutor {
-            color: #fc9b10;
+            color: var(--tutor);
             margin: 15px; 
         }
         &-student {
@@ -300,10 +302,10 @@ button {
     margin: 5px 0px;
     padding: 2px 10px;
     font-size: 14px;
-    background: #fef0db;
+    background: var(--background-booking);
     
     &.tutor {
-        color: #fc9b10;
+        color: var(--tutor);
     }
     &.student {
         color: var(--login);

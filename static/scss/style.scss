@@ -127,6 +127,11 @@ button {
     h2 {
         margin-top: 0px;
     }
+    .message-tutor-button {
+        padding: 6px;
+        color: var(--text-white);
+        background-color: var(--login);
+    }
 }
 .image-container {
     position: relative;
@@ -350,6 +355,65 @@ button {
     }
     &.open-right {
         right: 105%;
+    }
+}
+.chat-container {
+    display: flex;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+
+    .contacts {
+        flex: 1;
+        
+        h2 {
+            margin: 10px 0px;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        li {
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            &:hover {
+                background-color: var(--background-light);
+            }
+        }
+    }
+    .chat {
+        flex: 4;
+        border-radius: 5px;
+        border: 2px solid var(--links);
+        background-color: var(--background-light);
+
+        h3 {
+            margin: 15px;
+        }
+        .chat-messages {
+            height: 300px;
+            overflow-y: scroll;
+            padding: 10px;
+        }
+        .chat-input {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            
+            input {
+                flex: 1;
+                padding: 7px 10px;
+                border: none;
+                border-radius: 3px;
+                margin-right: 10px;
+            }
+            button {
+                background-color: var(--signup);
+                color: var(--text-white);
+                padding: 7px 25px;
+            }
+        }
     }
 }
 

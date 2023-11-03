@@ -1,4 +1,24 @@
 {% extends "home.html" %}
 {% block content %}
-    <p>This is where your messages would go</p>
+<div class="chat-container">
+    <div class="contacts">
+        <h2>Contacts</h2>
+        <ul>
+            <li>Contact 1</li>
+            <li>Contact 2</li>
+            <li>Contact 3</li>
+            <li>Contact 4</li>
+            <li>Contact 5</li>
+        </ul>
+    </div>
+    <div class="chat">
+        <h3>Contact 1</h3>
+        <div class="chat-messages">
+        </div>
+        <div class="chat-input">
+            <input type="text" placeholder="Type your message...">
+            <button>Send</button>
+        </div>
+    </div>
+</div>
 {% endblock %}

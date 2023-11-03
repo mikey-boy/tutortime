@@ -2,7 +2,7 @@
 {% extends "home.html" %}
 {% block content %}
     <div class="post-flex-container">
-        <div class="post single-post" x-data="{ image: 0 }">
+        <div class="post" x-data="{ image: 0 }">
             <h2>{{ service.title }}</h2>
             <p>offered by: {{ service.username }}</p>
             <div class="availability-flex-container">
@@ -69,7 +69,8 @@
                     </table>
                 </div>
             </div>
-            <p class="post-description">{{ service.description }}</p>
+            <p>{{ service.description }}</p>
+            <a href=""><button class="message-tutor-button"><i class="fa-regular fa-paper-plane"></i>  Message tutor</button></a>
             <form action="{{ url_for('service_booking_create', service_id=service.id) }}" method="POST">
                 <div>
                     <label for="datetime">Choose a time for your lesson:</label>

@@ -1,7 +1,7 @@
 {% extends "home.html" %}
 {% block content %}
     <div x-data="{  category: 'all' }">
-        <div class="service-category-box">
+        <div id="service-category-box">
             <label>Category: </label>
             <select x-model="category">
                 <option value="all">All</option>
@@ -12,7 +12,7 @@
                 <option value="other">Other</option>
             </select>
         </div>
-        <div class="grid-container">
+        <div class="post-grid-container">
             {% for service in services %}
                 <div class="post" x-show="'{{ service.category }}' == category || 'all' == category" x-data="{ image: 0 }">
                     <a href="{{ url_for('service_list', service_id=service.id) }}">
@@ -24,8 +24,8 @@
                                     <img x-show="image == {{ i }}" src="/static/uploads/{{ service.images[i].filenameOnServer }}" alt="{{ service.images[i].filename }}">
                                 {% endfor %}
                                 {% if service.images|length > 1 %}
-                                    <a href="" class="prev-image" @click.prevent="image = image == 0 ? {{ service.images|length }} - 1 : (image - 1)"><i class="fa-regular fa-circle-left fa-2x"></i></a>
-                                    <a href="" class="next-image" @click.prevent="image = (image + 1) % {{ service.images|length }}"><i class="fa-regular fa-circle-right fa-2x"></i></a>
+                                    <button class="image-prev" @click.prevent="image = image == 0 ? {{ service.images|length }} - 1 : (image - 1)"><i class="fa-regular fa-circle-left fa-2x"></i></button>
+                                    <button class="image-next" @click.prevent="image = (image + 1) % {{ service.images|length }}"><i class="fa-regular fa-circle-right fa-2x"></i></button>
                                 {% endif %}
                             {% endif %}
                         </div>
@@ -33,7 +33,7 @@
                     <a href="{{ url_for('service_list', service_id=service.id) }}">
                         <h3>{{ service.title }}</h3>
                     </a>
-                    <p class="post-truncated-description">{{ service.description }}</p>
+                    <p class="truncated-text">{{ service.description }}</p>
                     <p>{{ service.username }}</p>
                 </div>
             {% endfor %}

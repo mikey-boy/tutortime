@@ -2,13 +2,13 @@
 
 {% block title %}Signup{% endblock %}
 {% block content %}
-<div class="service-creation-box">
+<div id="user-service-creation">
     {% if service.get('title') == None %}
     <form action="{{ url_for('user_service_create') }}" method="POST" enctype="multipart/form-data">
     {% else %}
     <form action="{{ url_for('user_service_update', service_id=service.id) }}" method="POST" enctype="multipart/form-data">
     {% endif %}
-        <table class="service-creation-table">
+        <table id="service-creation-table">
             <tbody>
                 <tr>
                     <td>
@@ -127,11 +127,11 @@
                 </tr>
             </tbody>
         </table>
-        <div id="create-service-button-container">
+        <div class="button-container">
             {% if service %}
-                <button type="submit" id="create-service-button">Update service</button>
+                <button type="submit">Update service</button>
             {% else %}
-                <button type="submit" id="create-service-button">Create service</button>
+                <button type="submit">Create service</button>
             {% endif %}
         </div>
     </form>

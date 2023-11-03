@@ -2,11 +2,11 @@
 {% block content %}
     <div x-data="{ month: 12 }">
         <div class="calendar-control">
-            <a href="" x-show="month != 0" @click.prevent="month = month == 0 ? month : month - 1"><i class="fa-solid fa-chevron-left"></i></a>
+            <button x-show="month != 0" @click="month = month == 0 ? month : month - 1"><i class="fa-solid fa-chevron-left fa-xl"></i></button>
             {% for i in range(calendar|length) %}
                 <span class="calendar-control-date" x-show="month == {{ i }}">{{ calendar[i]["month_name"] }}</span>
             {% endfor %}
-            <a href="" x-show="month != 24" @click.prevent="month = month == 24 ? month : month + 1"><i class="fa-solid fa-chevron-right"></i></a>
+            <button x-show="month != 24" @click="month = month == 24 ? month : month + 1"><i class="fa-solid fa-chevron-right fa-xl"></i></button>
             {% for i in range(calendar|length) %}
                 <span class="calendar-control-date" x-show="month == {{ i }}">{{ calendar[i]["year"] }}</span>
             {% endfor %}
@@ -36,18 +36,18 @@
                             {{ j }}
                             {% for booking in calendar[i]["bookings"] %}
                                 {% if booking.day == j %}
-                                    <div class="calendar-booking-container">
+                                    <div class="relative-container">
                                     {% if booking.is_tutor %}
-                                        <button class="booking booking-tutor" x-on:click="modal = modal == {{ booking.id }} ? -1 : {{ booking.id }}">
+                                        <button class="calendar-booking tutor" x-on:click="modal = modal == {{ booking.id }} ? -1 : {{ booking.id }}">
                                     {% else %}
-                                        <button class="booking booking-student" x-on:click="modal = modal == {{ booking.id }} ? -1 : {{ booking.id }}">
+                                        <button class="calendar-booking student" x-on:click="modal = modal == {{ booking.id }} ? -1 : {{ booking.id }}">
                                     {% endif %}
                                             <b>{{ booking.start_time }} - {{ booking.end_time }}</b><br>{{ booking.title }}
                                         </button>
                                         {% if (j + calendar[i]["month_offset"] - 1) % 7 < 5 %}
-                                            <span class="calendar-booking-modal calendar-booking-modal-left" x-show="modal == {{ booking.id }}">
+                                            <span class="booking-modal open-left" x-show="modal == {{ booking.id }}">
                                         {% else %}
-                                            <span class="calendar-booking-modal calendar-booking-modal-right" x-show="modal == {{ booking.id }}">
+                                            <span class="booking-modal open-right" x-show="modal == {{ booking.id }}">
                                         {% endif %}
                                                 <button x-on:click="modal = -1"><i class="fa-regular fa-circle-xmark fa-xl"></i></button>
                                                 <a href="{{ url_for('service_list', service_id=booking.serviceId) }}"><h3 class="truncated-text">{{ booking.title }}</h3></a>

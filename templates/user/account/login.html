@@ -10,11 +10,11 @@
             <input type="text" name="username" required>
             <label for="password">Password:</label>
             <input type="password" name="password" required>
-            <button type="submit" id="login">Login</button>
+            <button type="submit" class="login-button">Login</button>
             <p class="error-text">{{ failure_msg }}</p>
         </form>
         <hr>
-        <a href="{{ url_for('user_account_create') }}"><button type="submit" id="signup">Create account</button></a>
+        <a href="{{ url_for('user_account_create') }}"><button type="submit" class="signup-button">Create account</button></a>
     </div>
 </div>
 {% endblock %}

@@ -3,6 +3,7 @@ from datetime import date, datetime
 
 from dateutil.relativedelta import relativedelta
 from flask import Flask, jsonify, redirect, render_template, request, session
+from flask_socketio import SocketIO, join_room, leave_room, send
 from sassutils.wsgi import SassMiddleware
 
 from database import Database
@@ -15,6 +16,12 @@ app.wsgi_app = SassMiddleware(app.wsgi_app, {__name__: ("static/scss", "static/c
 
 db = Database(db_folder=app.config["DB_FOLDER"], user_db=app.config["USER_DB"], service_db=app.config["SERVICE_DB"])
 image_server = ImageServer(image_folder=app.config["IMAGE_FOLDER"])
+
+socketio = SocketIO(app)
+chats = {}
+
+if __name__ == "__main__":
+    socketio.run(app, debug=True)
 
 
 @app.route("/")
@@ -210,11 +217,6 @@ def user_service_activate(service_id):
     return redirect("/user/service/list/paused")
 
 
-@app.route("/user/messages/list")
-def user_messages_list():
-    return render_template("user/messages/list.html")
-
-
 @app.route("/user/calendar/list")
 def user_calendar_list():
     if "username" not in session:
@@ -256,3 +258,60 @@ def user_calendar_list():
         cal.append(month)
 
     return render_template("user/calendar/list.html", bookings=bookings, calendar=cal, today=today.day)
+
+
+@app.route("/user/messages/list/")
+@app.route("/user/messages/list/<int:user_id>")
+def user_messages_list(user_id=None):
+    user1 = {"id": session["userId"], "name": session["username"]}
+    contacts = chats.get(user1["id"], [])
+
+    user2 = {}
+    if user_id:
+        user2 = {"id": user_id, "name": db.get_username(user_id)}
+    else:
+        if contacts == []:
+            return render_template("user/messages/list.html", error_text="Browse the service listings to start a chat")
+        user2 = {"id": contacts[0]["id"], "name": contacts[0]["name"]}
+
+    room = f"{user1['id']}-{user2['id']}" if int(user1["id"]) < int(user2["id"]) else f"{user2['id']}-{user1['id']}"
+    if room not in chats:
+        chats[room] = []
+
+    messages = chats[room]
+    if user1["id"] in chats:
+        if user2["id"] not in [user["id"] for user in chats[user1["id"]]]:
+            chats[user1["id"]].append(user2)
+    else:
+        chats[user1["id"]] = [user2]
+
+    if user2["id"] in chats:
+        if user1["id"] not in [user["id"] for user in chats[user2["id"]]]:
+            chats[user2["id"]].append(user1)
+    else:
+        chats[user2["id"]] = [user1]
+
+    return render_template(
+        "user/messages/list.html", contacts=contacts, messages=messages, user=user1, peer=user2, room=room
+    )
+
+
+@socketio.on("join_room")
+def handle_join_room(payload):
+    session["room"] = payload["room"]
+    join_room(payload["room"])
+
+
+@socketio.on("message")
+def handle_message(payload):
+    username = session["username"]
+    room = payload["room"]
+    payload["message"] = payload["message"].rstrip("\n")
+    message = {"sender": username, "message": payload["message"]}
+    send(message, to=room)
+    chats[room].append(message)
+
+
+@socketio.on("disconnect")
+def handle_disconnect():
+    leave_room(session["room"])

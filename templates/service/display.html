@@ -70,7 +70,7 @@
                 </div>
             </div>
             <p>{{ service.description }}</p>
-            <a href=""><button class="message-tutor-button"><i class="fa-regular fa-paper-plane"></i>  Message tutor</button></a>
+            <a href="{{ url_for('user_messages_list', user_id=service.userId) }}"><button class="message-tutor-button"><i class="fa-regular fa-paper-plane"></i>  Message tutor</button></a>
             <form action="{{ url_for('service_booking_create', service_id=service.id) }}" method="POST">
                 <div>
                     <label for="datetime">Choose a time for your lesson:</label>

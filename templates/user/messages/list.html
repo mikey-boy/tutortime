@@ -1,24 +1,54 @@
 {% extends "home.html" %}
 {% block content %}
+{% if error_text %}
+    <p>{{ error_text }}</p>
+{% else %}
 <div class="chat-container">
     <div class="contacts">
         <h2>Contacts</h2>
         <ul>
-            <li>Contact 1</li>
-            <li>Contact 2</li>
-            <li>Contact 3</li>
-            <li>Contact 4</li>
-            <li>Contact 5</li>
+            {% for contact in contacts %}
+                <a href="{{ url_for('user_messages_list', user_id=contact.id) }}"><li>{{ contact.name }}</li></a>
+            {% endfor %}
         </ul>
     </div>
     <div class="chat">
-        <h3>Contact 1</h3>
-        <div class="chat-messages">
+        <h3>{{ peer.name }}</h3>
+        <div id="chat-messages">
         </div>
-        <div class="chat-input">
-            <input type="text" placeholder="Type your message...">
-            <button>Send</button>
-        </div>
+        <form id="chat-input" onsubmit="sendMessage()">
+            <input type="text" placeholder="Type your message..." id="message" name="message"/>
+            <button type="submit" id="send-btn" onclick="sendMessage()">Send</button>
+        </form>
     </div>
+
+    <script type="text/javascript">
+        var socketio = io();
+        socketio.on("connect", () => { socketio.emit("join_room", { "room": "{{ room }}" }) } )
+        socketio.on("message", function (message) { createChatItem(message.message, message.sender) });
+        function createChatItem(message, sender) {
+            var messages = document.getElementById("chat-messages");
+            if (sender === "{{ user.name }}") {
+                var content = `<div class="flex-container-user"><span class="message-item">${message}</span></div>`
+            } else {
+                var content = `<div class="flex-container-peer"><span class="message-item">${message}</span></div>`
+            }
+            messages.innerHTML += content;
+        }
+
+        function sendMessage() {
+            var msgInput = document.getElementById("message");
+            if (msgInput.value === "") return;
+            var msg = msgInput.value;
+            socketio.emit("message", { message: msg, room: "{{room}}" });
+            msgInput.value = "";
+        }
+    </script>
+    <script type="text/javascript">
+        {% for message in messages %}
+            createChatItem("{{message.message}}", "{{message.sender}}");
+        {% endfor %}
+    </script>
 </div>
+{% endif %}
 {% endblock %}

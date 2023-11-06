@@ -291,8 +291,24 @@ def user_messages_list(user_id=None):
     else:
         chats[user2["id"]] = [user1]
 
+    now = datetime.now()
+    rows = db.get_bookings_between_users(user1["id"], user2["id"])
+    bookings = [dict(row) for row in rows]
+    for booking in bookings:
+        dt = datetime.strptime(booking["datetime"], "%Y-%m-%dT%H:%M")
+        booking["completed"] = 1 if dt < now else 0
+        booking["day"] = dt.strftime("%Y-%m-%d")
+        booking["start_time"] = dt.strftime("%H:%M")
+        booking["end_time"] = datetime.strftime(dt + relativedelta(minutes=booking["durationMinutes"]), "%H:%M")
+
     return render_template(
-        "user/messages/list.html", contacts=contacts, messages=messages, user=user1, peer=user2, room=room
+        "user/messages/list.html",
+        contacts=contacts,
+        messages=messages,
+        user=user1,
+        peer=user2,
+        room=room,
+        bookings=bookings,
     )
 
 

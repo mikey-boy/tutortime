@@ -3,7 +3,7 @@
 {% if error_text %}
     <p>{{ error_text }}</p>
 {% else %}
-<div class="chat-container">
+<div class="chat-container" x-data="{ request: false }">
     <div class="contacts">
         <h2>Contacts</h2>
         <ul>
@@ -14,12 +14,53 @@
     </div>
     <div class="chat">
         <h3>{{ peer.name }}</h3>
-        <div id="chat-messages">
+        <div id="chat-messages-container">
+            <div id="chat-messages"></div>
+            <div id="booking-request" x-show="request">
+                <span>
+                    <div>
+                        <span>Datetime: </span>
+                        <input type="date" required>
+                        <input type="time" required>
+                        <button id="cancel-button" @click="request = false"><i class="fa-regular fa-circle-xmark fa-xl"></i></button>
+                    </div>
+                    <div id="duration">
+                        <span>Duration: </span>
+                        <select name="duration">
+                            {% for i in range(1, 17) %}
+                                {% if i <= 4 %}
+                                    <option value="{{ i * 15 }}">{{ i * 15 }} minutes</option>
+                                {% else %}
+                                    <option value="{{ i * 15 }}">{{ i//4 }} hour {{ (i % 4) * 15 }} minutes</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button class="send-button">Send</button>
+                </span>
+            </div>
         </div>
         <form id="chat-input" onsubmit="sendMessage()">
             <input type="text" placeholder="Type your message..." id="message" name="message"/>
-            <button type="submit" id="send-btn" onclick="sendMessage()">Send</button>
+            <button type="submit" class="send-button" onclick="sendMessage()">Send</button>
         </form>
+    </div>
+    <div class="bookings" x-data="{ completed: 0 }">
+        <h2>Lessons</h2>
+        <div class="flex-container subnav">
+            <button :class="completed == 0 && 'active'" @click="completed = 0">Upcoming</button>
+            <button :class="completed == 1 && 'active'" @click="completed = 1">Completed</button>
+        </div>
+        <div class="booking-item-container">
+            {% for booking in bookings %}
+                <div class="booking-item" x-show="{{ booking.completed }} == completed">
+                    <a href="{{ url_for('service_list', service_id=booking.serviceId) }}"><h4>{{ booking.title }}</h4></a>
+                    <p>Day: {{ booking.day }}</p>
+                    <p>Time: {{ booking.start_time }} - {{booking.end_time}}</p>
+                </div>
+            {% endfor %}
+        </div>
+        <button class="booking-request-button" @click="request = !request"><i class="fa-regular fa-calendar-days fa-lg"></i> Send lesson request</button>
     </div>
 
     <script type="text/javascript">

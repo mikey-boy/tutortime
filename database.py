@@ -304,3 +304,26 @@ class Database:
         result = cursor.fetchall()
         conn.close()
         return result
+
+    def get_bookings_between_users(self, user_id: int, peer_id: int):
+        conn = sqlite3.connect(self.service_db)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        sql = """
+        SELECT 
+            bookings.id, bookings.tutorId, bookings.studentId, bookings.datetime, bookings.durationMinutes, services.title, services.description, services.id as serviceId
+        FROM 
+            bookings 
+        INNER JOIN
+            services
+        ON
+            bookings.serviceId = services.id  
+        WHERE
+            (tutorId = ? AND studentId = ?) OR (tutorId = ? AND studentId = ?)
+        ORDER BY
+            datetime
+        """
+        cursor.execute(sql, (user_id, peer_id, peer_id, user_id))
+        result = cursor.fetchall()
+        conn.close()
+        return result

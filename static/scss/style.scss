@@ -87,6 +87,9 @@ button {
 .relative-container {
     position: relative;
 }
+.flex-container {
+    display: flex;
+}
 .post-grid-container {
     display: grid;
     gap: 25px;
@@ -359,7 +362,6 @@ button {
 }
 .chat-container {
     display: flex;
-    max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
 
@@ -383,13 +385,19 @@ button {
         }
     }
     .chat {
-        flex: 4;
+        flex: 5;
+        height: 640px;
+        min-width: 400px;
         border-radius: 5px;
         border: 2px solid var(--links);
         background-color: var(--background-light);
 
         h3 {
             margin: 15px 60px;
+        }
+        .send-button {
+            color: var(--text-white);
+            padding: 7px 25px;
         }
         #chat-input {
             display: flex;
@@ -403,14 +411,12 @@ button {
                 border-radius: 3px;
                 margin-right: 10px;
             }
-            button {
+            .send-button {
                 background-color: var(--signup);
-                color: var(--text-white);
-                padding: 7px 25px;
             }
         }
-        #chat-messages {
-            height: 300px;
+        #chat-messages-container {
+            height: 500px;
             overflow-y: scroll;
             padding: 10px;
         
@@ -420,7 +426,6 @@ button {
                 margin: 0px 50px 7px;
                 padding: 5px 10px;
                 background: var(--background-booking);
-                position: relative;
             }
             .flex-container-user {
                 display: flex;
@@ -432,6 +437,82 @@ button {
                 justify-content: left;
                 color: var(--tutor);
             }
+        }
+        #booking-request {
+            display: flex;
+            justify-content: right;
+
+            > span {
+                margin: 10px 50px 0px;
+                padding: 10px 5px 10px 10px;
+                background-color: var(--background-light);
+                border: 1px dashed var(--links);
+                border-radius: 3px;
+            }
+            .send-button {
+                background-color: var(--login);
+                float: left;
+                margin-top: 10px;
+                margin-left: 10px;
+            }
+            #cancel-button {
+                float: right;
+                background-color: var(--background-light);
+                color: var(--background-lighter);
+                padding: 0px;
+                margin-left: 10px;
+            }
+            #duration {
+                float: left;
+                margin-top: 15px;
+            }
+        }
+    }
+    .bookings {
+        flex: 2;
+        margin: 0px 20px;
+
+        h2 {
+            margin: 0px;
+        }
+        .subnav {
+            margin-top: 10px;
+            margin-bottom: 15px;
+
+            button {
+                flex: 1;
+                padding: 5px 10px;
+                background-color: var(--background);
+                color: var(--text);
+                width: 100%;
+    
+                &.active {
+                    border: 1.5px solid var(--links);
+                }
+            }
+        }
+        .booking-item-container {
+            height: 513px;
+            overflow-y: scroll;
+        }
+        .booking-item {
+            background-color: var(--background-light);
+            padding: 10px;
+            margin-bottom: 10px;
+
+            h4 {
+                margin: 0px;
+            }
+            p {
+                margin-bottom: 0px;
+            }
+        }
+        .booking-request-button {
+            padding: 8px;
+            margin-top: 15px;
+            width: 100%;
+            color: var(--text-white);
+            background-color: var(--login);
         }
     }
 }

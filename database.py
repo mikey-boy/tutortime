@@ -12,6 +12,12 @@ def _crud(db: str, query: str):
     conn.close()
 
 
+class BookingStatus(StrEnum):
+    PENDING = auto()
+    CONFIRMED = auto()
+    CANCELLED = auto()
+
+
 class ServiceStatus(StrEnum):
     ACTIVE = auto()
     PAUSED = auto()
@@ -38,7 +44,27 @@ class Database:
                 username TEXT,
                 password TEXT
             )
-            """
+        """
+        message_schema = """
+            CREATE TABLE IF NOT EXISTS messages (
+                id INTEGER PRIMARY KEY,
+                roomId INTEGER,
+                senderId INTEGER,
+                recipientId INTEGER,
+                datetime INTEGER,
+                message TEXT,
+                bookingId INTEGER
+            )
+        """
+        room_schema = """
+            CREATE TABLE IF NOT EXISTS rooms (
+                id INTEGER PRIMARY KEY,
+                userId INTEGER,
+                peerId INTEGER,
+                userName TEXT,
+                peerName TEXT
+            )
+        """
         service_schema = """
             CREATE TABLE IF NOT EXISTS services (
                 id INTEGER PRIMARY KEY,
@@ -58,6 +84,7 @@ class Database:
                 serviceId INTEGER,
                 tutorId INTEGER,
                 studentId INTEGER,
+                status TEXT,
                 datetime TEXT,
                 durationMinutes INTEGER
             )
@@ -72,9 +99,11 @@ class Database:
         """
 
         _crud(self.user_db, user_schema)
-        _crud(self.service_db, service_schema)
-        _crud(self.service_db, image_schema)
-        _crud(self.service_db, booking_schema)
+        _crud(self.user_db, message_schema)
+        _crud(self.user_db, room_schema)
+        _crud(self.user_db, service_schema)
+        _crud(self.user_db, image_schema)
+        _crud(self.user_db, booking_schema)
 
     def user_exists(self, username: str):
         conn = sqlite3.connect(self.user_db)
@@ -133,24 +162,94 @@ class Database:
             conn.commit()
             conn.close()
 
+    def add_room(self, user_id, peer_id):
+        conn = sqlite3.connect(self.user_db)
+        cursor = conn.cursor()
+        user_name = self.get_username(user_id)
+        peer_name = self.get_username(peer_id)
+        sql = "INSERT INTO rooms (userId, peerId, userName, peerName) VALUES(?, ?, ?, ?)"
+        cursor.execute(sql, (user_id, peer_id, user_name, peer_name))
+        room_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        return room_id
+
+    def get_room_id(self, user1: int, user2: int):
+        user_id, peer_id = user1, user2
+        if user1 < user2:
+            user_id, peer_id = user2, user1
+        conn = sqlite3.connect(self.user_db)
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM rooms WHERE userId = ? AND peerId = ?", (user_id, peer_id))
+        results = cursor.fetchone()
+        conn.close()
+        if results is None:
+            return self.add_room(user_id, peer_id)
+        return results[0]
+
+    def get_contacts_of_user(self, user_id: int):
+        conn = sqlite3.connect(self.user_db)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        sql = """
+        SELECT userId, userName FROM rooms WHERE peerId = ? UNION
+        SELECT peerId, peerName FROM rooms WHERE userId = ?
+        """
+        cursor.execute(sql, (user_id, user_id))
+        results = cursor.fetchall()
+        conn.close()
+        return [dict(result) for result in results]
+
+    def add_message(
+        self, room_id: int, sender_id: int, recipient_id: int, datetime: str, message: str, booking_id: int = -1
+    ):
+        conn = sqlite3.connect(self.user_db)
+        cursor = conn.cursor()
+        sql = "INSERT INTO messages (roomId, senderId, recipientId, datetime, message, bookingId) VALUES(?, ?, ?, ?, ?, ?)"
+        cursor.execute(sql, (room_id, sender_id, recipient_id, datetime, message, booking_id))
+        conn.commit()
+        conn.close()
+
+    def get_messages_between_users(self, user1: int, user2: int):
+        room_id = self.get_room_id(user1, user2)
+        conn = sqlite3.connect(self.user_db)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        sql = """
+        SELECT
+            senderId, recipientId, message, bookingId, serviceId, bookings.datetime, bookings.durationMinutes
+        FROM
+            messages
+        LEFT JOIN
+            bookings
+        ON
+            messages.bookingId = bookings.id
+        WHERE 
+            roomId = ?
+        """
+        cursor.execute(sql, (room_id,))
+        results = cursor.fetchall()
+        conn.close()
+        return [dict(result) for result in results]
+
     def get_images_by_service_id(self, id: str):
-        conn = sqlite3.connect(self.service_db)
+        conn = sqlite3.connect(self.user_db)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         cursor.execute("SELECT filename, filenameOnServer FROM images WHERE serviceId = ?", (id,))
-        result = cursor.fetchall()
+        results = cursor.fetchall()
         conn.close()
-        return result
+        return [dict(result) for result in results]
 
     def add_service(
-        self, username: str, userId: int, title: str, description: str, category: str, availability: int, images: list
+        self, username: str, user_id: int, title: str, description: str, category: str, availability: int, images: list
     ):
         if category in iter(ServiceCategory):
-            conn = sqlite3.connect(self.service_db)
+            conn = sqlite3.connect(self.user_db)
             cursor = conn.cursor()
             cursor.execute(
                 "INSERT INTO services (username, userId, title, description, category, availability, status, totalMinutes) VALUES(?, ?, ?, ?, ?, ?, ?, ?)",
-                (username, userId, title, description, category, availability, ServiceStatus.ACTIVE, 0),
+                (username, user_id, title, description, category, availability, ServiceStatus.ACTIVE, 0),
             )
             service_id = cursor.lastrowid
             for image in images:
@@ -161,20 +260,20 @@ class Database:
             conn.commit()
             conn.close()
 
-    def get_services_by_status(self, username: str, status: str):
+    def get_services_by_status(self, user_id: str, status: str):
         if status in iter(ServiceStatus):
-            conn = sqlite3.connect(self.service_db)
+            conn = sqlite3.connect(self.user_db)
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
             cursor.execute(
-                "SELECT id, title, description FROM services WHERE username = ? AND status = ?", (username, status)
+                "SELECT id, title, description FROM services WHERE userId = ? AND status = ?", (user_id, status)
             )
-            result = cursor.fetchall()
+            results = cursor.fetchall()
             conn.close()
-            return result
+            return [dict(result) for result in results]
 
     def get_service_by_id(self, service_id: int):
-        conn = sqlite3.connect(self.service_db)
+        conn = sqlite3.connect(self.user_db)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         cursor.execute(
@@ -183,32 +282,32 @@ class Database:
         )
         result = cursor.fetchone()
         conn.close()
-        return result
+        return dict(result)
 
     def get_images_by_service_id(self, service_id: int):
-        conn = sqlite3.connect(self.service_db)
+        conn = sqlite3.connect(self.user_db)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         cursor.execute("SELECT filename, filenameOnServer FROM images WHERE serviceId = ?", (service_id,))
-        result = cursor.fetchall()
+        results = cursor.fetchall()
         conn.close()
-        return result
+        return [dict(result) for result in results]
 
     def get_all_services(self):
-        conn = sqlite3.connect(self.service_db)
+        conn = sqlite3.connect(self.user_db)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         cursor.execute(
             "SELECT id, category, title, description, username FROM services WHERE status = ?",
             (ServiceStatus.ACTIVE.value,),
         )
-        result = cursor.fetchall()
+        results = cursor.fetchall()
         conn.close()
-        return result
+        return [dict(result) for result in results]
 
     def get_all_services_by_category(self, category: str):
         if category in iter(ServiceCategory):
-            conn = sqlite3.connect(self.service_db)
+            conn = sqlite3.connect(self.user_db)
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
             cursor.execute(
@@ -221,7 +320,7 @@ class Database:
         return self.get_all_services()
 
     def remove_service(self, username: str, service_id: int):
-        conn = sqlite3.connect(self.service_db)
+        conn = sqlite3.connect(self.user_db)
         cursor = conn.cursor()
         cursor.execute("DELETE FROM services WHERE username = ? AND id = ?", (username, service_id))
         cursor.execute(
@@ -240,16 +339,15 @@ class Database:
         availability: int,
         images: list,
     ):
-        conn = sqlite3.connect(self.service_db)
+        conn = sqlite3.connect(self.user_db)
         cursor = conn.cursor()
         cursor.execute(
             "UPDATE services SET title = ?, description = ?, category = ?, availability = ? WHERE username = ? AND id = ?",
             (title, description, category, availability, username, service_id),
         )
         # Delete images and reupload them on update, probably should be improved
-        cursor.execute(
-            "DELETE FROM images WHERE serviceId = ?", (service_id,)
-        )  # TODO Am I able to delete images of a different user?
+        cursor.execute("DELETE FROM images WHERE serviceId = ?", (service_id,))
+        # TODO Am I able to delete images of a different user?
         for image in images:
             cursor.execute(
                 "INSERT INTO images (serviceId, filename, filenameOnServer) VALUES (?, ?, ?)",
@@ -260,7 +358,7 @@ class Database:
         return self.get_service_by_id(service_id)
 
     def _update_service_status(self, username: str, service_id: int, status: str):
-        conn = sqlite3.connect(self.service_db)
+        conn = sqlite3.connect(self.user_db)
         cursor = conn.cursor()
         cursor.execute("UPDATE services SET status = ? WHERE username = ? AND id = ?", (status, username, service_id))
         conn.commit()
@@ -273,17 +371,17 @@ class Database:
         self._update_service_status(username, service_id, ServiceStatus.PAUSED.value)
 
     def add_booking(self, service_id: int, tutor_id: int, student_id: int, datetime: str, duration: int):
-        conn = sqlite3.connect(self.service_db)
+        conn = sqlite3.connect(self.user_db)
         cursor = conn.cursor()
-        cursor.execute(
-            "INSERT INTO bookings (serviceId, tutorId, studentId, datetime, durationMinutes) VALUES(?, ?, ?, ?, ?)",
-            (service_id, tutor_id, student_id, datetime, duration),
-        )
+        sql = "INSERT INTO bookings (serviceId, tutorId, studentId, status, datetime, durationMinutes) VALUES(?, ?, ?, ?, ?, ?)"
+        cursor.execute(sql, (service_id, tutor_id, student_id, BookingStatus.PENDING, datetime, duration))
+        booking_id = cursor.lastrowid
         conn.commit()
         conn.close()
+        return booking_id
 
     def get_bookings_for_user(self, user_id: int):
-        conn = sqlite3.connect(self.service_db)
+        conn = sqlite3.connect(self.user_db)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         sql = """
@@ -301,15 +399,15 @@ class Database:
             datetime
         """
         cursor.execute(sql, (user_id, user_id))
-        result = cursor.fetchall()
+        results = cursor.fetchall()
         conn.close()
-        return result
+        return [dict(result) for result in results]
 
     def get_bookings_between_users(self, user_id: int, peer_id: int):
-        conn = sqlite3.connect(self.service_db)
+        conn = sqlite3.connect(self.user_db)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        sql = """
+        sql = f"""
         SELECT 
             bookings.id, bookings.tutorId, bookings.studentId, bookings.datetime, bookings.durationMinutes, services.title, services.description, services.id as serviceId
         FROM 
@@ -319,11 +417,11 @@ class Database:
         ON
             bookings.serviceId = services.id  
         WHERE
-            (tutorId = ? AND studentId = ?) OR (tutorId = ? AND studentId = ?)
+            ((tutorId = ? AND studentId = ?) OR (tutorId = ? AND studentId = ?)) AND bookings.status = '{BookingStatus.CONFIRMED}'
         ORDER BY
             datetime
         """
         cursor.execute(sql, (user_id, peer_id, peer_id, user_id))
-        result = cursor.fetchall()
+        results = cursor.fetchall()
         conn.close()
-        return result
+        return [dict(result) for result in results]

@@ -3,12 +3,12 @@
 {% if error_text %}
     <p>{{ error_text }}</p>
 {% else %}
-<div class="chat-container" x-data="{ request: false }">
+<div class="chat-container" x-data="{ request_service: false, service_title: '', service_id: 0 }">
     <div class="contacts">
         <h2>Contacts</h2>
         <ul>
             {% for contact in contacts %}
-                <a href="{{ url_for('user_messages_list', user_id=contact.id) }}"><li>{{ contact.name }}</li></a>
+                <a href="{{ url_for('user_messages_list', user_id=contact.userId) }}"><li>{{ contact.userName }}</li></a>
             {% endfor %}
         </ul>
     </div>
@@ -16,17 +16,20 @@
         <h3>{{ peer.name }}</h3>
         <div id="chat-messages-container">
             <div id="chat-messages"></div>
-            <div id="booking-request" x-show="request">
-                <span>
+            <div id="booking-request" x-show="request_service && service_title != ''">
+                <form onsubmit="sendBookingRequest()">
                     <div>
+                        <h4 x-text="service_title"></h4>
+                        <input id="booking-service-id" type="hidden" x-bind:value="service_id">
+                        <input id="booking-peer-id" type="hidden" value="{{ peer['id'] }}">
+                        <button id="cancel-button" @click="request_service = false"><i class="fa-regular fa-circle-xmark fa-xl"></i></button>
                         <span>Datetime: </span>
-                        <input type="date" required>
-                        <input type="time" required>
-                        <button id="cancel-button" @click="request = false"><i class="fa-regular fa-circle-xmark fa-xl"></i></button>
+                        <input id="booking-date" type="date" required>
+                        <input id="booking-time" type="time" required>
                     </div>
-                    <div id="duration">
-                        <span>Duration: </span>
-                        <select name="duration">
+                    <div>
+                        <label for="booking-duration">Duration: </label>
+                        <select id="booking-duration">
                             {% for i in range(1, 17) %}
                                 {% if i <= 4 %}
                                     <option value="{{ i * 15 }}">{{ i * 15 }} minutes</option>
@@ -36,8 +39,8 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <button class="send-button">Send</button>
-                </span>
+                    <button class="send-button" onclick="sendBookingRequest()">Send</button>
+                </form>
             </div>
         </div>
         <form id="chat-input" onsubmit="sendMessage()">
@@ -47,11 +50,11 @@
     </div>
     <div class="bookings" x-data="{ completed: 0 }">
         <h2>Lessons</h2>
-        <div class="flex-container subnav">
-            <button :class="completed == 0 && 'active'" @click="completed = 0">Upcoming</button>
-            <button :class="completed == 1 && 'active'" @click="completed = 1">Completed</button>
-        </div>
-        <div class="booking-item-container">
+        <div class="lesson-container" x-show="!request_service">
+            <div class="flex-container subnav" x-show="!request_service">
+                <button :class="completed == 0 && 'active'" @click="completed = 0">Upcoming</button>
+                <button :class="completed == 1 && 'active'" @click="completed = 1">Completed</button>
+            </div>
             {% for booking in bookings %}
                 <div class="booking-item" x-show="{{ booking.completed }} == completed">
                     <a href="{{ url_for('service_list', service_id=booking.serviceId) }}"><h4>{{ booking.title }}</h4></a>
@@ -60,34 +63,82 @@
                 </div>
             {% endfor %}
         </div>
-        <button class="booking-request-button" @click="request = !request"><i class="fa-regular fa-calendar-days fa-lg"></i> Send lesson request</button>
+        <form class="lesson-container" x-show="request_service" autocomplete="off">
+            <h4>As a student:</h4>
+            {% for service in peer["services"] %}
+                <label class="service-radio" @click="service_title = '{{service.title}}'; service_id = {{service.id}} " for="{{ service.id }}">
+                    <input type="radio" name="service" id="{{ service.id }}" value="{{ service.id }}"> {{ service.title }}
+                </label>
+            {% endfor %}
+            <h4>As a tutor:</h4>
+            {% for service in user["services"] %}
+                <label class="service-radio" @click="service_title = '{{service.title}}'; service_id = {{service.id}} " for="{{ service.id }}">
+                    <input type="radio" name="service" id="{{ service.id }}" value="{{ service.id }}"> {{ service.title }}
+                </label>
+            {% endfor %}
+        </form>
+        <button class="lessons-button request-lessons" @click="request_service = !request_service" x-show="!request_service"><i class="fa-solid fa-handshake fa-lg"></i> Send lesson request</button>
+        <button class="lessons-button view-lessons" @click="request_service = !request_service" x-show="request_service"><i class="fa-regular fa-calendar-days fa-lg"></i> View bookings</button>
     </div>
 
     <script type="text/javascript">
         var socketio = io();
         socketio.on("connect", () => { socketio.emit("join_room", { "room": "{{ room }}" }) } )
-        socketio.on("message", function (message) { createChatItem(message.message, message.sender) });
-        function createChatItem(message, sender) {
-            var messages = document.getElementById("chat-messages");
-            if (sender === "{{ user.name }}") {
+        socketio.on("message", function (message) { createChatItem(message) });
+
+        function createChatItem(sender, message) {
+            var messageContainer = document.getElementById("chat-messages");
+            if (sender === "{{ user.id }}") {
                 var content = `<div class="flex-container-user"><span class="message-item">${message}</span></div>`
             } else {
                 var content = `<div class="flex-container-peer"><span class="message-item">${message}</span></div>`
             }
-            messages.innerHTML += content;
+            messageContainer.innerHTML += content;
+        }
+        function createBookingChatItem(sender, serviceTitle, day, time) {
+            console.log("hey")
+            var messageContainer = document.getElementById("chat-messages");
+            var content = ""
+            if (sender === "{{ user.id }}") {
+                content = '<div class="flex-container-user">'
+            } else {
+                content = '<div class="flex-container-peer">'
+            }
+            content += `
+            <span class="message-item booking-item">
+                <h4>${serviceTitle}</h4>
+                <div>Day: ${day}</div>
+                <div>Time: ${time}</div>
+            </span></div>`
+            console.log(content)
+            messageContainer.innerHTML += content;
         }
 
         function sendMessage() {
             var msgInput = document.getElementById("message");
             if (msgInput.value === "") return;
             var msg = msgInput.value;
-            socketio.emit("message", { message: msg, room: "{{room}}" });
+            socketio.emit("message", { message: msg, room: "{{room}}", recipient: "{{peer['id']}}" });
             msgInput.value = "";
         }
+        
+        function sendBookingRequest() {
+            var serviceId = document.getElementById("booking-service-id")
+            var peerId = document.getElementById("booking-peer-id")
+            var dateInput = document.getElementById("booking-date");
+            var timeInput = document.getElementById("booking-time");
+            var durationInput = document.getElementById("booking-duration");
+            socketio.emit("booking", { serviceId: serviceId.value, peerId: peerId.value, date: dateInput.value, time: timeInput.value, duration: durationInput.value, room: "{{room}}" });
+        }
+
     </script>
     <script type="text/javascript">
         {% for message in messages %}
-            createChatItem("{{message.message}}", "{{message.sender}}");
+            {% if message.bookingId == -1 %}
+                createChatItem("{{message.senderId}}", "{{message.message}}");
+            {% else %}
+                createBookingChatItem("{{message.senderId}}", "{{message.serviceTitle}}", "{{message.day}}", "{{message.time}}");
+            {% endif %}
         {% endfor %}
     </script>
 </div>

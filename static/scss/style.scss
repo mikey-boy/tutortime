@@ -427,6 +427,14 @@ button {
                 padding: 5px 10px;
                 background: var(--background-booking);
             }
+            .booking-item {
+
+                h4 {
+                    color: var(--login);
+                    margin-top: 0px;
+                    margin-bottom: 10px;
+                }
+            }
             .flex-container-user {
                 display: flex;
                 justify-content: right;
@@ -442,7 +450,11 @@ button {
             display: flex;
             justify-content: right;
 
-            > span {
+            h4 {
+                margin-top: 0px;
+                margin-bottom: 10px;
+            }
+            > form {
                 margin: 10px 50px 0px;
                 padding: 10px 5px 10px 10px;
                 background-color: var(--background-light);
@@ -462,8 +474,7 @@ button {
                 padding: 0px;
                 margin-left: 10px;
             }
-            #duration {
-                float: left;
+            #booking-duration {
                 margin-top: 15px;
             }
         }
@@ -491,9 +502,17 @@ button {
                 }
             }
         }
-        .booking-item-container {
-            height: 513px;
+        .lesson-container {
+            height: 567px;
             overflow-y: scroll;
+        }
+        .service-radio {
+            display: block;
+            margin-bottom: 10px;
+            border: 1px dashed var(--links);
+            border-radius: 3px;
+            padding: 13px;
+            cursor: pointer;
         }
         .booking-item {
             background-color: var(--background-light);
@@ -507,12 +526,18 @@ button {
                 margin-bottom: 0px;
             }
         }
-        .booking-request-button {
+        .lessons-button {
             padding: 8px;
             margin-top: 15px;
             width: 100%;
             color: var(--text-white);
-            background-color: var(--login);
+
+            &.view-lessons {
+                background-color: var(--tutor);
+            }
+            &.request-lessons {
+                background-color: var(--login);
+            }
         }
     }
 }

@@ -95,23 +95,26 @@
             }
             messageContainer.innerHTML += content;
         }
-        function createBookingChatItem(sender, serviceTitle, day, time) {
-            console.log("hey")
+        function createBookingChatItem(sender, bookingId, serviceTitle, day, time, status) {
             var messageContainer = document.getElementById("chat-messages");
-            var content = ""
-            if (sender === "{{ user.id }}") {
-                content = '<div class="flex-container-user">'
-            } else {
-                content = '<div class="flex-container-peer">'
+            var div = document.createElement("div")
+            div.className = sender == '{{ user.id }}' ? 'flex-container-user' : 'flex-container-peer'
+            
+            var span = document.createElement("span")
+            span.className = "message-item booking-item"
+            span.innerHTML = `<div class="title">${serviceTitle}</div>`
+            span.innerHTML +=`<div>Day: ${day}</div>`
+            span.innerHTML +=`<div>Time: ${time}</div>`
+            span.innerHTML +=`<div>Status: ${status}</div>`
+            if (status == 'pending' && sender != '{{ user.id }}') {
+                    span.innerHTML += `<button class='confirm-button'><a href="/user/booking/confirm/${bookingId}">Confirm</a></button>`
+                    span.innerHTML += `<button class='cancel-button'><a href="/user/booking/cancel/${bookingId}">Cancel</a></button>`
+            } else if (status == 'pending' && sender == '{{ user.id }}') {
+                    span.innerHTML += `<button class='cancel-button'><a href="/user/booking/cancel/${bookingId}">Cancel</a></button>`
             }
-            content += `
-            <span class="message-item booking-item">
-                <h4>${serviceTitle}</h4>
-                <div>Day: ${day}</div>
-                <div>Time: ${time}</div>
-            </span></div>`
-            console.log(content)
-            messageContainer.innerHTML += content;
+
+            div.appendChild(span);
+            messageContainer.appendChild(div);
         }
 
         function sendMessage() {
@@ -121,7 +124,6 @@
             socketio.emit("message", { message: msg, room: "{{room}}", recipient: "{{peer['id']}}" });
             msgInput.value = "";
         }
-        
         function sendBookingRequest() {
             var serviceId = document.getElementById("booking-service-id")
             var peerId = document.getElementById("booking-peer-id")
@@ -137,9 +139,21 @@
             {% if message.bookingId == -1 %}
                 createChatItem("{{message.senderId}}", "{{message.message}}");
             {% else %}
-                createBookingChatItem("{{message.senderId}}", "{{message.serviceTitle}}", "{{message.day}}", "{{message.time}}");
+                createBookingChatItem("{{message.senderId}}", "{{message.bookingId}}", "{{message.serviceTitle}}", "{{message.day}}", "{{message.time}}", "{{message.status}}");
             {% endif %}
         {% endfor %}
+
+        function scrollToBottom() {
+            console.log('hey');
+            var scrollContainer = document.getElementById("chat-messages-container");
+            scrollContainer.scrollTop = scrollContainer.scrollHeight;
+        }
+        function focusInput() {
+            const inputElement = document.getElementById("message");
+            inputElement.focus()
+        }
+        scrollToBottom();
+        focusInput();
     </script>
 </div>
 {% endif %}

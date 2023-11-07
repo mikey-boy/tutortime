@@ -330,6 +330,9 @@ button {
     font-size: 14px;
     background: var(--background-booking);
     
+    &.pending {
+        color: var(--background-lighter);
+    }
     &.tutor {
         color: var(--tutor);
     }
@@ -429,10 +432,24 @@ button {
             }
             .booking-item {
 
-                h4 {
-                    color: var(--login);
-                    margin-top: 0px;
+                button {
+                    margin-top: 10px;
+                    margin-right: 10px;
+                    width: 65px;
+
+                    a {
+                        color: var(--text-white);
+                    }
+                }
+                .title {
                     margin-bottom: 10px;
+                    font-weight: bold;
+                }
+                .confirm-button {
+                    background-color: var(--signup);
+                }
+                .cancel-button {
+                    background-color: var(--error-text);
                 }
             }
             .flex-container-user {

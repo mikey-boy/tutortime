@@ -217,7 +217,7 @@ class Database:
         cursor = conn.cursor()
         sql = """
         SELECT
-            senderId, recipientId, message, bookingId, serviceId, bookings.datetime, bookings.durationMinutes
+            senderId, recipientId, message, bookingId, serviceId, bookings.datetime, bookings.durationMinutes, bookings.status
         FROM
             messages
         LEFT JOIN
@@ -231,6 +231,15 @@ class Database:
         results = cursor.fetchall()
         conn.close()
         return [dict(result) for result in results]
+
+    def get_booking_request(self, booking_id):
+        conn = sqlite3.connect(self.user_db)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("SELECT senderId, recipientId FROM messages WHERE bookingId = ?", (booking_id,))
+        result = cursor.fetchone()
+        conn.close()
+        return dict(result)
 
     def get_images_by_service_id(self, id: str):
         conn = sqlite3.connect(self.user_db)
@@ -380,13 +389,29 @@ class Database:
         conn.close()
         return booking_id
 
+    def _update_booking_status(self, user_id: int, booking_id: int, status: BookingStatus):
+        conn = sqlite3.connect(self.user_db)
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE bookings SET status = ? WHERE id = ? AND (tutorId = ? OR studentId = ?)",
+            (status, booking_id, user_id, user_id),
+        )
+        conn.commit()
+        conn.close()
+
+    def confirm_booking(self, user_id: int, booking_id: int):
+        self._update_booking_status(user_id, booking_id, BookingStatus.CONFIRMED)
+
+    def cancel_booking(self, user_id: int, booking_id: int):
+        self._update_booking_status(user_id, booking_id, BookingStatus.CANCELLED)
+
     def get_bookings_for_user(self, user_id: int):
         conn = sqlite3.connect(self.user_db)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         sql = """
         SELECT 
-            bookings.id, bookings.tutorId, bookings.studentId, bookings.datetime, bookings.durationMinutes, services.title, services.description, services.id as serviceId
+            bookings.id, bookings.tutorId, bookings.studentId, bookings.datetime, bookings.durationMinutes, bookings.status, services.title, services.description, services.id as serviceId
         FROM 
             bookings 
         INNER JOIN

@@ -35,14 +35,21 @@
                     {% endif %}
                             {{ j }}
                             {% for booking in calendar[i]["bookings"] %}
-                                {% if booking.day == j %}
+                                {% if booking.day == j and booking.status != 'cancelled' %}
                                     <div class="relative-container">
-                                    {% if booking.is_tutor %}
+                                    {% if booking.status == 'pending' %}
+                                        <button class="calendar-booking pending" x-on:click="modal = modal == {{ booking.id }} ? -1 : {{ booking.id }}">
+                                    {% elif booking.is_tutor %}
                                         <button class="calendar-booking tutor" x-on:click="modal = modal == {{ booking.id }} ? -1 : {{ booking.id }}">
                                     {% else %}
                                         <button class="calendar-booking student" x-on:click="modal = modal == {{ booking.id }} ? -1 : {{ booking.id }}">
                                     {% endif %}
-                                            <b>{{ booking.start_time }} - {{ booking.end_time }}</b><br>{{ booking.title }}
+                                            <b>{{ booking.start_time }} - {{ booking.end_time }}</b><br>
+                                            {% if booking.status == 'pending' %}
+                                                {{ booking.title }} (pending)
+                                            {% else %}    
+                                                {{ booking.title }}
+                                            {% endif %}
                                         </button>
                                         {% if (j + calendar[i]["month_offset"] - 1) % 7 < 5 %}
                                             <span class="booking-modal open-left" x-show="modal == {{ booking.id }}">

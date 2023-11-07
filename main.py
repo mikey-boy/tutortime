@@ -80,17 +80,6 @@ def user_account_create():
         return render_template("home.html")
 
 
-@app.route("/api/service/list/<string:category>")
-def api_service_list(category="all"):
-    services = db.get_all_services_by_category(category)
-    for service in services:
-        images = db.get_images_by_service_id(service["id"])
-        service["images"] = [
-            {"filenameOnServer": image["filenameOnServer"], "filename": image["filename"]} for image in images
-        ]
-    return jsonify(services)
-
-
 @app.route("/service/list/")
 @app.route("/service/list/<int:service_id>")
 def service_list(service_id=None):
@@ -110,24 +99,6 @@ def service_list(service_id=None):
                 {"filenameOnServer": image["filenameOnServer"], "filename": image["filename"]} for image in images
             ]
         return render_template("service/list.html", services=services)
-
-
-@app.route("/service/booking/create/<int:service_id>", methods=["POST"])
-def service_booking_create(service_id):
-    if "userId" in session:
-        service = db.get_service_by_id(service_id)
-        datetime = request.form.get("datetime")
-        duration = request.form.get("duration")
-        db.add_booking(service["id"], service["userId"], session["userId"], datetime, duration)
-        return render_template("home.html")
-
-
-@app.route("/api/user/service/list/<string:status>")
-def api_user_service_list(status="active"):
-    if "username" in session:
-        services = db.get_services_by_status(session["userId"], status)
-        return jsonify(services)
-    return jsonify([])
 
 
 @app.route("/user/service/list/<string:status>")
@@ -209,6 +180,24 @@ def user_service_activate(service_id):
         return render_template("user/account/login.html")
     db.activate_service(session["username"], service_id)
     return redirect("/user/service/list/paused")
+
+
+@app.route("/user/booking/confirm/<int:booking_id>")
+def user_booking_confirm(booking_id):
+    user_id = session["userId"]
+    if booking_id == -1 or db.get_booking_request(booking_id).get("senderId", "") == user_id:
+        return render_template("home.html")
+    db.confirm_booking(user_id, booking_id)
+    return redirect(request.referrer)
+
+
+@app.route("/user/booking/cancel/<int:booking_id>")
+def user_booking_cancel(booking_id):
+    user_id = session["userId"]
+    if booking_id == -1:
+        return render_template("home.html")
+    db.cancel_booking(user_id, booking_id)
+    return redirect(request.referrer)
 
 
 @app.route("/user/calendar/list")

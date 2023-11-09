@@ -2,7 +2,7 @@
     --background: #2e3436;
     --background-light: #3e4648;
     --background-lighter: #808080;
-    --background-booking: #fef0db;
+    --background-lesson: #fef0db;
     --headers: #99C1F1;
     --login: #5095e9;
     --tutor: #fc9b10;
@@ -318,7 +318,7 @@ button {
         background-color: var(--links);
     }
 }
-.calendar-booking {
+.calendar-lesson {
     display: block;
     width: 100%;
     text-decoration: none;
@@ -328,7 +328,7 @@ button {
     margin: 5px 0px;
     padding: 2px 10px;
     font-size: 14px;
-    background: var(--background-booking);
+    background: var(--background-lesson);
     
     &.pending {
         color: var(--background-lighter);
@@ -340,7 +340,7 @@ button {
         color: var(--login);
     }
 }
-.booking-modal {
+.lesson-modal {
     position: absolute;
     z-index: 100;
     padding-left: 10px;
@@ -361,201 +361,6 @@ button {
     }
     &.open-right {
         right: 105%;
-    }
-}
-.chat-container {
-    display: flex;
-    margin: 0 auto;
-    padding: 20px;
-
-    .contacts {
-        flex: 1;
-        
-        h2 {
-            margin: 10px 0px;
-        }
-        ul {
-            list-style: none;
-            padding: 0;
-        }
-        li {
-            margin-bottom: 10px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            &:hover {
-                background-color: var(--background-light);
-            }
-        }
-    }
-    .chat {
-        flex: 5;
-        height: 640px;
-        min-width: 400px;
-        border-radius: 5px;
-        border: 2px solid var(--links);
-        background-color: var(--background-light);
-
-        h3 {
-            margin: 15px 60px;
-        }
-        .send-button {
-            color: var(--text-white);
-            padding: 7px 25px;
-        }
-        #chat-input {
-            display: flex;
-            align-items: center;
-            padding: 15px;
-            
-            input {
-                flex: 1;
-                padding: 7px 10px;
-                border: none;
-                border-radius: 3px;
-                margin-right: 10px;
-            }
-            .send-button {
-                background-color: var(--signup);
-            }
-        }
-        #chat-messages-container {
-            height: 500px;
-            overflow-y: scroll;
-            padding: 10px;
-        
-            .message-item {
-                border: 2px solid;
-                border-radius: 3px;
-                margin: 0px 50px 7px;
-                padding: 5px 10px;
-                background: var(--background-booking);
-            }
-            .booking-item {
-
-                button {
-                    margin-top: 10px;
-                    margin-right: 10px;
-                    width: 65px;
-
-                    a {
-                        color: var(--text-white);
-                    }
-                }
-                .title {
-                    margin-bottom: 10px;
-                    font-weight: bold;
-                }
-                .confirm-button {
-                    background-color: var(--signup);
-                }
-                .cancel-button {
-                    background-color: var(--error-text);
-                }
-            }
-            .flex-container-user {
-                display: flex;
-                justify-content: right;
-                color: var(--login);
-            }
-            .flex-container-peer {
-                display: flex;
-                justify-content: left;
-                color: var(--tutor);
-            }
-        }
-        #booking-request {
-            display: flex;
-            justify-content: right;
-
-            h4 {
-                margin-top: 0px;
-                margin-bottom: 10px;
-            }
-            > form {
-                margin: 10px 50px 0px;
-                padding: 10px 5px 10px 10px;
-                background-color: var(--background-light);
-                border: 1px dashed var(--links);
-                border-radius: 3px;
-            }
-            .send-button {
-                background-color: var(--login);
-                float: left;
-                margin-top: 10px;
-                margin-left: 10px;
-            }
-            #cancel-button {
-                float: right;
-                background-color: var(--background-light);
-                color: var(--background-lighter);
-                padding: 0px;
-                margin-left: 10px;
-            }
-            #booking-duration {
-                margin-top: 15px;
-            }
-        }
-    }
-    .bookings {
-        flex: 2;
-        margin: 0px 20px;
-
-        h2 {
-            margin: 0px;
-        }
-        .subnav {
-            margin-top: 10px;
-            margin-bottom: 15px;
-
-            button {
-                flex: 1;
-                padding: 5px 10px;
-                background-color: var(--background);
-                color: var(--text);
-                width: 100%;
-    
-                &.active {
-                    border: 1.5px solid var(--links);
-                }
-            }
-        }
-        .lesson-container {
-            height: 567px;
-            overflow-y: scroll;
-        }
-        .service-radio {
-            display: block;
-            margin-bottom: 10px;
-            border: 1px dashed var(--links);
-            border-radius: 3px;
-            padding: 13px;
-            cursor: pointer;
-        }
-        .booking-item {
-            background-color: var(--background-light);
-            padding: 10px;
-            margin-bottom: 10px;
-
-            h4 {
-                margin: 0px;
-            }
-            p {
-                margin-bottom: 0px;
-            }
-        }
-        .lessons-button {
-            padding: 8px;
-            margin-top: 15px;
-            width: 100%;
-            color: var(--text-white);
-
-            &.view-lessons {
-                background-color: var(--tutor);
-            }
-            &.request-lessons {
-                background-color: var(--login);
-            }
-        }
     }
 }
 
@@ -687,6 +492,206 @@ button {
             padding-right: 10px;
             min-width: 140px;
             font-weight: bold;
+        }
+    }
+}
+#chat-container {
+    display: flex;
+    margin: 0 auto;
+    padding: 20px;
+}
+#contacts {
+    flex: 1;
+    
+    h2 {
+        margin: 10px 0px;
+    }
+    ul {
+        list-style: none;
+        padding: 0;
+    }
+    li {
+        margin-bottom: 10px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        &:hover {
+            background-color: var(--background-light);
+        }
+    }
+}
+#chat {
+    flex: 5;
+    border-radius: 5px;
+    border: 2px solid var(--links);
+    background-color: var(--background-light);
+    padding: 0px 40px;
+    margin: 0px 10px;
+
+    #chat-input {
+        display: flex;
+        margin: 20px 0px;
+        
+        input {
+            flex: 1;
+            padding: 7px 10px;
+            border: none;
+            border-radius: 3px;
+            margin-right: 10px;
+        }
+        #send-message-button {
+            color: var(--text-white);
+            padding: 7px 25px;
+            background-color: var(--signup);
+        }
+    }
+    #chat-messages {
+        height: 500px;
+        overflow-y: scroll;
+        padding: 0px 10px;
+        
+        &.minimized {
+            height: 370px;
+        }
+        .flex-container-user {
+            display: flex;
+            justify-content: right;
+            color: var(--login);
+        }
+        .flex-container-peer {
+            display: flex;
+            justify-content: left;
+            color: var(--tutor);
+        }
+        .message-item {
+            border: 2px solid;
+            border-radius: 3px;
+            margin-bottom: 7px;
+            padding: 5px 10px;
+            background: var(--background-lesson);
+        }
+        .lesson-item {
+
+            button {
+                margin-top: 10px;
+                margin-right: 10px;
+                width: 65px;
+
+                a {
+                    color: var(--text-white);
+                }
+            }
+            .title {
+                margin-bottom: 10px;
+                font-weight: bold;
+            }
+            .confirm-button {
+                background-color: var(--signup);
+            }
+            .cancel-button {
+                background-color: var(--error-text);
+            }
+        }
+    }
+    #chat-lesson-request {
+        display: flex;
+        justify-content: right;
+
+        div {
+            margin-bottom: 10px;
+        }
+        h3 {
+            margin-top: 0px;
+            justify-content: left;
+        }
+        > form {
+            padding: 8px;
+            min-width: 327px;
+            background-color: var(--background-light);
+            border: 1px dashed var(--links);
+            border-radius: 3px;
+
+            select, input {
+                padding: 4px ;
+            }
+        }
+        .truncated-text {
+            -webkit-line-clamp: 1;
+        }
+        .flex-container {
+            display:flex;
+            justify-content: space-between;
+        }
+        #send-request-button {
+            background-color: var(--login);
+            color: var(--text-white);
+            padding: 6px 27px;
+        }
+        #cancel-request-button {
+            background-color: var(--background-light);
+            color: var(--background-lighter);
+            margin-top: 10px;
+            cursor: pointer;
+        }
+    }
+}
+#lessons {
+    flex: 2;
+    margin: 0px 20px;
+
+    h2 {
+        margin: 0px;
+    }
+    .subnav {
+        margin-top: 10px;
+        margin-bottom: 15px;
+
+        button {
+            flex: 1;
+            padding: 5px 10px;
+            background-color: var(--background);
+            color: var(--text);
+            width: 100%;
+
+            &.active {
+                border: 1.5px solid var(--links);
+            }
+        }
+    }
+    .lesson-container {
+        height: 567px;
+        overflow-y: scroll;
+    }
+    .lesson-request-item {
+        display: block;
+        margin-bottom: 10px;
+        border: 1px dashed var(--links);
+        border-radius: 3px;
+        padding: 13px;
+        cursor: pointer;
+    }
+    .lesson-confirmed-item {
+        background-color: var(--background-light);
+        padding: 10px;
+        margin-bottom: 10px;
+
+        h4 {
+            margin: 0px;
+        }
+        p {
+            margin-bottom: 0px;
+        }
+    }
+    .lesson-view-switch {
+        padding: 8px;
+        margin-top: 15px;
+        width: 100%;
+        color: var(--text-white);
+
+        &.view-lessons {
+            background-color: var(--tutor);
+        }
+        &.request-lessons {
+            background-color: var(--login);
         }
     }
 }

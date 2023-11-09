@@ -182,21 +182,21 @@ def user_service_activate(service_id):
     return redirect("/user/service/list/paused")
 
 
-@app.route("/user/booking/confirm/<int:booking_id>")
-def user_booking_confirm(booking_id):
+@app.route("/user/lesson/confirm/<int:lesson_id>")
+def user_lesson_confirm(lesson_id):
     user_id = session["userId"]
-    if booking_id == -1 or db.get_booking_request(booking_id).get("senderId", "") == user_id:
+    if lesson_id == -1 or db.get_lesson_request(lesson_id).get("senderId", "") == user_id:
         return render_template("home.html")
-    db.confirm_booking(user_id, booking_id)
+    db.confirm_lesson(user_id, lesson_id)
     return redirect(request.referrer)
 
 
-@app.route("/user/booking/cancel/<int:booking_id>")
-def user_booking_cancel(booking_id):
+@app.route("/user/lesson/cancel/<int:lesson_id>")
+def user_lesson_cancel(lesson_id):
     user_id = session["userId"]
-    if booking_id == -1:
+    if lesson_id == -1:
         return render_template("home.html")
-    db.cancel_booking(user_id, booking_id)
+    db.cancel_lesson(user_id, lesson_id)
     return redirect(request.referrer)
 
 
@@ -205,15 +205,15 @@ def user_calendar_list():
     if "username" not in session:
         return render_template("user/calendar/list.html", services=[])
 
-    bookings = db.get_bookings_for_user(session["userId"])
-    for booking in bookings:
-        booking["dt"] = datetime.strptime(booking["datetime"], "%Y-%m-%dT%H:%M")
-        if session["userId"] == booking["tutorId"]:
-            booking["tutorName"] = session["username"]
-            booking["studentName"] = db.get_username(booking["studentId"])
+    lessons = db.get_lessons_for_user(session["userId"])
+    for lesson in lessons:
+        lesson["dt"] = datetime.strptime(lesson["datetime"], "%Y-%m-%dT%H:%M")
+        if session["userId"] == lesson["tutorId"]:
+            lesson["tutorName"] = session["username"]
+            lesson["studentName"] = db.get_username(lesson["studentId"])
         else:
-            booking["tutorName"] = db.get_username(booking["tutorId"])
-            booking["studentName"] = session["username"]
+            lesson["tutorName"] = db.get_username(lesson["tutorId"])
+            lesson["studentName"] = session["username"]
 
     cal = []
     today = date.today()
@@ -225,21 +225,21 @@ def user_calendar_list():
         month["month_name"] = calendar.month_name[cur_month.month]
         month["month_offset"] = monthrange[0]
         month["month_length"] = monthrange[1]
-        month["bookings"] = []
-        for booking in bookings:
-            if cur_month.month == booking["dt"].month and cur_month.year == booking["dt"].year:
-                booking["day"] = booking["dt"].day
-                booking["start_time"] = datetime.strftime(booking["dt"], "%H:%M")
-                booking["end_time"] = datetime.strftime(
-                    booking["dt"] + relativedelta(minutes=booking["durationMinutes"]), "%H:%M"
+        month["lessons"] = []
+        for lesson in lessons:
+            if cur_month.month == lesson["dt"].month and cur_month.year == lesson["dt"].year:
+                lesson["day"] = lesson["dt"].day
+                lesson["start_time"] = datetime.strftime(lesson["dt"], "%H:%M")
+                lesson["end_time"] = datetime.strftime(
+                    lesson["dt"] + relativedelta(minutes=lesson["durationMinutes"]), "%H:%M"
                 )
-                booking["title"] = booking["title"]
-                booking["is_tutor"] = booking["tutorName"] == session["username"]
-                month["bookings"].append(booking)
+                lesson["title"] = lesson["title"]
+                lesson["is_tutor"] = lesson["tutorName"] == session["username"]
+                month["lessons"].append(lesson)
 
         cal.append(month)
 
-    return render_template("user/calendar/list.html", bookings=bookings, calendar=cal, today=today.day)
+    return render_template("user/calendar/list.html", lessons=lessons, calendar=cal, today=today.day)
 
 
 @app.route("/user/messages/list/")
@@ -262,17 +262,17 @@ def user_messages_list(user_id=None):
     room = db.get_room_id(user1["id"], user2["id"])
 
     now = datetime.now()
-    bookings = db.get_bookings_between_users(user1["id"], user2["id"])
-    for booking in bookings:
-        dt = datetime.strptime(booking["datetime"], "%Y-%m-%dT%H:%M")
-        booking["completed"] = 1 if dt < now else 0
-        booking["day"] = dt.strftime("%Y-%m-%d")
-        booking["start_time"] = dt.strftime("%H:%M")
-        booking["end_time"] = datetime.strftime(dt + relativedelta(minutes=booking["durationMinutes"]), "%H:%M")
+    lessons = db.get_lessons_between_users(user1["id"], user2["id"])
+    for lesson in lessons:
+        dt = datetime.strptime(lesson["datetime"], "%Y-%m-%dT%H:%M")
+        lesson["completed"] = 1 if dt < now else 0
+        lesson["day"] = dt.strftime("%Y-%m-%d")
+        lesson["start_time"] = dt.strftime("%H:%M")
+        lesson["end_time"] = datetime.strftime(dt + relativedelta(minutes=lesson["durationMinutes"]), "%H:%M")
 
     messages = db.get_messages_between_users(user1["id"], user2["id"])
     for message in messages:
-        if message["bookingId"] != -1:
+        if message["lessonId"] != -1:
             message["serviceTitle"] = db.get_service_by_id(message["serviceId"])["title"]
             dt = datetime.strptime(message["datetime"], "%Y-%m-%dT%H:%M")
             message["day"] = dt.strftime("%Y-%m-%d")
@@ -287,7 +287,7 @@ def user_messages_list(user_id=None):
         user=user1,
         peer=user2,
         room=room,
-        bookings=bookings,
+        lessons=lessons,
         messages=messages,
     )
 
@@ -308,12 +308,12 @@ def handle_message(payload):
     payload["message"] = payload["message"].rstrip("\n")
 
     db.add_message(room_id, user_id, peer_id, dt, payload["message"])
-    message = {"sender": username, "senderId": user_id, "message": payload["message"], "bookingId": -1}
+    message = {"sender": username, "senderId": user_id, "message": payload["message"], "lessonId": -1}
     send(message, json=True, to=room_id)
 
 
-@socketio.on("booking")
-def handle_booking(payload):
+@socketio.on("lesson")
+def handle_lesson(payload):
     username = session["username"]
     user_id = session["userId"]
     service_id = payload["serviceId"]
@@ -324,21 +324,21 @@ def handle_booking(payload):
 
     service = db.get_service_by_id(service_id)
     if service["userId"] == user_id:
-        booking_id = db.add_booking(service_id, user_id, peer_id, dt, duration)
+        lesson_id = db.add_lesson(service_id, user_id, peer_id, dt, duration)
     else:
-        booking_id = db.add_booking(service_id, peer_id, user_id, dt, duration)
+        lesson_id = db.add_lesson(service_id, peer_id, user_id, dt, duration)
 
-    db.add_message(room, user_id, peer_id, dt, "", booking_id)
-    booking = {
+    db.add_message(room, user_id, peer_id, dt, "", lesson_id)
+    lesson = {
         "sender": username,
         "senderId": user_id,
         "message": "",
-        "bookingId": booking_id,
+        "lessonId": lesson_id,
         "serviceTitle": service["title"],
         "datetime": dt,
         "duration": payload["duration"],
     }
-    send(booking, json=True, to=room)
+    send(lesson, json=True, to=room)
 
 
 @socketio.on("disconnect")

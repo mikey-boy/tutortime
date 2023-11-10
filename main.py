@@ -1,9 +1,10 @@
 import calendar
+import json
 from datetime import date, datetime
 
 from dateutil.relativedelta import relativedelta
 from flask import Flask, jsonify, redirect, render_template, request, session
-from flask_socketio import SocketIO, join_room, leave_room, send
+from flask_socketio import SocketIO, emit, join_room, leave_room, send
 from sassutils.wsgi import SassMiddleware
 
 from database import Database, ServiceStatus
@@ -17,7 +18,7 @@ app.wsgi_app = SassMiddleware(app.wsgi_app, {__name__: ("static/scss", "static/c
 db = Database(db_folder=app.config["DB_FOLDER"], user_db=app.config["USER_DB"], service_db=app.config["SERVICE_DB"])
 image_server = ImageServer(image_folder=app.config["IMAGE_FOLDER"])
 
-socketio = SocketIO(app)
+socketio = SocketIO(app, logger=True)
 
 if __name__ == "__main__":
     socketio.run(app, debug=True)
@@ -273,11 +274,15 @@ def user_messages_list(user_id=None):
     messages = db.get_messages_between_users(user1["id"], user2["id"])
     for message in messages:
         if message["lessonId"] != -1:
-            message["serviceTitle"] = db.get_service_by_id(message["serviceId"])["title"]
-            dt = datetime.strptime(message["datetime"], "%Y-%m-%dT%H:%M")
+            lesson = db.get_lesson_request(message["lessonId"])
+            service = db.get_service_by_id(lesson["serviceId"])
+
+            message["serviceTitle"] = service["title"]
+            message["status"] = lesson["status"]
+            dt = datetime.strptime(lesson["datetime"], "%Y-%m-%dT%H:%M")
             message["day"] = dt.strftime("%Y-%m-%d")
             start = dt.strftime("%H:%M")
-            end = datetime.strftime(dt + relativedelta(minutes=message["durationMinutes"]), "%H:%M")
+            end = datetime.strftime(dt + relativedelta(minutes=lesson["durationMinutes"]), "%H:%M")
             message["time"] = f"{start} - {end}"
 
     contacts = db.get_contacts_of_user(user1["id"])
@@ -309,7 +314,7 @@ def handle_message(payload):
 
     db.add_message(room_id, user_id, peer_id, dt, payload["message"])
     message = {"sender": username, "senderId": user_id, "message": payload["message"], "lessonId": -1}
-    send(message, json=True, to=room_id)
+    send(message, to=room_id)
 
 
 @socketio.on("lesson")
@@ -328,6 +333,8 @@ def handle_lesson(payload):
     else:
         lesson_id = db.add_lesson(service_id, peer_id, user_id, dt, duration)
 
+    dt_obj = datetime.strptime(dt, "%Y-%m-%dT%H:%M")
+    end_time = datetime.strftime(dt_obj + relativedelta(minutes=int(duration)), "%H:%M")
     db.add_message(room, user_id, peer_id, dt, "", lesson_id)
     lesson = {
         "sender": username,
@@ -335,12 +342,14 @@ def handle_lesson(payload):
         "message": "",
         "lessonId": lesson_id,
         "serviceTitle": service["title"],
-        "datetime": dt,
-        "duration": payload["duration"],
+        "day": payload["date"],
+        "time": f"{payload['time']} - {end_time}",
+        "status": "pending",
     }
-    send(lesson, json=True, to=room)
+    emit("lesson", lesson, to=room)
 
 
 @socketio.on("disconnect")
 def handle_disconnect():
+    print(f"Disconnect: {session['room']}")
     leave_room(session["room"])

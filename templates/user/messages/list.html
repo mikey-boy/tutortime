@@ -16,7 +16,7 @@
         <h2>{{ peer.name }}</h2>
         <div id="chat-messages" :class="request_service && service_title != '' && 'minimized'" x-ref="messages"></div>
         <div id="chat-lesson-request" x-show="request_service && service_title != ''">
-            <form onsubmit="sendLessonRequest()">
+            <div>
                 <div class="flex-container">
                     <h3 class="truncated-text" x-text="service_title"></h3>
                     <i id="cancel-request-button" @click="request_service = false" class="fa-regular fa-circle-xmark fa-xl"></i>
@@ -39,14 +39,14 @@
                             {% endif %}
                         {% endfor %}
                     </select>
-                    <button id="send-request-button" onclick="sendLessonRequest()">Send</button>
+                    <button id="send-request-button" @click="sendLessonRequest(); request_service = false ">Send</button>
                 </div>
-            </form>
+            </div>
         </div>
-        <form id="chat-input" onsubmit="sendMessage()">
+        <div id="chat-input">
             <input type="text" placeholder="Type your message..." id="message" name="message"/>
-            <button type="submit" id="send-message-button" onclick="sendMessage()">Send</button>
-        </form>
+            <button id="send-message-button" @click="sendMessage()">Send</button>
+        </div>
     </div>
     <div id="lessons" x-data="{ completed: 0 }">
         <h2>Lessons</h2>
@@ -82,39 +82,45 @@
     </div>
 
     <script type="text/javascript">
-        var socketio = io();
-        socketio.on("connect", () => { socketio.emit("join_room", { "room": "{{ room }}" }) } )
-        socketio.on("message", function (message) { createChatItem(message) });
-
-        function createChatItem(sender, message) {
+        function createMessageItem(message) {
             var messageContainer = document.getElementById("chat-messages");
-            if (sender === "{{ user.id }}") {
-                var content = `<div class="flex-container-user"><span class="message-item">${message}</span></div>`
+            if (message.senderId === {{ user.id }}) {
+                var content = `<div class="flex-container-user"><span class="message-item">${message.message}</span></div>`
             } else {
-                var content = `<div class="flex-container-peer"><span class="message-item">${message}</span></div>`
+                var content = `<div class="flex-container-peer"><span class="message-item">${message.message}</span></div>`
             }
             messageContainer.innerHTML += content;
         }
-        function createLessonChatItem(sender, lessonId, serviceTitle, day, time, status) {
+        function createLessonItem(message) {
             var messageContainer = document.getElementById("chat-messages");
             var div = document.createElement("div")
-            div.className = sender == '{{ user.id }}' ? 'flex-container-user' : 'flex-container-peer'
+            div.className = message.senderId === {{ user.id }} ? 'flex-container-user' : 'flex-container-peer'
             
             var span = document.createElement("span")
             span.className = "message-item lesson-item"
-            span.innerHTML = `<div class="title">${serviceTitle}</div>`
-            span.innerHTML +=`<div>Day: ${day}</div>`
-            span.innerHTML +=`<div>Time: ${time}</div>`
-            span.innerHTML +=`<div>Status: ${status}</div>`
-            if (status == 'pending' && sender != '{{ user.id }}') {
-                    span.innerHTML += `<button id='confirm-button'><a href="/user/lesson/confirm/${lessonId}">Confirm</a></button>`
-                    span.innerHTML += `<button class='cancel-button'><a href="/user/lesson/cancel/${lessonId}">Cancel</a></button>`
-            } else if (status == 'pending' && sender == '{{ user.id }}') {
-                    span.innerHTML += `<button class='cancel-button'><a href="/user/lesson/cancel/${lessonId}">Cancel</a></button>`
+            span.innerHTML = `<div class="title">${message.serviceTitle}</div>`
+            span.innerHTML +=`<div>Day: ${message.day}</div>`
+            span.innerHTML +=`<div>Time: ${message.time}</div>`
+            span.innerHTML +=`<div>Status: ${message.status}</div>`
+            if (message.status == 'pending' && message.senderId != {{ user.id }}) {
+                    span.innerHTML += `<button class='confirm-button'><a href="/user/lesson/confirm/${message.lessonId}">Confirm</a></button>`
+                    span.innerHTML += `<button class='cancel-button'><a href="/user/lesson/cancel/${message.lessonId}">Cancel</a></button>`
+            } else if (message.status == 'pending' && message.senderId == {{ user.id }}) {
+                    span.innerHTML += `<button class='cancel-button'><a href="/user/lesson/cancel/${message.lessonId}">Cancel</a></button>`
             }
 
             div.appendChild(span);
             messageContainer.appendChild(div);
+        }
+        function createChatItems(messages) {
+            messages.forEach((message, index) => {
+                if (message.lessonId == -1) {
+                    createMessageItem(message);
+                } else {
+                    createLessonItem(message);
+                }
+
+            });
         }
         function sendMessage() {
             var msgInput = document.getElementById("message");
@@ -131,15 +137,15 @@
             var durationInput = document.getElementById("lesson-duration");
             socketio.emit("lesson", { serviceId: serviceId.value, peerId: peerId.value, date: dateInput.value, time: timeInput.value, duration: durationInput.value, room: "{{room}}" });
         }
+
+        var socketio = io();
+        socketio.on("connect", () => { socketio.emit("join_room", { "room": "{{ room }}" }) } )
+        socketio.on("message", function(message) { createMessageItem(message); scrollToBottom(); } );
+        socketio.on("lesson", function(message) { createLessonItem(message); scrollToBottom(); } );
     </script>
     <script type="text/javascript">
-        {% for message in messages %}
-            {% if message.lessonId == -1 %}
-                createChatItem("{{message.senderId}}", "{{message.message}}");
-            {% else %}
-                createLessonChatItem("{{message.senderId}}", "{{message.lessonId}}", "{{message.serviceTitle}}", "{{message.day}}", "{{message.time}}", "{{message.status}}");
-            {% endif %}
-        {% endfor %}
+        const messages = {{ messages|tojson }}
+        createChatItems(messages);
 
         function scrollToBottom() {
             var scrollContainer = document.getElementById("chat-messages");

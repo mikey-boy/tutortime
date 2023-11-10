@@ -546,11 +546,12 @@ button {
     }
     #chat-messages {
         height: 500px;
+        min-width: 327px;
         overflow-y: scroll;
         padding: 0px 10px;
         
         &.minimized {
-            height: 370px;
+            height: 352px;
         }
         .flex-container-user {
             display: flex;
@@ -596,22 +597,21 @@ button {
         display: flex;
         justify-content: right;
 
-        div {
-            margin-bottom: 10px;
-        }
         h3 {
             margin-top: 0px;
             justify-content: left;
         }
-        > form {
+        > div {
             padding: 8px;
-            min-width: 327px;
             background-color: var(--background-light);
             border: 1px dashed var(--links);
             border-radius: 3px;
 
             select, input {
                 padding: 4px ;
+            }
+            div {
+                margin-bottom: 10px;
             }
         }
         .truncated-text {

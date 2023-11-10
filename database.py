@@ -219,13 +219,9 @@ class Database:
         cursor = conn.cursor()
         sql = """
         SELECT
-            senderId, recipientId, message, lessonId, serviceId, lessons.datetime, lessons.durationMinutes, lessons.status
+            senderId, recipientId, message, lessonId
         FROM
             messages
-        LEFT JOIN
-            lessons
-        ON
-            messages.lessonId = lessons.id
         WHERE 
             roomId = ?
         """
@@ -238,7 +234,18 @@ class Database:
         conn = sqlite3.connect(self.user_db)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        cursor.execute("SELECT senderId, recipientId FROM messages WHERE lessonId = ?", (lesson_id,))
+        sql = """
+        SELECT
+            lessonId, serviceId, senderId, recipientId, lessons.datetime, lessons.durationMinutes, lessons.status
+        FROM
+            messages
+        INNER JOIN
+            lessons
+        ON
+            messages.lessonId = lessons.id
+        WHERE lessonId = ?
+        """
+        cursor.execute(sql, (lesson_id,))
         result = cursor.fetchone()
         conn.close()
         return dict(result)

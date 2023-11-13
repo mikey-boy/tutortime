@@ -34,27 +34,34 @@
                         <div class="day">
                     {% endif %}
                             {{ j }}
-                            {% for booking in calendar[i]["bookings"] %}
-                                {% if booking.day == j %}
+                            {% for lesson in calendar[i]["lessons"] %}
+                                {% if lesson.day == j and lesson.status != 'cancelled' %}
                                     <div class="relative-container">
-                                    {% if booking.is_tutor %}
-                                        <button class="calendar-booking tutor" x-on:click="modal = modal == {{ booking.id }} ? -1 : {{ booking.id }}">
+                                    {% if lesson.status == 'pending' %}
+                                        <button class="calendar-lesson pending" x-on:click="modal = modal == {{ lesson.id }} ? -1 : {{ lesson.id }}">
+                                    {% elif lesson.is_tutor %}
+                                        <button class="calendar-lesson tutor" x-on:click="modal = modal == {{ lesson.id }} ? -1 : {{ lesson.id }}">
                                     {% else %}
-                                        <button class="calendar-booking student" x-on:click="modal = modal == {{ booking.id }} ? -1 : {{ booking.id }}">
+                                        <button class="calendar-lesson student" x-on:click="modal = modal == {{ lesson.id }} ? -1 : {{ lesson.id }}">
                                     {% endif %}
-                                            <b>{{ booking.start_time }} - {{ booking.end_time }}</b><br>{{ booking.title }}
+                                            <b>{{ lesson.start_time }} - {{ lesson.end_time }}</b><br>
+                                            {% if lesson.status == 'pending' %}
+                                                {{ lesson.title }} (pending)
+                                            {% else %}    
+                                                {{ lesson.title }}
+                                            {% endif %}
                                         </button>
                                         {% if (j + calendar[i]["month_offset"] - 1) % 7 < 5 %}
-                                            <span class="booking-modal open-left" x-show="modal == {{ booking.id }}">
+                                            <span class="lesson-modal open-left" x-show="modal == {{ lesson.id }}">
                                         {% else %}
-                                            <span class="booking-modal open-right" x-show="modal == {{ booking.id }}">
+                                            <span class="lesson-modal open-right" x-show="modal == {{ lesson.id }}">
                                         {% endif %}
                                                 <button x-on:click="modal = -1"><i class="fa-regular fa-circle-xmark fa-xl"></i></button>
-                                                <a href="{{ url_for('service_list', service_id=booking.serviceId) }}"><h3 class="truncated-text">{{ booking.title }}</h3></a>
-                                                <p>Time: {{ booking.start_time }} - {{ booking.end_time }}</p>
-                                                <p class="truncated-text">Description: {{ booking.description }}</p>
-                                                <p>Tutor: {{ booking.tutorName }}</p>
-                                                <p>Student: {{ booking.studentName }}</p>
+                                                <a href="{{ url_for('service_list', service_id=lesson.serviceId) }}"><h3 class="truncated-text">{{ lesson.title }}</h3></a>
+                                                <p>Time: {{ lesson.start_time }} - {{ lesson.end_time }}</p>
+                                                <p class="truncated-text">Description: {{ lesson.description }}</p>
+                                                <p>Tutor: {{ lesson.tutorName }}</p>
+                                                <p>Student: {{ lesson.studentName }}</p>
                                             </span>
                                     </div> 
                                 {% endif %}

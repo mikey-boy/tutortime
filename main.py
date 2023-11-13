@@ -1,11 +1,13 @@
 import calendar
+import json
 from datetime import date, datetime
 
 from dateutil.relativedelta import relativedelta
 from flask import Flask, jsonify, redirect, render_template, request, session
+from flask_socketio import SocketIO, emit, join_room, leave_room, send
 from sassutils.wsgi import SassMiddleware
 
-from database import Database
+from database import Database, ServiceStatus
 from image_server import ImageServer
 from utils import availability_to_int, availability_to_list
 
@@ -15,6 +17,11 @@ app.wsgi_app = SassMiddleware(app.wsgi_app, {__name__: ("static/scss", "static/c
 
 db = Database(db_folder=app.config["DB_FOLDER"], user_db=app.config["USER_DB"], service_db=app.config["SERVICE_DB"])
 image_server = ImageServer(image_folder=app.config["IMAGE_FOLDER"])
+
+socketio = SocketIO(app, logger=True)
+
+if __name__ == "__main__":
+    socketio.run(app, debug=True)
 
 
 @app.route("/")
@@ -74,64 +81,31 @@ def user_account_create():
         return render_template("home.html")
 
 
-@app.route("/api/service/list/<string:category>")
-def api_service_list(category="all"):
-    services = db.get_all_services_by_category(category)
-    json_services = [dict(service) for service in services]
-    for json_service in json_services:
-        images = db.get_images_by_service_id(json_service["id"])
-        json_service["images"] = [
-            {"filenameOnServer": image["filenameOnServer"], "filename": image["filename"]} for image in images
-        ]
-    return jsonify(json_services)
-
-
 @app.route("/service/list/")
 @app.route("/service/list/<int:service_id>")
 def service_list(service_id=None):
     if service_id:
         service = db.get_service_by_id(service_id)
         images = db.get_images_by_service_id(service_id)
-        json_service = dict(service)
-        json_service["available"] = availability_to_list(json_service["availability"])
-        json_service["images"] = [
+        service["available"] = availability_to_list(service["availability"])
+        service["images"] = [
             {"filenameOnServer": image["filenameOnServer"], "filename": image["filename"]} for image in images
         ]
-        return render_template("service/display.html", service=json_service)
+        return render_template("service/display.html", service=service)
     else:
         services = db.get_all_services()
-        json_services = [dict(service) for service in services]
-        for json_service in json_services:
-            images = db.get_images_by_service_id(json_service["id"])
-            json_service["images"] = [
+        for service in services:
+            images = db.get_images_by_service_id(service["id"])
+            service["images"] = [
                 {"filenameOnServer": image["filenameOnServer"], "filename": image["filename"]} for image in images
             ]
-        return render_template("service/list.html", services=json_services)
-
-
-@app.route("/service/booking/create/<int:service_id>", methods=["POST"])
-def service_booking_create(service_id):
-    if "userId" in session:
-        service = db.get_service_by_id(service_id)
-        datetime = request.form.get("datetime")
-        duration = request.form.get("duration")
-        db.add_booking(service["id"], service["userId"], session["userId"], datetime, duration)
-        return render_template("home.html")
-
-
-@app.route("/api/user/service/list/<string:status>")
-def api_user_service_list(status="active"):
-    if "username" in session:
-        services = db.get_services_by_status(session["username"], status)
-        json_services = [dict(service) for service in services]
-        return jsonify(json_services)
-    return jsonify([])
+        return render_template("service/list.html", services=services)
 
 
 @app.route("/user/service/list/<string:status>")
 def user_service_list(status="active"):
     if "username" in session:
-        services = db.get_services_by_status(session["username"], status)
+        services = db.get_services_by_status(session["userId"], status)
         return render_template("user/service/list.html", services=services, status=status)
     return render_template("user/service/list.html")
 
@@ -177,7 +151,6 @@ def user_service_update(service_id):
         return render_template("home.html")
 
     if request.method == "GET":
-        service = dict(service)
         service["available"] = availability_to_list(service["availability"])
         return render_template("user/service/create.html", service=service)
     else:
@@ -210,9 +183,22 @@ def user_service_activate(service_id):
     return redirect("/user/service/list/paused")
 
 
-@app.route("/user/messages/list")
-def user_messages_list():
-    return render_template("user/messages/list.html")
+@app.route("/user/lesson/confirm/<int:lesson_id>")
+def user_lesson_confirm(lesson_id):
+    user_id = session["userId"]
+    if lesson_id == -1 or db.get_lesson_request(lesson_id).get("senderId", "") == user_id:
+        return render_template("home.html")
+    db.confirm_lesson(user_id, lesson_id)
+    return redirect(request.referrer)
+
+
+@app.route("/user/lesson/cancel/<int:lesson_id>")
+def user_lesson_cancel(lesson_id):
+    user_id = session["userId"]
+    if lesson_id == -1:
+        return render_template("home.html")
+    db.cancel_lesson(user_id, lesson_id)
+    return redirect(request.referrer)
 
 
 @app.route("/user/calendar/list")
@@ -220,16 +206,15 @@ def user_calendar_list():
     if "username" not in session:
         return render_template("user/calendar/list.html", services=[])
 
-    rows = db.get_bookings_for_user(session["userId"])
-    bookings = [dict(row) for row in rows]
-    for booking in bookings:
-        booking["dt"] = datetime.strptime(booking["datetime"], "%Y-%m-%dT%H:%M")
-        if session["userId"] == booking["tutorId"]:
-            booking["tutorName"] = session["username"]
-            booking["studentName"] = db.get_username(booking["studentId"])
+    lessons = db.get_lessons_for_user(session["userId"])
+    for lesson in lessons:
+        lesson["dt"] = datetime.strptime(lesson["datetime"], "%Y-%m-%dT%H:%M")
+        if session["userId"] == lesson["tutorId"]:
+            lesson["tutorName"] = session["username"]
+            lesson["studentName"] = db.get_username(lesson["studentId"])
         else:
-            booking["tutorName"] = db.get_username(booking["tutorId"])
-            booking["studentName"] = session["username"]
+            lesson["tutorName"] = db.get_username(lesson["tutorId"])
+            lesson["studentName"] = session["username"]
 
     cal = []
     today = date.today()
@@ -241,18 +226,129 @@ def user_calendar_list():
         month["month_name"] = calendar.month_name[cur_month.month]
         month["month_offset"] = monthrange[0]
         month["month_length"] = monthrange[1]
-        month["bookings"] = []
-        for booking in bookings:
-            if cur_month.month == booking["dt"].month and cur_month.year == booking["dt"].year:
-                booking["day"] = booking["dt"].day
-                booking["start_time"] = datetime.strftime(booking["dt"], "%H:%M")
-                booking["end_time"] = datetime.strftime(
-                    booking["dt"] + relativedelta(minutes=booking["durationMinutes"]), "%H:%M"
+        month["lessons"] = []
+        for lesson in lessons:
+            if cur_month.month == lesson["dt"].month and cur_month.year == lesson["dt"].year:
+                lesson["day"] = lesson["dt"].day
+                lesson["start_time"] = datetime.strftime(lesson["dt"], "%H:%M")
+                lesson["end_time"] = datetime.strftime(
+                    lesson["dt"] + relativedelta(minutes=lesson["durationMinutes"]), "%H:%M"
                 )
-                booking["title"] = booking["title"]
-                booking["is_tutor"] = booking["tutorName"] == session["username"]
-                month["bookings"].append(booking)
+                lesson["title"] = lesson["title"]
+                lesson["is_tutor"] = lesson["tutorName"] == session["username"]
+                month["lessons"].append(lesson)
 
         cal.append(month)
 
-    return render_template("user/calendar/list.html", bookings=bookings, calendar=cal, today=today.day)
+    return render_template("user/calendar/list.html", lessons=lessons, calendar=cal, today=today.day)
+
+
+@app.route("/user/messages/list/")
+@app.route("/user/messages/list/<int:user_id>")
+def user_messages_list(user_id=None):
+    user1 = {"id": session["userId"], "name": session["username"]}
+    user2 = {}
+
+    contacts = db.get_contacts_of_user(user1["id"])
+
+    if user_id:
+        user2 = {"id": user_id, "name": db.get_username(user_id)}
+    else:
+        if contacts == []:
+            return render_template("user/messages/list.html", error_text="Browse the service listings to start a chat")
+        user2 = {"id": contacts[0]["userId"], "name": contacts[0]["userName"]}
+
+    user1["services"] = db.get_services_by_status(user1["id"], ServiceStatus.ACTIVE)
+    user2["services"] = db.get_services_by_status(user2["id"], ServiceStatus.ACTIVE)
+    room = db.get_room_id(user1["id"], user2["id"])
+
+    now = datetime.now()
+    lessons = db.get_lessons_between_users(user1["id"], user2["id"])
+    for lesson in lessons:
+        dt = datetime.strptime(lesson["datetime"], "%Y-%m-%dT%H:%M")
+        lesson["completed"] = 1 if dt < now else 0
+        lesson["day"] = dt.strftime("%Y-%m-%d")
+        lesson["start_time"] = dt.strftime("%H:%M")
+        lesson["end_time"] = datetime.strftime(dt + relativedelta(minutes=lesson["durationMinutes"]), "%H:%M")
+
+    messages = db.get_messages_between_users(user1["id"], user2["id"])
+    for message in messages:
+        if message["lessonId"] != -1:
+            lesson = db.get_lesson_request(message["lessonId"])
+            service = db.get_service_by_id(lesson["serviceId"])
+
+            message["serviceTitle"] = service["title"]
+            message["status"] = lesson["status"]
+            dt = datetime.strptime(lesson["datetime"], "%Y-%m-%dT%H:%M")
+            message["day"] = dt.strftime("%Y-%m-%d")
+            start = dt.strftime("%H:%M")
+            end = datetime.strftime(dt + relativedelta(minutes=lesson["durationMinutes"]), "%H:%M")
+            message["time"] = f"{start} - {end}"
+
+    contacts = db.get_contacts_of_user(user1["id"])
+    return render_template(
+        "user/messages/list.html",
+        contacts=contacts,
+        user=user1,
+        peer=user2,
+        room=room,
+        lessons=lessons,
+        messages=messages,
+    )
+
+
+@socketio.on("join_room")
+def handle_join_room(payload):
+    session["room"] = payload["room"]
+    join_room(payload["room"])
+
+
+@socketio.on("message")
+def handle_message(payload):
+    username = session["username"]
+    user_id = session["userId"]
+    peer_id = payload["recipient"]
+    room_id = payload["room"]
+    dt = datetime.now().strftime("%Y-%m-%dT%H:%M")
+    payload["message"] = payload["message"].rstrip("\n")
+
+    db.add_message(room_id, user_id, peer_id, dt, payload["message"])
+    message = {"sender": username, "senderId": user_id, "message": payload["message"], "lessonId": -1}
+    send(message, to=room_id)
+
+
+@socketio.on("lesson")
+def handle_lesson(payload):
+    username = session["username"]
+    user_id = session["userId"]
+    service_id = payload["serviceId"]
+    peer_id = payload["peerId"]
+    dt = f"{payload['date']}T{payload['time']}"
+    duration = payload["duration"]
+    room = payload["room"]
+
+    service = db.get_service_by_id(service_id)
+    if service["userId"] == user_id:
+        lesson_id = db.add_lesson(service_id, user_id, peer_id, dt, duration)
+    else:
+        lesson_id = db.add_lesson(service_id, peer_id, user_id, dt, duration)
+
+    dt_obj = datetime.strptime(dt, "%Y-%m-%dT%H:%M")
+    end_time = datetime.strftime(dt_obj + relativedelta(minutes=int(duration)), "%H:%M")
+    db.add_message(room, user_id, peer_id, dt, "", lesson_id)
+    lesson = {
+        "sender": username,
+        "senderId": user_id,
+        "message": "",
+        "lessonId": lesson_id,
+        "serviceTitle": service["title"],
+        "day": payload["date"],
+        "time": f"{payload['time']} - {end_time}",
+        "status": "pending",
+    }
+    emit("lesson", lesson, to=room)
+
+
+@socketio.on("disconnect")
+def handle_disconnect():
+    leave_room(session["room"])

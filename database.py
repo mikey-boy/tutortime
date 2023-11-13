@@ -162,6 +162,135 @@ class Database:
             conn.commit()
             conn.close()
 
+    def add_service(
+        self, username: str, user_id: int, title: str, description: str, category: str, availability: int, images: list
+    ):
+        if category in iter(ServiceCategory):
+            conn = sqlite3.connect(self.user_db)
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO services (username, userId, title, description, category, availability, status, totalMinutes) VALUES(?, ?, ?, ?, ?, ?, ?, ?)",
+                (username, user_id, title, description, category, availability, ServiceStatus.ACTIVE, 0),
+            )
+            service_id = cursor.lastrowid
+            for image in images:
+                cursor.execute(
+                    "INSERT INTO images (serviceId, filename, filenameOnServer) VALUES (?, ?, ?)",
+                    (service_id, image["filename"], image["filenameOnServer"]),
+                )
+            conn.commit()
+            conn.close()
+
+    def remove_service(self, username: str, service_id: int):
+        conn = sqlite3.connect(self.user_db)
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM services WHERE username = ? AND id = ?", (username, service_id))
+        cursor.execute(
+            "DELETE FROM images WHERE serviceId = ?", (service_id,)
+        )  # TODO Am I able to delete images of a different user?
+        conn.commit()
+        conn.close()
+
+    def update_service(
+        self,
+        username: str,
+        service_id: int,
+        title: str,
+        description: str,
+        category: str,
+        availability: int,
+        images: list,
+    ):
+        conn = sqlite3.connect(self.user_db)
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE services SET title = ?, description = ?, category = ?, availability = ? WHERE username = ? AND id = ?",
+            (title, description, category, availability, username, service_id),
+        )
+        # Delete images and reupload them on update, probably should be improved
+        cursor.execute("DELETE FROM images WHERE serviceId = ?", (service_id,))
+        # TODO Am I able to delete images of a different user?
+        for image in images:
+            cursor.execute(
+                "INSERT INTO images (serviceId, filename, filenameOnServer) VALUES (?, ?, ?)",
+                (service_id, image["filename"], image["filenameOnServer"]),
+            )
+        conn.commit()
+        conn.close()
+        return self.get_service_by_id(service_id)
+
+    def _update_service_status(self, username: str, service_id: int, status: str):
+        conn = sqlite3.connect(self.user_db)
+        cursor = conn.cursor()
+        cursor.execute("UPDATE services SET status = ? WHERE username = ? AND id = ?", (status, username, service_id))
+        conn.commit()
+        conn.close()
+
+    def activate_service(self, username: str, service_id: int):
+        self._update_service_status(username, service_id, ServiceStatus.ACTIVE.value)
+
+    def pause_service(self, username: str, service_id: int):
+        self._update_service_status(username, service_id, ServiceStatus.PAUSED.value)
+
+    def get_services_by_status(self, user_id: str, status: str):
+        if status in iter(ServiceStatus):
+            conn = sqlite3.connect(self.user_db)
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT id, title, description FROM services WHERE userId = ? AND status = ?", (user_id, status)
+            )
+            results = cursor.fetchall()
+            conn.close()
+            return [dict(result) for result in results]
+
+    def get_service_by_id(self, service_id: int):
+        conn = sqlite3.connect(self.user_db)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT id, userId, title, description, category, availability, status, username FROM services WHERE id = ?",
+            (service_id,),
+        )
+        result = cursor.fetchone()
+        conn.close()
+        return dict(result)
+
+    def get_all_services(self):
+        conn = sqlite3.connect(self.user_db)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT id, category, title, description, username FROM services WHERE status = ?",
+            (ServiceStatus.ACTIVE.value,),
+        )
+        results = cursor.fetchall()
+        conn.close()
+        return [dict(result) for result in results]
+
+    def get_all_services_by_category(self, category: str):
+        if category in iter(ServiceCategory):
+            conn = sqlite3.connect(self.user_db)
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT id, title, description, username FROM services WHERE status = ? AND category = ?",
+                (ServiceStatus.ACTIVE.value, category),
+            )
+            result = cursor.fetchall()
+            conn.close()
+            return result
+        return self.get_all_services()
+
+    def get_images_by_service_id(self, service_id: int):
+        conn = sqlite3.connect(self.user_db)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("SELECT filename, filenameOnServer FROM images WHERE serviceId = ?", (service_id,))
+        results = cursor.fetchall()
+        conn.close()
+        return [dict(result) for result in results]
+
     def add_room(self, user_id, peer_id):
         conn = sqlite3.connect(self.user_db)
         cursor = conn.cursor()
@@ -249,144 +378,6 @@ class Database:
         result = cursor.fetchone()
         conn.close()
         return dict(result)
-
-    def get_images_by_service_id(self, id: str):
-        conn = sqlite3.connect(self.user_db)
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
-        cursor.execute("SELECT filename, filenameOnServer FROM images WHERE serviceId = ?", (id,))
-        results = cursor.fetchall()
-        conn.close()
-        return [dict(result) for result in results]
-
-    def add_service(
-        self, username: str, user_id: int, title: str, description: str, category: str, availability: int, images: list
-    ):
-        if category in iter(ServiceCategory):
-            conn = sqlite3.connect(self.user_db)
-            cursor = conn.cursor()
-            cursor.execute(
-                "INSERT INTO services (username, userId, title, description, category, availability, status, totalMinutes) VALUES(?, ?, ?, ?, ?, ?, ?, ?)",
-                (username, user_id, title, description, category, availability, ServiceStatus.ACTIVE, 0),
-            )
-            service_id = cursor.lastrowid
-            for image in images:
-                cursor.execute(
-                    "INSERT INTO images (serviceId, filename, filenameOnServer) VALUES (?, ?, ?)",
-                    (service_id, image["filename"], image["filenameOnServer"]),
-                )
-            conn.commit()
-            conn.close()
-
-    def get_services_by_status(self, user_id: str, status: str):
-        if status in iter(ServiceStatus):
-            conn = sqlite3.connect(self.user_db)
-            conn.row_factory = sqlite3.Row
-            cursor = conn.cursor()
-            cursor.execute(
-                "SELECT id, title, description FROM services WHERE userId = ? AND status = ?", (user_id, status)
-            )
-            results = cursor.fetchall()
-            conn.close()
-            return [dict(result) for result in results]
-
-    def get_service_by_id(self, service_id: int):
-        conn = sqlite3.connect(self.user_db)
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT id, userId, title, description, category, availability, status, username FROM services WHERE id = ?",
-            (service_id,),
-        )
-        result = cursor.fetchone()
-        conn.close()
-        return dict(result)
-
-    def get_images_by_service_id(self, service_id: int):
-        conn = sqlite3.connect(self.user_db)
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
-        cursor.execute("SELECT filename, filenameOnServer FROM images WHERE serviceId = ?", (service_id,))
-        results = cursor.fetchall()
-        conn.close()
-        return [dict(result) for result in results]
-
-    def get_all_services(self):
-        conn = sqlite3.connect(self.user_db)
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT id, category, title, description, username FROM services WHERE status = ?",
-            (ServiceStatus.ACTIVE.value,),
-        )
-        results = cursor.fetchall()
-        conn.close()
-        return [dict(result) for result in results]
-
-    def get_all_services_by_category(self, category: str):
-        if category in iter(ServiceCategory):
-            conn = sqlite3.connect(self.user_db)
-            conn.row_factory = sqlite3.Row
-            cursor = conn.cursor()
-            cursor.execute(
-                "SELECT id, title, description, username FROM services WHERE status = ? AND category = ?",
-                (ServiceStatus.ACTIVE.value, category),
-            )
-            result = cursor.fetchall()
-            conn.close()
-            return result
-        return self.get_all_services()
-
-    def remove_service(self, username: str, service_id: int):
-        conn = sqlite3.connect(self.user_db)
-        cursor = conn.cursor()
-        cursor.execute("DELETE FROM services WHERE username = ? AND id = ?", (username, service_id))
-        cursor.execute(
-            "DELETE FROM images WHERE serviceId = ?", (service_id,)
-        )  # TODO Am I able to delete images of a different user?
-        conn.commit()
-        conn.close()
-
-    def update_service(
-        self,
-        username: str,
-        service_id: int,
-        title: str,
-        description: str,
-        category: str,
-        availability: int,
-        images: list,
-    ):
-        conn = sqlite3.connect(self.user_db)
-        cursor = conn.cursor()
-        cursor.execute(
-            "UPDATE services SET title = ?, description = ?, category = ?, availability = ? WHERE username = ? AND id = ?",
-            (title, description, category, availability, username, service_id),
-        )
-        # Delete images and reupload them on update, probably should be improved
-        cursor.execute("DELETE FROM images WHERE serviceId = ?", (service_id,))
-        # TODO Am I able to delete images of a different user?
-        for image in images:
-            cursor.execute(
-                "INSERT INTO images (serviceId, filename, filenameOnServer) VALUES (?, ?, ?)",
-                (service_id, image["filename"], image["filenameOnServer"]),
-            )
-        conn.commit()
-        conn.close()
-        return self.get_service_by_id(service_id)
-
-    def _update_service_status(self, username: str, service_id: int, status: str):
-        conn = sqlite3.connect(self.user_db)
-        cursor = conn.cursor()
-        cursor.execute("UPDATE services SET status = ? WHERE username = ? AND id = ?", (status, username, service_id))
-        conn.commit()
-        conn.close()
-
-    def activate_service(self, username: str, service_id: int):
-        self._update_service_status(username, service_id, ServiceStatus.ACTIVE.value)
-
-    def pause_service(self, username: str, service_id: int):
-        self._update_service_status(username, service_id, ServiceStatus.PAUSED.value)
 
     def add_lesson(self, service_id: int, tutor_id: int, student_id: int, datetime: str, duration: int):
         conn = sqlite3.connect(self.user_db)

@@ -363,6 +363,32 @@ button {
         right: 105%;
     }
 }
+.lesson-item {
+
+    button {
+        margin-top: 10px;
+        margin-right: 10px;
+        width: 65px;
+        color: var(--text-white);
+
+        a {
+            color: var(--text-white);
+        }
+    }
+    .title {
+        margin-bottom: 10px;
+        font-weight: bold;
+    }
+    .accept-button {
+        background-color: var(--signup);
+    }
+    .cancel-button {
+        background-color: var(--error-text);
+    }
+    .modify-button {
+        background-color: var(--tutor);
+    }
+}
 
 #logo {
     width: 100%;
@@ -576,28 +602,6 @@ button {
             padding: 5px 10px;
             background: var(--background-lesson);
         }
-        .lesson-item {
-
-            button {
-                margin-top: 10px;
-                margin-right: 10px;
-                width: 65px;
-
-                a {
-                    color: var(--text-white);
-                }
-            }
-            .title {
-                margin-bottom: 10px;
-                font-weight: bold;
-            }
-            .confirm-button {
-                background-color: var(--signup);
-            }
-            .cancel-button {
-                background-color: var(--error-text);
-            }
-        }
     }
     #chat-lesson-request {
         display: flex;
@@ -631,6 +635,11 @@ button {
             background-color: var(--login);
             color: var(--text-white);
             padding: 6px 27px;
+        }
+        #modify-request-button {
+            background-color: var(--tutor);
+            color: var(--text-white);
+            padding: 6px 21px;
         }
         #cancel-request-button {
             background-color: var(--background-light);

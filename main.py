@@ -7,7 +7,7 @@ from flask import Flask, jsonify, redirect, render_template, request, session
 from flask_socketio import SocketIO, emit, join_room, leave_room, send
 from sassutils.wsgi import SassMiddleware
 
-from database import Database, ServiceStatus
+from database import Database, LessonStatus, ServiceStatus
 from image_server import ImageServer
 from utils import availability_to_int, availability_to_list
 
@@ -79,6 +79,14 @@ def user_account_create():
         session["username"] = username
         session["userId"] = user_id
         return render_template("home.html")
+
+
+@app.route("/user/account/list")
+def user_account_list():
+    if "username" in session:
+        services = db.get_services_by_status(session["userId"], ServiceStatus.ACTIVE)
+        lessons = db.get_lessons_for_user(session["userId"])
+        return render_template("user/account/list.html", services=services, lessons=lessons)
 
 
 @app.route("/service/list/")
@@ -186,9 +194,18 @@ def user_service_activate(service_id):
 @app.route("/user/lesson/confirm/<int:lesson_id>")
 def user_lesson_confirm(lesson_id):
     user_id = session["userId"]
-    if lesson_id == -1 or db.get_lesson_request(lesson_id).get("senderId", "") == user_id:
+    if lesson_id == -1:
         return render_template("home.html")
     db.confirm_lesson(user_id, lesson_id)
+    return redirect(request.referrer)
+
+
+@app.route("/user/lesson/accept/<int:lesson_id>")
+def user_lesson_accept(lesson_id):
+    user_id = session["userId"]
+    if lesson_id == -1:
+        return render_template("home.html")
+    db.accept_lesson(user_id, lesson_id)
     return redirect(request.referrer)
 
 
@@ -265,11 +282,10 @@ def user_messages_list(user_id=None):
     now = datetime.now()
     lessons = db.get_lessons_between_users(user1["id"], user2["id"])
     for lesson in lessons:
-        dt = datetime.strptime(lesson["datetime"], "%Y-%m-%dT%H:%M")
+        dt = datetime.strptime(lesson["proposedDatetime"], "%Y-%m-%dT%H:%M")
         lesson["completed"] = 1 if dt < now else 0
         lesson["day"] = dt.strftime("%Y-%m-%d")
-        lesson["start_time"] = dt.strftime("%H:%M")
-        lesson["end_time"] = datetime.strftime(dt + relativedelta(minutes=lesson["durationMinutes"]), "%H:%M")
+        lesson["time"] = dt.strftime("%H:%M")
 
     messages = db.get_messages_between_users(user1["id"], user2["id"])
     for message in messages:
@@ -279,11 +295,10 @@ def user_messages_list(user_id=None):
 
             message["serviceTitle"] = service["title"]
             message["status"] = lesson["status"]
-            dt = datetime.strptime(lesson["datetime"], "%Y-%m-%dT%H:%M")
+            dt = datetime.strptime(lesson["proposedDatetime"], "%Y-%m-%dT%H:%M")
             message["day"] = dt.strftime("%Y-%m-%d")
-            start = dt.strftime("%H:%M")
-            end = datetime.strftime(dt + relativedelta(minutes=lesson["durationMinutes"]), "%H:%M")
-            message["time"] = f"{start} - {end}"
+            message["time"] = dt.strftime("%H:%M")
+            message["duration"] = lesson["proposedDurationMinutes"]
 
     contacts = db.get_contacts_of_user(user1["id"])
     return render_template(
@@ -321,20 +336,20 @@ def handle_message(payload):
 def handle_lesson(payload):
     username = session["username"]
     user_id = session["userId"]
-    service_id = payload["serviceId"]
     peer_id = payload["peerId"]
+    service_id = payload["serviceId"]
     dt = f"{payload['date']}T{payload['time']}"
     duration = payload["duration"]
     room = payload["room"]
 
     service = db.get_service_by_id(service_id)
     if service["userId"] == user_id:
-        lesson_id = db.add_lesson(service_id, user_id, peer_id, dt, duration)
+        status = LessonStatus.ACCEPTED_TUTOR
+        lesson_id = db.add_lesson(service_id, user_id, peer_id, status, dt, duration)
     else:
-        lesson_id = db.add_lesson(service_id, peer_id, user_id, dt, duration)
+        status = LessonStatus.ACCEPTED_STUDENT
+        lesson_id = db.add_lesson(service_id, peer_id, user_id, status, dt, duration)
 
-    dt_obj = datetime.strptime(dt, "%Y-%m-%dT%H:%M")
-    end_time = datetime.strftime(dt_obj + relativedelta(minutes=int(duration)), "%H:%M")
     db.add_message(room, user_id, peer_id, dt, "", lesson_id)
     lesson = {
         "sender": username,
@@ -343,10 +358,33 @@ def handle_lesson(payload):
         "lessonId": lesson_id,
         "serviceTitle": service["title"],
         "day": payload["date"],
-        "time": f"{payload['time']} - {end_time}",
-        "status": "pending",
+        "time": payload["time"],
+        "duration": duration,
+        "status": status,
     }
     emit("lesson", lesson, to=room)
+
+
+@socketio.on("modify")
+def handle_lesson(payload):
+    username = session["username"]
+    user_id = session["userId"]
+    peer_id = payload["peerId"]
+    lesson_id = payload["lessonId"]
+    dt = f"{payload['date']}T{payload['time']}"
+    duration = payload["duration"]
+    room = payload["room"]
+
+    lesson = db.get_lesson_request(lesson_id)
+    if lesson["tutorId"] == user_id:
+        db.update_lesson(lesson["id"], dt, duration, LessonStatus.ACCEPTED_TUTOR)
+    else:
+        db.update_lesson(lesson["id"], dt, duration, LessonStatus.ACCEPTED_STUDENT)
+
+    message = db.get_message_by_lesson_id(lesson_id)
+    print(message["id"])
+    db.update_message(message["id"], user_id, peer_id)
+    emit("modify", to=room)
 
 
 @socketio.on("disconnect")

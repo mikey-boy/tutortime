@@ -8,7 +8,9 @@
         <h2>Contacts</h2>
         <ul>
             {% for contact in contacts %}
-                <a href="{{ url_for('user_messages_list', user_id=contact.userId) }}"><li>{{ contact.userName }}</li></a>
+                <a href="{{ url_for('user_messages_list', user_id=contact.userId) }}">
+                    <li :class="{{ peer.id }} == {{ contact.userId }} && 'active'">{{ contact.userName }}</li>
+                </a>
             {% endfor %}
         </ul>
     </div>
@@ -44,7 +46,7 @@
             </div>
         </div>
         <div id="chat-input">
-            <input type="text" placeholder="Type your message..." id="message" name="message"/>
+            <input type="text" placeholder="Type your message..." @keydown.enter="sendMessage()" id="message" name="message"/>
             <button id="send-message-button" @click="sendMessage()">Send</button>
         </div>
     </div>

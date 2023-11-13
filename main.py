@@ -351,5 +351,4 @@ def handle_lesson(payload):
 
 @socketio.on("disconnect")
 def handle_disconnect():
-    print(f"Disconnect: {session['room']}")
     leave_room(session["room"])

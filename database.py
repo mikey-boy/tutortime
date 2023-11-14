@@ -47,7 +47,8 @@ class Database:
             CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY,
                 username TEXT,
-                password TEXT
+                password TEXT,
+                minutes INTEGER
             )
         """
         message_schema = """
@@ -155,7 +156,9 @@ class Database:
             conn = sqlite3.connect(self.user_db)
             cursor = conn.cursor()
             encoded_pass = hashlib.sha256(password.encode()).hexdigest()
-            cursor.execute("INSERT INTO users (username, password) VALUES(?, ?)", (username, encoded_pass))
+            cursor.execute(
+                "INSERT INTO users (username, password, minutes) VALUES(?, ?, ?)", (username, encoded_pass, 120)
+            )
             user_id = cursor.lastrowid
             conn.commit()
             conn.close()
@@ -444,7 +447,7 @@ class Database:
         conn.commit()
         conn.close()
 
-    def _update_lesson_status(self, user_id: int, lesson_id: int, status: LessonStatus):
+    def update_lesson_status(self, user_id: int, lesson_id: int, status: LessonStatus):
         conn = sqlite3.connect(self.user_db)
         cursor = conn.cursor()
         cursor.execute(
@@ -453,15 +456,6 @@ class Database:
         )
         conn.commit()
         conn.close()
-
-    def accept_lesson(self, user_id: int, lesson_id: int):
-        self._update_lesson_status(user_id, lesson_id, LessonStatus.ACCEPTED)
-
-    def confirm_lesson(self, user_id: int, lesson_id: int):
-        self._update_lesson_status(user_id, lesson_id, LessonStatus.CONFIRMED)
-
-    def cancel_lesson(self, user_id: int, lesson_id: int):
-        self._update_lesson_status(user_id, lesson_id, LessonStatus.CANCELLED)
 
     def get_lessons_for_user(self, user_id: int):
         conn = sqlite3.connect(self.user_db)
@@ -492,7 +486,7 @@ class Database:
         cursor = conn.cursor()
         sql = f"""
         SELECT 
-            lessons.id, lessons.tutorId, lessons.studentId, lessons.proposedDatetime, lessons.proposedDurationMinutes, services.title, services.description, services.id as serviceId
+            lessons.id, lessons.tutorId, lessons.studentId, lessons.status, lessons.proposedDatetime, lessons.proposedDurationMinutes, services.title, services.description, services.id as serviceId
         FROM 
             lessons 
         INNER JOIN
@@ -500,7 +494,7 @@ class Database:
         ON
             lessons.serviceId = services.id  
         WHERE
-            ((tutorId = ? AND studentId = ?) OR (tutorId = ? AND studentId = ?)) AND lessons.status = '{LessonStatus.ACCEPTED}'
+            ((tutorId = ? AND studentId = ?) OR (tutorId = ? AND studentId = ?)) AND (lessons.status == '{LessonStatus.ACCEPTED}' OR lessons.status LIKE '{LessonStatus.CONFIRMED}%')
         ORDER BY
             lessons.proposedDatetime
         """

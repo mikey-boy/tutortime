@@ -367,7 +367,6 @@ button {
 
     button {
         margin-top: 10px;
-        margin-right: 10px;
         width: 65px;
         color: var(--text-white);
 
@@ -577,13 +576,13 @@ button {
         }
     }
     #chat-messages {
-        height: 500px;
+        height: 527px;
         min-width: 327px;
         overflow-y: scroll;
         padding: 0px 10px;
         
         &.minimized {
-            height: 352px;
+            height: 379px;
         }
         .flex-container-user {
             display: flex;
@@ -673,7 +672,8 @@ button {
         }
     }
     .lesson-container {
-        height: 567px;
+        min-width: 180px;
+        height: 540px;
         overflow-y: scroll;
     }
     .lesson-request-item {

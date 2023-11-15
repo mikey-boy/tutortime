@@ -91,9 +91,8 @@ class Database:
                 tutorId INTEGER,
                 studentId INTEGER,
                 status TEXT,
-                proposedDatetime TEXT,
+                datetime TEXT,
                 proposedDurationMinutes INTEGER,
-                actualDatetime TEXT,
                 actualDurationMinutes INTEGER
             )
         """
@@ -248,7 +247,7 @@ class Database:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
             cursor.execute(
-                "SELECT id, title, description FROM services WHERE userId = ? AND status = ?", (user_id, status)
+                "SELECT id, userId, title, description FROM services WHERE userId = ? AND status = ?", (user_id, status)
             )
             results = cursor.fetchall()
             conn.close()
@@ -400,7 +399,7 @@ class Database:
         cursor = conn.cursor()
         sql = """
         SELECT
-            lessonId, serviceId, senderId, recipientId, lessons.id AS id, lessons.tutorId, lessons.studentId, lessons.proposedDatetime, lessons.proposedDurationMinutes, lessons.status
+            lessonId, serviceId, senderId, recipientId, lessons.id AS id, lessons.tutorId, lessons.studentId, lessons.datetime, lessons.proposedDurationMinutes, lessons.status
         FROM
             messages
         INNER JOIN
@@ -422,11 +421,11 @@ class Database:
         sql = """
         INSERT INTO
             lessons 
-                (serviceId, tutorId, studentId, status, proposedDatetime, proposedDurationMinutes, actualDatetime, actualDurationMinutes)
+                (serviceId, tutorId, studentId, status, datetime, proposedDurationMinutes, actualDurationMinutes)
             VALUES
-                (?, ?, ?, ?, ?, ?, ?, ?)
+                (?, ?, ?, ?, ?, ?, ?)
         """
-        cursor.execute(sql, (service_id, tutor_id, student_id, status, datetime, duration, datetime, duration))
+        cursor.execute(sql, (service_id, tutor_id, student_id, status, datetime, duration, duration))
         lesson_id = cursor.lastrowid
         conn.commit()
         conn.close()
@@ -439,11 +438,21 @@ class Database:
         UPDATE
             lessons
         SET
-            proposedDatetime = ?, proposedDurationMinutes = ?, status = ?
+            datetime = ?, proposedDurationMinutes = ?, status = ?
         WHERE 
             id = ?
         """
         cursor.execute(sql, (datetime, duration, status, lesson_id))
+        conn.commit()
+        conn.close()
+
+    def update_lesson_duration(self, user_id: int, lesson_id: int, duration: int):
+        conn = sqlite3.connect(self.user_db)
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE lessons SET actualDurationMinutes = ? WHERE id = ? AND (tutorId = ? OR studentId = ?)",
+            (duration, lesson_id, user_id, user_id),
+        )
         conn.commit()
         conn.close()
 
@@ -463,7 +472,7 @@ class Database:
         cursor = conn.cursor()
         sql = """
         SELECT 
-            lessons.id, lessons.tutorId, lessons.studentId, lessons.proposedDatetime, lessons.proposedDurationMinutes, lessons.status, services.title, services.description, services.id as serviceId
+            lessons.id, lessons.tutorId, lessons.studentId, lessons.datetime, lessons.proposedDurationMinutes, lessons.status, services.title, services.description, services.id as serviceId
         FROM 
             lessons 
         INNER JOIN
@@ -486,7 +495,7 @@ class Database:
         cursor = conn.cursor()
         sql = f"""
         SELECT 
-            lessons.id, lessons.tutorId, lessons.studentId, lessons.status, lessons.proposedDatetime, lessons.proposedDurationMinutes, services.title, services.description, services.id as serviceId
+            lessons.id, lessons.tutorId, lessons.studentId, lessons.status, lessons.datetime, lessons.proposedDurationMinutes, lessons.actualDurationMinutes, services.title, services.description, services.id as serviceId
         FROM 
             lessons 
         INNER JOIN
@@ -496,7 +505,7 @@ class Database:
         WHERE
             ((tutorId = ? AND studentId = ?) OR (tutorId = ? AND studentId = ?)) AND (lessons.status == '{LessonStatus.ACCEPTED}' OR lessons.status LIKE '{LessonStatus.CONFIRMED}%')
         ORDER BY
-            lessons.proposedDatetime
+            lessons.datetime
         """
         cursor.execute(sql, (user_id, peer_id, peer_id, user_id))
         results = cursor.fetchall()

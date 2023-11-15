@@ -281,13 +281,19 @@ def user_messages_list(user_id=None):
     services = db.get_services_by_status(user1["id"], ServiceStatus.ACTIVE)
     services += db.get_services_by_status(user2["id"], ServiceStatus.ACTIVE)
 
-    now = datetime.now()
-    lessons = db.get_lessons_between_users(user1["id"], user2["id"])
-    for lesson in lessons:
-        dt = datetime.strptime(lesson["proposedDatetime"], "%Y-%m-%dT%H:%M")
-        lesson["completed"] = 1 if dt < now else 0
+    upcoming, completed = [], []
+    for lesson in db.get_lessons_between_users(user1["id"], user2["id"]):
+        dt = datetime.strptime(lesson["datetime"], "%Y-%m-%dT%H:%M")
         lesson["day"] = dt.strftime("%Y-%m-%d")
         lesson["time"] = dt.strftime("%H:%M")
+        if dt < datetime.now():
+            lesson["completed"] = 1
+            lesson["modified"] = True if lesson["proposedDurationMinutes"] != lesson["actualDurationMinutes"] else False
+            completed.insert(0, lesson)
+        else:
+            lesson["completed"] = 0
+            upcoming.append(lesson)
+    lessons = upcoming + completed
 
     messages = db.get_messages_between_users(user1["id"], user2["id"])
     for message in messages:
@@ -297,7 +303,7 @@ def user_messages_list(user_id=None):
 
             message["serviceTitle"] = service["title"]
             message["status"] = lesson["status"]
-            dt = datetime.strptime(lesson["proposedDatetime"], "%Y-%m-%dT%H:%M")
+            dt = datetime.strptime(lesson["datetime"], "%Y-%m-%dT%H:%M")
             message["day"] = dt.strftime("%Y-%m-%d")
             message["time"] = dt.strftime("%H:%M")
             message["duration"] = lesson["proposedDurationMinutes"]
@@ -396,17 +402,23 @@ def accept_lesson(payload):
 def confirm_lesson(payload):
     user_id = session["userId"]
     lesson_id = payload["lessonId"]
+
+    duration = payload.get("duration", "")
+    if duration:
+        db.update_lesson_duration(user_id, lesson_id, duration)
+
     lesson = db.get_lesson_request(lesson_id)
     if lesson["tutorId"] == user_id:
-        if lesson["status"] == LessonStatus.ACCEPTED:
+        if lesson["status"] == LessonStatus.ACCEPTED or duration:
             db.update_lesson_status(user_id, lesson_id, LessonStatus.CONFIRMED_TUTOR)
         else:
             db.update_lesson_status(user_id, lesson_id, LessonStatus.CONFIRMED)
     else:
-        if lesson["status"] == LessonStatus.ACCEPTED:
+        if lesson["status"] == LessonStatus.ACCEPTED or duration:
             db.update_lesson_status(user_id, lesson_id, LessonStatus.CONFIRMED_STUDENT)
         else:
             db.update_lesson_status(user_id, lesson_id, LessonStatus.CONFIRMED)
+
     emit("pageReload", to=session["room"])
 
 

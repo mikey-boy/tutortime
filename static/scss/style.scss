@@ -651,6 +651,7 @@ button {
 #lessons {
     flex: 2;
     margin: 0px 20px;
+    height: 670px;
 
     h2 {
         margin: 0px;
@@ -676,6 +677,9 @@ button {
         height: 540px;
         overflow-y: scroll;
     }
+    .lesson-container.without-subnav {
+        height: 594px;
+    }
     .lesson-request-item {
         display: block;
         margin-bottom: 10px;
@@ -695,6 +699,16 @@ button {
         p {
             margin-bottom: 0px;
         }
+        input {
+            width: 42px;
+        }
+    }
+    .warning {
+        border: 1px solid var(--error-text);
+    }
+    .warning-text {
+        color: var(--tutor);
+        font-weight: bolder;
     }
     .lesson-view-switch {
         padding: 8px;

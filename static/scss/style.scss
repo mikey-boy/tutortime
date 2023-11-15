@@ -594,6 +594,13 @@ button {
             justify-content: left;
             color: var(--tutor);
         }
+        .flex-container-system {
+            display: flex;
+            justify-content: center;
+            font-size: 13px;
+            margin: 5px 0px;
+            color: var(--background-lighter);
+        }
         .message-item {
             border: 2px solid;
             border-radius: 3px;

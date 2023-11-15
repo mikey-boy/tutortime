@@ -399,7 +399,7 @@ class Database:
         cursor = conn.cursor()
         sql = """
         SELECT
-            lessonId, serviceId, senderId, recipientId, lessons.id AS id, lessons.tutorId, lessons.studentId, lessons.datetime, lessons.proposedDurationMinutes, lessons.status
+            lessonId, serviceId, senderId, recipientId, lessons.id AS id, lessons.tutorId, lessons.studentId, lessons.datetime, lessons.proposedDurationMinutes, lessons.actualDurationMinutes, lessons.status
         FROM
             messages
         INNER JOIN

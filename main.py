@@ -320,6 +320,27 @@ def user_messages_list(user_id=None):
     )
 
 
+def _system_message(lesson_id, status):
+    user_id = session["userId"]
+    username = db.get_username(user_id)
+    lesson = db.get_lesson_request(lesson_id)
+    service = db.get_service_by_id(lesson["serviceId"])
+    dt = datetime.strptime(lesson["datetime"], "%Y-%m-%dT%H:%M")
+    day = dt.strftime("%Y-%m-%d")
+    time = dt.strftime("%H:%M")
+    now = datetime.now().strftime("%Y-%m-%dT%H:%M")
+    if status == LessonStatus.ACCEPTED:
+        message = f"{username} accepted '{service['title']}' scheduled for {day} @ {time}"
+    elif status == LessonStatus.CANCELLED:
+        message = f"{username} cancelled '{service['title']}' scheduled for {day} @ {time}"
+    else:
+        message = (
+            f"{username} confirmed '{service['title']}' on {day} @ {time} for {lesson['actualDurationMinutes']} minutes"
+        )
+
+    db.add_message(session["room"], -1, -1, now, message)
+
+
 @socketio.on("connect")
 def connect():
     join_room(session["room"])
@@ -395,6 +416,7 @@ def accept_lesson(payload):
     user_id = session["userId"]
     lesson_id = payload["lessonId"]
     db.update_lesson_status(user_id, lesson_id, LessonStatus.ACCEPTED)
+    _system_message(lesson_id, LessonStatus.ACCEPTED)
     emit("pageReload", to=session["room"])
 
 
@@ -407,17 +429,24 @@ def confirm_lesson(payload):
     if duration:
         db.update_lesson_duration(user_id, lesson_id, duration)
 
+    _system_message(lesson_id, LessonStatus.CONFIRMED)
+
     lesson = db.get_lesson_request(lesson_id)
+    student_name = db.get_username(lesson["studentId"])
+    tutor_name = db.get_username(lesson["tutorId"])
+    message = f"{lesson['actualDurationMinutes']} minutes transferred from {student_name} to {tutor_name}"
     if lesson["tutorId"] == user_id:
         if lesson["status"] == LessonStatus.ACCEPTED or duration:
             db.update_lesson_status(user_id, lesson_id, LessonStatus.CONFIRMED_TUTOR)
         else:
             db.update_lesson_status(user_id, lesson_id, LessonStatus.CONFIRMED)
+            db.add_message(session["room"], -1, -1, datetime.now(), message)
     else:
         if lesson["status"] == LessonStatus.ACCEPTED or duration:
             db.update_lesson_status(user_id, lesson_id, LessonStatus.CONFIRMED_STUDENT)
         else:
             db.update_lesson_status(user_id, lesson_id, LessonStatus.CONFIRMED)
+            db.add_message(session["room"], -1, -1, datetime.now(), message)
 
     emit("pageReload", to=session["room"])
 
@@ -427,6 +456,7 @@ def cancel_lesson(payload):
     user_id = session["userId"]
     lesson_id = payload["lessonId"]
     db.update_lesson_status(user_id, lesson_id, LessonStatus.CANCELLED)
+    _system_message(lesson_id, LessonStatus.CANCELLED)
     emit("pageReload", to=session["room"])
 
 

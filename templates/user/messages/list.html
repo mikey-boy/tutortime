@@ -27,8 +27,8 @@
                     <input id="service-or-lesson-id" type="hidden">
                     <input id="lesson-peer-id" type="hidden" value="{{ peer['id'] }}">
                     <label for="lesson-date">Datetime: </label>
-                    <input id="lesson-date" type="date" required>
-                    <input id="lesson-time" type="time" required>
+                    <input id="lesson-date" type="date">
+                    <input id="lesson-time" type="time">
                 </div>
                 <div>
                     <label for="lesson-duration">Duration: </label>
@@ -146,7 +146,10 @@
 
         function createMessageItem(message) {
             var messageContainer = document.getElementById("chat-messages");
-            if (message.senderId === {{ user.id }}) {
+            
+            if (message.senderId === -1 ){
+                var content = `<div class="flex-container-system"><span class="message-item">${message.message}</span></div>`
+            } else if (message.senderId === {{ user.id }}) {
                 var content = `<div class="flex-container-user"><span class="message-item">${message.message}</span></div>`
             } else {
                 var content = `<div class="flex-container-peer"><span class="message-item">${message.message}</span></div>`
@@ -154,13 +157,17 @@
             messageContainer.innerHTML += content;
         }
         function createLessonItem(message) {
-            if (message.status == 'accepted' || message.status.startsWith('confirmed')) {
+            if (message.status == 'accepted' || message.status == 'cancelled'|| message.status.startsWith('confirmed')) {
                 return;
             }
 
             var messageContainer = document.getElementById("chat-messages");
             var div = document.createElement("div")
-            div.className = message.senderId === {{ user.id }} ? 'flex-container-user' : 'flex-container-peer'
+            if (message.senderId === {{ user.id }}) {
+                div.className = 'flex-container-user'
+            } else {
+                div.className = 'flex-container-peer'
+            }
             
             var span = document.createElement("span")
             span.className = "message-item lesson-item"

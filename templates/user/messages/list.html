@@ -18,33 +18,29 @@
         <h2>{{ peer.name }}</h2>
         <div id="chat-messages" :class="request_service > 1 && 'minimized'"></div>
         <div id="chat-lesson-request" x-show="request_service > 1">
-            <div>
+            <form @submit.prevent="sendLessonRequest(request_service); request_service = 0;">
                 <div class="flex-container">
                     <h3 id="service-title"></h3>
                     <i id="cancel-request-button" @click="request_service = 0" class="fa-regular fa-circle-xmark fa-lg"></i>
                 </div>
-                <div>
-                    <input id="service-or-lesson-id" type="hidden">
-                    <input id="lesson-peer-id" type="hidden" value="{{ peer['id'] }}">
-                    <label for="lesson-date">Datetime: </label>
-                    <input id="lesson-date" type="date">
-                    <input id="lesson-time" type="time">
-                </div>
-                <div>
-                    <label for="lesson-duration">Duration: </label>
-                    <select id="lesson-duration">
-                        {% for i in range(1, 17) %}
-                            {% if i <= 4 %}
-                                <option value="{{ i * 15 }}">{{ i * 15 }} minutes</option>
-                            {% else %}
-                                <option value="{{ i * 15 }}">{{ i//4 }} hour {{ (i % 4) * 15 }} minutes</option>
-                            {% endif %}
-                        {% endfor %}
-                    </select>
-                    <button id="send-request-button" @click="sendLessonRequest(); request_service = 0" x-show="request_service == 2">Send</button>
-                    <button id="modify-request-button" @click="sendModifyRequest(); request_service = 0" x-show="request_service == 3">Modify</button>
-                </div>
-            </div>
+                <input id="service-or-lesson-id" type="hidden">
+                <input id="lesson-peer-id" type="hidden" value="{{ peer['id'] }}">
+                <label for="lesson-date">Datetime: </label>
+                <input id="lesson-date" name="lesson-date" type="date" required>
+                <input id="lesson-time" name="lesson-time" type="time" required>
+                <label for="lesson-duration">Duration: </label>
+                <select id="lesson-duration">
+                    {% for i in range(1, 17) %}
+                        {% if i <= 4 %}
+                            <option value="{{ i * 15 }}">{{ i * 15 }} minutes</option>
+                        {% else %}
+                            <option value="{{ i * 15 }}">{{ i//4 }} hour {{ (i % 4) * 15 }} minutes</option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+                <button id="send-request-button" x-show="request_service == 2">Send</button>
+                <button id="modify-request-button" x-show="request_service == 3">Modify</button>
+            </form>
         </div>
         <div id="chat-input">
             <input type="text" placeholder="Type your message..." @keydown.enter="sendMessage()" id="message" name="message"/>
@@ -210,21 +206,17 @@
             socketio.emit("message", { message: msg, recipient: "{{ peer['id'] }}" });
             msgInput.value = "";
         }
-        function sendLessonRequest() {
+        function sendLessonRequest(request_type) {
             var serviceId = document.getElementById("service-or-lesson-id")
             var peerId = document.getElementById("lesson-peer-id")
             var dateInput = document.getElementById("lesson-date");
             var timeInput = document.getElementById("lesson-time");
             var durationInput = document.getElementById("lesson-duration");
-            socketio.emit("createLesson", { serviceId: serviceId.value, peerId: peerId.value, date: dateInput.value, time: timeInput.value, duration: durationInput.value });
-        }
-        function sendModifyRequest() {
-            var lessonId = document.getElementById("service-or-lesson-id")
-            var peerId = document.getElementById("lesson-peer-id")
-            var dateInput = document.getElementById("lesson-date");
-            var timeInput = document.getElementById("lesson-time");
-            var durationInput = document.getElementById("lesson-duration");
-            socketio.emit("modifyLesson", { lessonId: lessonId.value, peerId: peerId.value, date: dateInput.value, time: timeInput.value, duration: durationInput.value });
+            if (request_type == 2) {
+                socketio.emit("createLesson", { serviceId: serviceId.value, peerId: peerId.value, date: dateInput.value, time: timeInput.value, duration: durationInput.value });
+            } else {
+                socketio.emit("modifyLesson", { lessonId: serviceId.value, peerId: peerId.value, date: dateInput.value, time: timeInput.value, duration: durationInput.value });
+            }
         }
         function sendAcceptRequest(lesson_id) {
             socketio.emit("acceptLesson", { lessonId: lesson_id });

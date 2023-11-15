@@ -577,7 +577,7 @@ button {
     }
     #chat-messages {
         height: 527px;
-        min-width: 327px;
+        min-width: 330px;
         overflow-y: scroll;
         padding: 0px 10px;
         
@@ -617,16 +617,15 @@ button {
             margin-top: 0px;
             justify-content: left;
         }
-        > div {
+        > form {
             padding: 8px;
             background-color: var(--background-light);
             border: 1px dashed var(--links);
             border-radius: 3px;
+            width: 330px;
 
             select, input {
                 padding: 4px ;
-            }
-            div {
                 margin-bottom: 10px;
             }
         }

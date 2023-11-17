@@ -582,7 +582,7 @@ button {
         padding: 0px 10px;
         
         &.minimized {
-            height: 379px;
+            height: 388px;
         }
         .flex-container-user {
             display: flex;
@@ -599,7 +599,7 @@ button {
             justify-content: center;
             font-size: 13px;
             margin: 5px 0px;
-            color: var(--background-lighter);
+            color: var(--text);
         }
         .message-item {
             border: 2px solid;
@@ -607,6 +607,9 @@ button {
             margin-bottom: 7px;
             padding: 5px 10px;
             background: var(--background-lesson);
+        }
+        .message-item-system {
+            margin: 5px 0px;
         }
     }
     #chat-lesson-request {

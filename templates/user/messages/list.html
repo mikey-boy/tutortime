@@ -108,7 +108,7 @@
     </div>
 
     <script type="text/javascript">
-        const messages = {{ messages|tojson }};
+        var messages = {{ messages|tojson }};
         const services = {{ services|tojson }};
         
         function modifyRequest(lesson_id) {
@@ -144,7 +144,7 @@
             var messageContainer = document.getElementById("chat-messages");
             
             if (message.senderId === -1 ){
-                var content = `<div class="flex-container-system"><span class="message-item">${message.message}</span></div>`
+                var content = `<div class="flex-container-system"><span class="message-item-system">${message.message}</span></div>`
             } else if (message.senderId === {{ user.id }}) {
                 var content = `<div class="flex-container-user"><span class="message-item">${message.message}</span></div>`
             } else {
@@ -233,8 +233,8 @@
         }
 
         var socketio = io();
-        socketio.on("message", function(message) { createMessageItem(message); scrollToBottom(); } );
-        socketio.on("createLesson", function(message) { createLessonItem(message); scrollToBottom(); } );
+        socketio.on("message", function(message) { messages.push(message); createMessageItem(message); scrollToBottom(); } );
+        socketio.on("createLesson", function(message) { messages.push(message); createLessonItem(message); scrollToBottom(); } );
         socketio.on("pageReload", function(message) { window.location.reload(); } );
     </script>
     <script type="text/javascript">

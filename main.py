@@ -249,7 +249,7 @@ def user_calendar_list():
                 lesson["day"] = lesson["dt"].day
                 lesson["start_time"] = datetime.strftime(lesson["dt"], "%H:%M")
                 lesson["end_time"] = datetime.strftime(
-                    lesson["dt"] + relativedelta(minutes=lesson["durationMinutes"]), "%H:%M"
+                    lesson["dt"] + relativedelta(minutes=lesson["proposedDurationMinutes"]), "%H:%M"
                 )
                 lesson["title"] = lesson["title"]
                 lesson["is_tutor"] = lesson["tutorName"] == session["username"]

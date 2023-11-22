@@ -13,9 +13,14 @@ def _crud(db: str, query: str):
 
 
 class LessonStatus(StrEnum):
-    PENDING = auto()
-    CONFIRMED = auto()
     CANCELLED = auto()
+    EXPIRED = auto()
+    ACCEPTED = auto()
+    ACCEPTED_STUDENT = auto()
+    ACCEPTED_TUTOR = auto()
+    CONFIRMED = auto()
+    CONFIRMED_STUDENT = auto()
+    CONFIRMED_TUTOR = auto()
 
 
 class ServiceStatus(StrEnum):
@@ -42,7 +47,8 @@ class Database:
             CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY,
                 username TEXT,
-                password TEXT
+                password TEXT,
+                minutes INTEGER
             )
         """
         message_schema = """
@@ -86,7 +92,8 @@ class Database:
                 studentId INTEGER,
                 status TEXT,
                 datetime TEXT,
-                durationMinutes INTEGER
+                proposedDurationMinutes INTEGER,
+                actualDurationMinutes INTEGER
             )
         """
         image_schema = """
@@ -123,6 +130,26 @@ class Database:
             return result[0]
         return -1
 
+    def get_user_balance(self, user_id: int):
+        conn = sqlite3.connect(self.user_db)
+        cursor = conn.cursor()
+        cursor.execute("SELECT minutes FROM users WHERE id = ?", (user_id,))
+        result = cursor.fetchone()
+        conn.close()
+        if result:
+            return result[0]
+        return 0
+
+    def update_user_balance(self, user_id: int, minutes: int):
+        current_balance = self.get_user_balance(user_id)
+        updated_balance = current_balance + minutes
+
+        conn = sqlite3.connect(self.user_db)
+        cursor = conn.cursor()
+        cursor.execute("UPDATE users SET minutes = ? WHERE id = ?", (updated_balance, user_id))
+        conn.commit()
+        conn.close()
+
     def get_username(self, user_id: int):
         conn = sqlite3.connect(self.user_db)
         cursor = conn.cursor()
@@ -148,7 +175,9 @@ class Database:
             conn = sqlite3.connect(self.user_db)
             cursor = conn.cursor()
             encoded_pass = hashlib.sha256(password.encode()).hexdigest()
-            cursor.execute("INSERT INTO users (username, password) VALUES(?, ?)", (username, encoded_pass))
+            cursor.execute(
+                "INSERT INTO users (username, password, minutes) VALUES(?, ?, ?)", (username, encoded_pass, 60)
+            )
             user_id = cursor.lastrowid
             conn.commit()
             conn.close()
@@ -238,7 +267,7 @@ class Database:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
             cursor.execute(
-                "SELECT id, title, description FROM services WHERE userId = ? AND status = ?", (user_id, status)
+                "SELECT id, userId, title, description FROM services WHERE userId = ? AND status = ?", (user_id, status)
             )
             results = cursor.fetchall()
             conn.close()
@@ -359,13 +388,38 @@ class Database:
         conn.close()
         return [dict(result) for result in results]
 
+    def get_message_by_lesson_id(self, lesson_id: int):
+        conn = sqlite3.connect(self.user_db)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        sql = "SELECT id FROM messages WHERE lessonId = ?"
+        cursor.execute(sql, (lesson_id,))
+        result = cursor.fetchone()
+        conn.close()
+        return dict(result)
+
+    def update_message(self, message_id: int, sender_id: int, recipient_id: int):
+        conn = sqlite3.connect(self.user_db)
+        cursor = conn.cursor()
+        sql = """
+        UPDATE
+            messages
+        SET
+            senderId = ?, recipientId = ?
+        WHERE 
+            id = ?
+        """
+        cursor.execute(sql, (sender_id, recipient_id, message_id))
+        conn.commit()
+        conn.close()
+
     def get_lesson_request(self, lesson_id):
         conn = sqlite3.connect(self.user_db)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         sql = """
         SELECT
-            lessonId, serviceId, senderId, recipientId, lessons.datetime, lessons.durationMinutes, lessons.status
+            lessonId, serviceId, senderId, recipientId, lessons.id AS id, lessons.tutorId, lessons.studentId, lessons.datetime, lessons.proposedDurationMinutes, lessons.actualDurationMinutes, lessons.status
         FROM
             messages
         INNER JOIN
@@ -379,17 +433,50 @@ class Database:
         conn.close()
         return dict(result)
 
-    def add_lesson(self, service_id: int, tutor_id: int, student_id: int, datetime: str, duration: int):
+    def add_lesson(
+        self, service_id: int, tutor_id: int, student_id: int, status: LessonStatus, datetime: str, duration: int
+    ):
         conn = sqlite3.connect(self.user_db)
         cursor = conn.cursor()
-        sql = "INSERT INTO lessons (serviceId, tutorId, studentId, status, datetime, durationMinutes) VALUES(?, ?, ?, ?, ?, ?)"
-        cursor.execute(sql, (service_id, tutor_id, student_id, LessonStatus.PENDING, datetime, duration))
+        sql = """
+        INSERT INTO
+            lessons 
+                (serviceId, tutorId, studentId, status, datetime, proposedDurationMinutes, actualDurationMinutes)
+            VALUES
+                (?, ?, ?, ?, ?, ?, ?)
+        """
+        cursor.execute(sql, (service_id, tutor_id, student_id, status, datetime, duration, duration))
         lesson_id = cursor.lastrowid
         conn.commit()
         conn.close()
         return lesson_id
 
-    def _update_lesson_status(self, user_id: int, lesson_id: int, status: LessonStatus):
+    def update_lesson(self, lesson_id: int, datetime: str, duration: int, status: LessonStatus):
+        conn = sqlite3.connect(self.user_db)
+        cursor = conn.cursor()
+        sql = """
+        UPDATE
+            lessons
+        SET
+            datetime = ?, proposedDurationMinutes = ?, status = ?
+        WHERE 
+            id = ?
+        """
+        cursor.execute(sql, (datetime, duration, status, lesson_id))
+        conn.commit()
+        conn.close()
+
+    def update_lesson_duration(self, user_id: int, lesson_id: int, duration: int):
+        conn = sqlite3.connect(self.user_db)
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE lessons SET actualDurationMinutes = ? WHERE id = ? AND (tutorId = ? OR studentId = ?)",
+            (duration, lesson_id, user_id, user_id),
+        )
+        conn.commit()
+        conn.close()
+
+    def update_lesson_status(self, user_id: int, lesson_id: int, status: LessonStatus):
         conn = sqlite3.connect(self.user_db)
         cursor = conn.cursor()
         cursor.execute(
@@ -399,19 +486,13 @@ class Database:
         conn.commit()
         conn.close()
 
-    def confirm_lesson(self, user_id: int, lesson_id: int):
-        self._update_lesson_status(user_id, lesson_id, LessonStatus.CONFIRMED)
-
-    def cancel_lesson(self, user_id: int, lesson_id: int):
-        self._update_lesson_status(user_id, lesson_id, LessonStatus.CANCELLED)
-
     def get_lessons_for_user(self, user_id: int):
         conn = sqlite3.connect(self.user_db)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         sql = """
         SELECT 
-            lessons.id, lessons.tutorId, lessons.studentId, lessons.datetime, lessons.durationMinutes, lessons.status, services.title, services.description, services.id as serviceId
+            lessons.id, lessons.tutorId, lessons.studentId, lessons.datetime, lessons.actualDurationMinutes, lessons.proposedDurationMinutes, lessons.status, services.title, services.description, services.id as serviceId
         FROM 
             lessons 
         INNER JOIN
@@ -419,11 +500,12 @@ class Database:
         ON
             lessons.serviceId = services.id  
         WHERE
-            tutorId = ? OR studentId = ?
+            (tutorId = ? OR studentId = ?) AND (lessons.status != ? AND lessons.status != ?)
         ORDER BY
             datetime
+        DESC
         """
-        cursor.execute(sql, (user_id, user_id))
+        cursor.execute(sql, (user_id, user_id, LessonStatus.CANCELLED, LessonStatus.EXPIRED))
         results = cursor.fetchall()
         conn.close()
         return [dict(result) for result in results]
@@ -432,9 +514,9 @@ class Database:
         conn = sqlite3.connect(self.user_db)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        sql = f"""
+        sql = """
         SELECT 
-            lessons.id, lessons.tutorId, lessons.studentId, lessons.datetime, lessons.durationMinutes, services.title, services.description, services.id as serviceId
+            lessons.id, lessons.tutorId, lessons.studentId, lessons.status, lessons.datetime, lessons.proposedDurationMinutes, lessons.actualDurationMinutes, services.title, services.description, services.id as serviceId
         FROM 
             lessons 
         INNER JOIN
@@ -442,11 +524,11 @@ class Database:
         ON
             lessons.serviceId = services.id  
         WHERE
-            ((tutorId = ? AND studentId = ?) OR (tutorId = ? AND studentId = ?)) AND lessons.status = '{LessonStatus.CONFIRMED}'
+            ((tutorId = ? AND studentId = ?) OR (tutorId = ? AND studentId = ?)) AND (lessons.status = ? OR lessons.status LIKE ? )
         ORDER BY
-            datetime
+            lessons.datetime
         """
-        cursor.execute(sql, (user_id, peer_id, peer_id, user_id))
+        cursor.execute(sql, (user_id, peer_id, peer_id, user_id, LessonStatus.ACCEPTED, f"{LessonStatus.CONFIRMED}%"))
         results = cursor.fetchall()
         conn.close()
         return [dict(result) for result in results]

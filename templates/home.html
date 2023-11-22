@@ -18,7 +18,7 @@
                     <div class="relative-container" x-show="open">
                         <div id="user-modal-popout">
                             <ul>
-                                <li><a href="#">Profile</a></li>
+                                <li><a href="{{ url_for('user_account_list') }}">Profile</a></li>
                                 <li><a href="{{ url_for('user_account_logout') }}">Logout</a></li>
                             </ul>
                         </div>

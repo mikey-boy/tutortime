@@ -7,7 +7,7 @@ from flask import Flask, jsonify, redirect, render_template, request, session
 from flask_socketio import SocketIO, emit, join_room, leave_room, send
 from sassutils.wsgi import SassMiddleware
 
-from database import Database, ServiceStatus
+from database import Database, LessonStatus, ServiceStatus
 from image_server import ImageServer
 from utils import availability_to_int, availability_to_list
 
@@ -79,6 +79,36 @@ def user_account_create():
         session["username"] = username
         session["userId"] = user_id
         return render_template("home.html")
+
+
+@app.route("/user/account/list")
+def user_account_list():
+    if "username" in session:
+        services = db.get_services_by_status(session["userId"], ServiceStatus.ACTIVE)
+        lessons = db.get_lessons_for_user(session["userId"])
+        balance = db.get_user_balance(session["userId"])
+        original_balance = balance
+        for lesson in lessons:
+            dt = datetime.strptime(lesson["datetime"], "%Y-%m-%dT%H:%M")
+            lesson["day"] = datetime.strftime(dt, "%d/%m/%Y")
+            lesson["tutorName"] = db.get_username(lesson["tutorId"])
+            lesson["studentName"] = db.get_username(lesson["studentId"])
+            if lesson["tutorId"] == session["userId"] and lesson["status"] == LessonStatus.CONFIRMED:
+                lesson["balance"] = balance
+                balance -= lesson["actualDurationMinutes"]
+            elif lesson["studentId"] == session["userId"] and lesson["status"].startswith("accepted_") == False:
+                lesson["balance"] = balance
+                balance += lesson["proposedDurationMinutes"]
+            else:
+                lesson["balance"] = balance
+
+        return render_template(
+            "user/account/list.html",
+            user_id=session["userId"],
+            services=services,
+            lessons=lessons,
+            balance=original_balance,
+        )
 
 
 @app.route("/service/list/")
@@ -186,9 +216,18 @@ def user_service_activate(service_id):
 @app.route("/user/lesson/confirm/<int:lesson_id>")
 def user_lesson_confirm(lesson_id):
     user_id = session["userId"]
-    if lesson_id == -1 or db.get_lesson_request(lesson_id).get("senderId", "") == user_id:
+    if lesson_id == -1:
         return render_template("home.html")
-    db.confirm_lesson(user_id, lesson_id)
+    db.update_lesson_status(user_id, lesson_id, LessonStatus.CONFIRMED)
+    return redirect(request.referrer)
+
+
+@app.route("/user/lesson/accept/<int:lesson_id>")
+def user_lesson_accept(lesson_id):
+    user_id = session["userId"]
+    if lesson_id == -1:
+        return render_template("home.html")
+    db.accept_lesson(user_id, lesson_id)
     return redirect(request.referrer)
 
 
@@ -197,7 +236,7 @@ def user_lesson_cancel(lesson_id):
     user_id = session["userId"]
     if lesson_id == -1:
         return render_template("home.html")
-    db.cancel_lesson(user_id, lesson_id)
+    db.update_lesson_status(user_id, lesson_id, LessonStatus.CANCELLED)
     return redirect(request.referrer)
 
 
@@ -232,7 +271,7 @@ def user_calendar_list():
                 lesson["day"] = lesson["dt"].day
                 lesson["start_time"] = datetime.strftime(lesson["dt"], "%H:%M")
                 lesson["end_time"] = datetime.strftime(
-                    lesson["dt"] + relativedelta(minutes=lesson["durationMinutes"]), "%H:%M"
+                    lesson["dt"] + relativedelta(minutes=lesson["proposedDurationMinutes"]), "%H:%M"
                 )
                 lesson["title"] = lesson["title"]
                 lesson["is_tutor"] = lesson["tutorName"] == session["username"]
@@ -258,18 +297,25 @@ def user_messages_list(user_id=None):
             return render_template("user/messages/list.html", error_text="Browse the service listings to start a chat")
         user2 = {"id": contacts[0]["userId"], "name": contacts[0]["userName"]}
 
-    user1["services"] = db.get_services_by_status(user1["id"], ServiceStatus.ACTIVE)
-    user2["services"] = db.get_services_by_status(user2["id"], ServiceStatus.ACTIVE)
     room = db.get_room_id(user1["id"], user2["id"])
+    session["room"] = room
 
-    now = datetime.now()
-    lessons = db.get_lessons_between_users(user1["id"], user2["id"])
-    for lesson in lessons:
+    services = db.get_services_by_status(user1["id"], ServiceStatus.ACTIVE)
+    services += db.get_services_by_status(user2["id"], ServiceStatus.ACTIVE)
+
+    upcoming, completed = [], []
+    for lesson in db.get_lessons_between_users(user1["id"], user2["id"]):
         dt = datetime.strptime(lesson["datetime"], "%Y-%m-%dT%H:%M")
-        lesson["completed"] = 1 if dt < now else 0
         lesson["day"] = dt.strftime("%Y-%m-%d")
-        lesson["start_time"] = dt.strftime("%H:%M")
-        lesson["end_time"] = datetime.strftime(dt + relativedelta(minutes=lesson["durationMinutes"]), "%H:%M")
+        lesson["time"] = dt.strftime("%H:%M")
+        if dt < datetime.now():
+            lesson["completed"] = 1
+            lesson["modified"] = True if lesson["proposedDurationMinutes"] != lesson["actualDurationMinutes"] else False
+            completed.insert(0, lesson)
+        else:
+            lesson["completed"] = 0
+            upcoming.append(lesson)
+    lessons = upcoming + completed
 
     messages = db.get_messages_between_users(user1["id"], user2["id"])
     for message in messages:
@@ -281,9 +327,8 @@ def user_messages_list(user_id=None):
             message["status"] = lesson["status"]
             dt = datetime.strptime(lesson["datetime"], "%Y-%m-%dT%H:%M")
             message["day"] = dt.strftime("%Y-%m-%d")
-            start = dt.strftime("%H:%M")
-            end = datetime.strftime(dt + relativedelta(minutes=lesson["durationMinutes"]), "%H:%M")
-            message["time"] = f"{start} - {end}"
+            message["time"] = dt.strftime("%H:%M")
+            message["duration"] = lesson["proposedDurationMinutes"]
 
     contacts = db.get_contacts_of_user(user1["id"])
     return render_template(
@@ -291,51 +336,69 @@ def user_messages_list(user_id=None):
         contacts=contacts,
         user=user1,
         peer=user2,
-        room=room,
+        services=services,
         lessons=lessons,
         messages=messages,
     )
 
 
-@socketio.on("join_room")
-def handle_join_room(payload):
-    session["room"] = payload["room"]
-    join_room(payload["room"])
+def _system_message(lesson_id, status):
+    user_id = session["userId"]
+    username = db.get_username(user_id)
+    lesson = db.get_lesson_request(lesson_id)
+    service = db.get_service_by_id(lesson["serviceId"])
+    dt = datetime.strptime(lesson["datetime"], "%Y-%m-%dT%H:%M")
+    day = dt.strftime("%Y-%m-%d")
+    time = dt.strftime("%H:%M")
+    now = datetime.now().strftime("%Y-%m-%dT%H:%M")
+    if status == LessonStatus.ACCEPTED:
+        message = f"{username} accepted '{service['title']}' scheduled for {day} @ {time}"
+    elif status == LessonStatus.CANCELLED:
+        message = f"{username} cancelled '{service['title']}' scheduled for {day} @ {time}"
+    else:
+        message = (
+            f"{username} confirmed '{service['title']}' on {day} @ {time} for {lesson['actualDurationMinutes']} minutes"
+        )
+
+    db.add_message(session["room"], -1, -1, now, message)
+
+
+@socketio.on("connect")
+def connect():
+    join_room(session["room"])
 
 
 @socketio.on("message")
-def handle_message(payload):
+def message(payload):
     username = session["username"]
     user_id = session["userId"]
     peer_id = payload["recipient"]
-    room_id = payload["room"]
     dt = datetime.now().strftime("%Y-%m-%dT%H:%M")
     payload["message"] = payload["message"].rstrip("\n")
 
-    db.add_message(room_id, user_id, peer_id, dt, payload["message"])
+    db.add_message(session["room"], user_id, peer_id, dt, payload["message"])
     message = {"sender": username, "senderId": user_id, "message": payload["message"], "lessonId": -1}
-    send(message, to=room_id)
+    send(message, to=session["room"])
 
 
-@socketio.on("lesson")
-def handle_lesson(payload):
+@socketio.on("createLesson")
+def create_lesson(payload):
     username = session["username"]
     user_id = session["userId"]
-    service_id = payload["serviceId"]
     peer_id = payload["peerId"]
+    service_id = payload["serviceId"]
     dt = f"{payload['date']}T{payload['time']}"
     duration = payload["duration"]
-    room = payload["room"]
 
     service = db.get_service_by_id(service_id)
     if service["userId"] == user_id:
-        lesson_id = db.add_lesson(service_id, user_id, peer_id, dt, duration)
+        status = LessonStatus.ACCEPTED_TUTOR
+        lesson_id = db.add_lesson(service_id, user_id, peer_id, status, dt, duration)
     else:
-        lesson_id = db.add_lesson(service_id, peer_id, user_id, dt, duration)
+        status = LessonStatus.ACCEPTED_STUDENT
+        lesson_id = db.add_lesson(service_id, peer_id, user_id, status, dt, duration)
 
-    dt_obj = datetime.strptime(dt, "%Y-%m-%dT%H:%M")
-    end_time = datetime.strftime(dt_obj + relativedelta(minutes=int(duration)), "%H:%M")
-    db.add_message(room, user_id, peer_id, dt, "", lesson_id)
+    db.add_message(session["room"], user_id, peer_id, dt, "", lesson_id)
     lesson = {
         "sender": username,
         "senderId": user_id,
@@ -343,10 +406,84 @@ def handle_lesson(payload):
         "lessonId": lesson_id,
         "serviceTitle": service["title"],
         "day": payload["date"],
-        "time": f"{payload['time']} - {end_time}",
-        "status": "pending",
+        "time": payload["time"],
+        "duration": duration,
+        "status": status,
     }
-    emit("lesson", lesson, to=room)
+    emit("createLesson", lesson, to=session["room"])
+
+
+@socketio.on("modifyLesson")
+def modify_lesson(payload):
+    username = session["username"]
+    user_id = session["userId"]
+    peer_id = payload["peerId"]
+    lesson_id = payload["lessonId"]
+    dt = f"{payload['date']}T{payload['time']}"
+    duration = payload["duration"]
+
+    lesson = db.get_lesson_request(lesson_id)
+    if lesson["tutorId"] == user_id:
+        db.update_lesson(lesson["id"], dt, duration, LessonStatus.ACCEPTED_TUTOR)
+    else:
+        db.update_lesson(lesson["id"], dt, duration, LessonStatus.ACCEPTED_STUDENT)
+
+    message = db.get_message_by_lesson_id(lesson_id)
+    db.update_message(message["id"], user_id, peer_id)
+    emit("pageReload", to=session["room"])
+
+
+@socketio.on("acceptLesson")
+def accept_lesson(payload):
+    user_id = session["userId"]
+    lesson_id = payload["lessonId"]
+    db.update_lesson_status(user_id, lesson_id, LessonStatus.ACCEPTED)
+    lesson = db.get_lesson_request(lesson_id)
+    db.update_user_balance(lesson["studentId"], lesson["proposedDurationMinutes"] * -1)
+    _system_message(lesson_id, LessonStatus.ACCEPTED)
+    emit("pageReload", to=session["room"])
+
+
+@socketio.on("confirmLesson")
+def confirm_lesson(payload):
+    user_id = session["userId"]
+    lesson_id = payload["lessonId"]
+
+    duration = payload.get("duration", "")
+    if duration:
+        db.update_lesson_duration(user_id, lesson_id, duration)
+
+    _system_message(lesson_id, LessonStatus.CONFIRMED)
+
+    lesson = db.get_lesson_request(lesson_id)
+    if lesson["status"] == LessonStatus.ACCEPTED or duration:
+        if lesson["tutorId"] == user_id:
+            db.update_lesson_status(user_id, lesson_id, LessonStatus.CONFIRMED_TUTOR)
+        else:
+            db.update_lesson_status(user_id, lesson_id, LessonStatus.CONFIRMED_STUDENT)
+    else:
+        tutor_name = db.get_username(lesson["tutorId"])
+        message = f"{lesson['actualDurationMinutes']} minutes transferred to {tutor_name}"
+        db.add_message(session["room"], -1, -1, datetime.now(), message)
+
+        db.update_lesson_status(user_id, lesson_id, LessonStatus.CONFIRMED)
+        db.update_user_balance(lesson["tutorId"], lesson["actualDurationMinutes"])
+        if lesson["actualDurationMinutes"] != lesson["proposedDurationMinutes"]:
+            difference = lesson["proposedDurationMinutes"] - lesson["actualDurationMinutes"]
+            db.update_user_balance(lesson["studentId"], difference)
+
+    emit("pageReload", to=session["room"])
+
+
+@socketio.on("cancelLesson")
+def cancel_lesson(payload):
+    user_id = session["userId"]
+    lesson_id = payload["lessonId"]
+    db.update_lesson_status(user_id, lesson_id, LessonStatus.CANCELLED)
+    lesson = db.get_lesson_request(lesson_id)
+    db.update_user_balance(lesson["studentId"], lesson["proposedDurationMinutes"])
+    _system_message(lesson_id, LessonStatus.CANCELLED)
+    emit("pageReload", to=session["room"])
 
 
 @socketio.on("disconnect")

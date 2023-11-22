@@ -3,7 +3,7 @@
 {% if error_text %}
     <p>{{ error_text }}</p>
 {% else %}
-<div id="chat-container" x-data="{ request_service: false, service_title: '', service_id: 0 }">
+<div id="chat-container" x-data="{ request_service: 0 }">
     <div id="contacts">
         <h2>Contacts</h2>
         <ul>
@@ -16,34 +16,31 @@
     </div>
     <div id="chat">
         <h2>{{ peer.name }}</h2>
-        <div id="chat-messages" :class="request_service && service_title != '' && 'minimized'" x-ref="messages"></div>
-        <div id="chat-lesson-request" x-show="request_service && service_title != ''">
-            <div>
+        <div id="chat-messages" :class="request_service > 1 && 'minimized'"></div>
+        <div id="chat-lesson-request" x-show="request_service > 1">
+            <form @submit.prevent="sendLessonRequest(request_service); request_service = 0;">
                 <div class="flex-container">
-                    <h3 class="truncated-text" x-text="service_title"></h3>
-                    <i id="cancel-request-button" @click="request_service = false" class="fa-regular fa-circle-xmark fa-xl"></i>
+                    <h3 id="service-title"></h3>
+                    <i id="cancel-request-button" @click="request_service = 0" class="fa-regular fa-circle-xmark fa-lg"></i>
                 </div>
-                <div>
-                    <input id="lesson-service-id" type="hidden" x-bind:value="service_id">
-                    <input id="lesson-peer-id" type="hidden" value="{{ peer['id'] }}">
-                    <label for="lesson-date">Datetime: </label>
-                    <input id="lesson-date" type="date" required>
-                    <input id="lesson-time" type="time" required>
-                </div>
-                <div>
-                    <label for="lesson-duration">Duration: </label>
-                    <select id="lesson-duration">
-                        {% for i in range(1, 17) %}
-                            {% if i <= 4 %}
-                                <option value="{{ i * 15 }}">{{ i * 15 }} minutes</option>
-                            {% else %}
-                                <option value="{{ i * 15 }}">{{ i//4 }} hour {{ (i % 4) * 15 }} minutes</option>
-                            {% endif %}
-                        {% endfor %}
-                    </select>
-                    <button id="send-request-button" @click="sendLessonRequest(); request_service = false ">Send</button>
-                </div>
-            </div>
+                <input id="service-or-lesson-id" type="hidden">
+                <input id="lesson-peer-id" type="hidden" value="{{ peer['id'] }}">
+                <label for="lesson-date">Datetime: </label>
+                <input id="lesson-date" name="lesson-date" type="date" required>
+                <input id="lesson-time" name="lesson-time" type="time" required>
+                <label for="lesson-duration">Duration: </label>
+                <select id="lesson-duration">
+                    {% for i in range(1, 17) %}
+                        {% if i <= 4 %}
+                            <option value="{{ i * 15 }}">{{ i * 15 }} minutes</option>
+                        {% else %}
+                            <option value="{{ i * 15 }}">{{ i//4 }} hour {{ (i % 4) * 15 }} minutes</option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+                <button id="send-request-button" x-show="request_service == 2">Send</button>
+                <button id="modify-request-button" x-show="request_service == 3">Modify</button>
+            </form>
         </div>
         <div id="chat-input">
             <input type="text" placeholder="Type your message..." @keydown.enter="sendMessage()" id="message" name="message"/>
@@ -52,41 +49,103 @@
     </div>
     <div id="lessons" x-data="{ completed: 0 }">
         <h2>Lessons</h2>
-        <div class="lesson-container" x-show="!request_service">
-            <div class="flex-container subnav" x-show="!request_service">
-                <button :class="completed == 0 && 'active'" @click="completed = 0">Upcoming</button>
-                <button :class="completed == 1 && 'active'" @click="completed = 1">Completed</button>
-            </div>
+        <div class="flex-container subnav" x-show="request_service == 0 || request_service == 3">
+            <button :class="completed == 0 && 'active'" @click="completed = 0">Scheduled</button>
+            <button :class="completed == 1 && 'active'" @click="completed = 1">Completed</button>
+        </div>
+        <div class="lesson-container" x-show="request_service == 0 || request_service == 3">
             {% for lesson in lessons %}
-                <div class="lesson-confirmed-item" x-show="{{ lesson.completed }} == completed">
+                <div class="lesson-item lesson-confirmed-item" :class="'{{ lesson.modified }}' == 'True' && '{{ lesson.status }}' != 'confirmed' ? 'warning' : ''" x-data="{ modify: false }" x-show="{{ lesson.completed }} == completed">
                     <a href="{{ url_for('service_list', service_id=lesson.serviceId) }}"><h4>{{ lesson.title }}</h4></a>
                     <p>Day: {{ lesson.day }}</p>
-                    <p>Time: {{ lesson.start_time }} - {{lesson.end_time}}</p>
+                    <p>Time: {{ lesson.time }}</p>
+                    {% if lesson.modified and lesson.status != 'confirmed' %}
+                        <p x-show="modify == false">Scheduled duration: {{ lesson.proposedDurationMinutes }} minutes</p>
+                        <p class='warning-text' x-show="modify == false">Modified duration: {{ lesson.actualDurationMinutes }} minutes</p>
+                    {% else %}
+                        <p x-show="modify == false">Duration: {{ lesson.proposedDurationMinutes }} minutes</p>
+                    {% endif %}
+
+                    {% if lesson.completed %}
+                        {% if lesson.status == 'confirmed' %}
+                            <p>Status: confirmed</p>
+                        {% elif lesson.status == 'accepted' or (lesson.status == 'confirmed_tutor' and lesson.tutorId != user.id) or (lesson.status == 'confirmed_student' and lesson.studentId != user.id) %}
+                            <p x-show="modify == true">Duration: <input type="number" id="{{ lesson.id }}-duration" min="0" step="15" value="{{ lesson.proposedDurationMinutes }}"/>  minutes</p>
+                            <p>Status: pending confirmation</p>
+                            <button class='accept-button' @click="sendConfirmRequest({{ lesson.id }})" x-show="modify == false">Confirm</button>
+                            <button class='accept-button' @click="sendConfirmRequestModify({{ lesson.id }})" x-show="modify">Confirm</button>
+                            <button class='modify-button' @click="modify = true" x-show="modify == false">Modify</button>
+                            <button class='cancel-button' @click="modify = false" x-show="modify">Cancel</button>
+                        {% else %}
+                            <p>Status: pending confirmation</p>
+                        {% endif %}
+                    {% else %}
+                        <button class='cancel-button' @click="sendCancelRequest({{ lesson.id }})">Cancel</button>
+                    {% endif %}
                 </div>
             {% endfor %}
         </div>
-        <form class="lesson-container" x-show="request_service" autocomplete="off">
+        <form class="lesson-container without-subnav" x-show="request_service == 1 || request_service == 2" autocomplete="off">
             <h4>As a student:</h4>
-            {% for service in peer["services"] %}
-                <label class="lesson-request-item" @click="service_title = '{{service.title}}'; service_id = {{service.id}}; $refs.messages.scrollTop = $refs.messages.scrollHeight" for="{{ service.id }}">
-                    <input type="radio" name="service" id="{{ service.id }}" value="{{ service.id }}"> {{ service.title }}
-                </label>
+            {% for service in services %}
+                {% if service.userId != user.id %}
+                    <label class="lesson-request-item" @click="lessonRequest({{ service.id }}); request_service = 2; scrollToBottom()" for="service-{{ service.id }}">
+                        <input type="radio" name="service" id="service-{{ service.id }}"> {{ service.title }}
+                    </label>
+                {% endif %}
             {% endfor %}
             <h4>As a tutor:</h4>
-            {% for service in user["services"] %}
-                <label class="lesson-request-item" @click="service_title = '{{service.title}}'; service_id = {{service.id}}; $refs.messages.scrollTop = $refs.messages.scrollHeight" for="{{ service.id }}">
-                    <input type="radio" name="service" id="{{ service.id }}" value="{{ service.id }}"> {{ service.title }}
-                </label>
+            {% for service in services %}
+                {% if service.userId == user.id %}
+                    <label class="lesson-request-item" @click="lessonRequest({{ service.id }}); request_service = 2; scrollToBottom()" for="service-{{ service.id }}">
+                        <input type="radio" name="service" id="service-{{ service.id }}"> {{ service.title }}
+                    </label>
+                {% endif %}
             {% endfor %}
         </form>
-        <button class="lesson-view-switch request-lessons" @click="request_service = !request_service" x-show="!request_service"><i class="fa-solid fa-handshake fa-lg"></i> Send lesson request</button>
-        <button class="lesson-view-switch view-lessons" @click="request_service = !request_service" x-show="request_service"><i class="fa-regular fa-calendar-days fa-lg"></i> View lessons</button>
+        <button class="lesson-view-switch request-lessons" @click="clearRadioButtons(); request_service = 1" x-show="request_service == 0 || request_service == 3"><i class="fa-solid fa-handshake fa-lg"></i> Send lesson request</button>
+        <button class="lesson-view-switch view-lessons" @click="request_service = 0" x-show="request_service == 1 || request_service == 2"><i class="fa-regular fa-calendar-days fa-lg"></i> View lessons</button>
     </div>
 
     <script type="text/javascript">
+        var messages = {{ messages|tojson }};
+        const services = {{ services|tojson }};
+        
+        function modifyRequest(lesson_id) {
+            messages.forEach((message, index) => {
+                if (message.lessonId == lesson_id) {
+                    document.getElementById("service-or-lesson-id").value = message.lessonId;
+                    document.getElementById("service-title").innerHTML = `${message.serviceTitle}`;
+                    document.getElementById("lesson-date").value = `${message.day}`;
+                    document.getElementById("lesson-time").value = `${message.time}`;
+                    document.getElementById("lesson-duration").value = message.duration;
+                }
+            });
+        }
+        function lessonRequest(service_id) {
+            services.forEach((service, index) => {
+                if (service.id == service_id) {
+                    document.getElementById("service-or-lesson-id").value = service.id;
+                    document.getElementById("service-title").innerHTML = `${service.title}`;
+                    document.getElementById("lesson-date").value = "";
+                    document.getElementById("lesson-time").value = "";
+                    document.getElementById("lesson-duration").value = "15";
+                }
+            });
+        }
+        function clearRadioButtons(){
+            var radioButtons = document.getElementsByName('service');
+            for (var i = 0; i < radioButtons.length; i++) {
+                radioButtons[i].checked = false;
+            }
+        }
+
         function createMessageItem(message) {
             var messageContainer = document.getElementById("chat-messages");
-            if (message.senderId === {{ user.id }}) {
+            
+            if (message.senderId === -1 ){
+                var content = `<div class="flex-container-system"><span class="message-item-system">${message.message}</span></div>`
+            } else if (message.senderId === {{ user.id }}) {
                 var content = `<div class="flex-container-user"><span class="message-item">${message.message}</span></div>`
             } else {
                 var content = `<div class="flex-container-peer"><span class="message-item">${message.message}</span></div>`
@@ -94,23 +153,39 @@
             messageContainer.innerHTML += content;
         }
         function createLessonItem(message) {
+            if (message.status == 'accepted' || message.status == 'cancelled'|| message.status.startsWith('confirmed')) {
+                return;
+            }
+
             var messageContainer = document.getElementById("chat-messages");
             var div = document.createElement("div")
-            div.className = message.senderId === {{ user.id }} ? 'flex-container-user' : 'flex-container-peer'
+            if (message.senderId === {{ user.id }}) {
+                div.className = 'flex-container-user'
+            } else {
+                div.className = 'flex-container-peer'
+            }
             
             var span = document.createElement("span")
             span.className = "message-item lesson-item"
             span.innerHTML = `<div class="title">${message.serviceTitle}</div>`
             span.innerHTML +=`<div>Day: ${message.day}</div>`
             span.innerHTML +=`<div>Time: ${message.time}</div>`
-            span.innerHTML +=`<div>Status: ${message.status}</div>`
-            if (message.status == 'pending' && message.senderId != {{ user.id }}) {
-                    span.innerHTML += `<button class='confirm-button'><a href="/user/lesson/confirm/${message.lessonId}">Confirm</a></button>`
-                    span.innerHTML += `<button class='cancel-button'><a href="/user/lesson/cancel/${message.lessonId}">Cancel</a></button>`
-            } else if (message.status == 'pending' && message.senderId == {{ user.id }}) {
-                    span.innerHTML += `<button class='cancel-button'><a href="/user/lesson/cancel/${message.lessonId}">Cancel</a></button>`
-            }
+            span.innerHTML +=`<div>Duration: ${message.duration} minutes</div>`
+            
+            var acceptButton = `<button class='accept-button' @click="sendAcceptRequest(${message.lessonId})">Accept</button> `;
+            var cancelButton = `<button class='cancel-button' @click="sendCancelRequest(${message.lessonId})">Cancel</button> `
+            var modifyButton = `<button class='modify-button' @click="modifyRequest(${message.lessonId}); request_service = 3;">Modify</button> `
 
+            if (message.status == 'accepted_student' || message.status == 'accepted_tutor') {
+                span.innerHTML +='<div>Status: pending</div>';
+                if (message.senderId != {{ user.id }}) {
+                    span.innerHTML += acceptButton;
+                }
+                span.innerHTML += modifyButton;
+                span.innerHTML += cancelButton
+            } else {
+                span.innerHTML +=`<div>Status: ${message.status}</div>`;
+            }
             div.appendChild(span);
             messageContainer.appendChild(div);
         }
@@ -121,32 +196,48 @@
                 } else {
                     createLessonItem(message);
                 }
-
             });
         }
+
         function sendMessage() {
             var msgInput = document.getElementById("message");
             if (msgInput.value === "") return;
             var msg = msgInput.value;
-            socketio.emit("message", { message: msg, room: "{{room}}", recipient: "{{peer['id']}}" });
+            socketio.emit("message", { message: msg, recipient: "{{ peer['id'] }}" });
             msgInput.value = "";
         }
-        function sendLessonRequest() {
-            var serviceId = document.getElementById("lesson-service-id")
+        function sendLessonRequest(request_type) {
+            var serviceId = document.getElementById("service-or-lesson-id")
             var peerId = document.getElementById("lesson-peer-id")
             var dateInput = document.getElementById("lesson-date");
             var timeInput = document.getElementById("lesson-time");
             var durationInput = document.getElementById("lesson-duration");
-            socketio.emit("lesson", { serviceId: serviceId.value, peerId: peerId.value, date: dateInput.value, time: timeInput.value, duration: durationInput.value, room: "{{room}}" });
+            if (request_type == 2) {
+                socketio.emit("createLesson", { serviceId: serviceId.value, peerId: peerId.value, date: dateInput.value, time: timeInput.value, duration: durationInput.value });
+            } else {
+                socketio.emit("modifyLesson", { lessonId: serviceId.value, peerId: peerId.value, date: dateInput.value, time: timeInput.value, duration: durationInput.value });
+            }
+        }
+        function sendAcceptRequest(lesson_id) {
+            socketio.emit("acceptLesson", { lessonId: lesson_id });
+        }
+        function sendConfirmRequest(lesson_id) {
+            socketio.emit("confirmLesson", { lessonId: lesson_id });
+        }
+        function sendConfirmRequestModify(lesson_id) {
+            var durationInput = document.getElementById(`${lesson_id}-duration`);
+            socketio.emit("confirmLesson", { lessonId: lesson_id, duration: durationInput.value });
+        }
+        function sendCancelRequest(lesson_id) {
+            socketio.emit("cancelLesson", { lessonId: lesson_id });
         }
 
         var socketio = io();
-        socketio.on("connect", () => { socketio.emit("join_room", { "room": "{{ room }}" }) } )
-        socketio.on("message", function(message) { createMessageItem(message); scrollToBottom(); } );
-        socketio.on("lesson", function(message) { createLessonItem(message); scrollToBottom(); } );
+        socketio.on("message", function(message) { messages.push(message); createMessageItem(message); scrollToBottom(); } );
+        socketio.on("createLesson", function(message) { messages.push(message); createLessonItem(message); scrollToBottom(); } );
+        socketio.on("pageReload", function(message) { window.location.reload(); } );
     </script>
     <script type="text/javascript">
-        const messages = {{ messages|tojson }}
         createChatItems(messages);
 
         function scrollToBottom() {

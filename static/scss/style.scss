@@ -221,6 +221,21 @@ button {
         }
     }
 }
+.page-control {
+    font-weight: bolder;
+
+    button {
+        background: none;
+        color: var(--links);
+    }
+    p {
+        display: inline-block;
+        text-align: center;
+    }
+    div {
+        float: right
+    }
+}
 .calendar-control {
     font-weight: bolder;
     font-size: 20px;
@@ -363,6 +378,31 @@ button {
         right: 105%;
     }
 }
+.lesson-item {
+
+    button {
+        margin-top: 10px;
+        width: 65px;
+        color: var(--text-white);
+
+        a {
+            color: var(--text-white);
+        }
+    }
+    .title {
+        margin-bottom: 10px;
+        font-weight: bold;
+    }
+    .accept-button {
+        background-color: var(--signup);
+    }
+    .cancel-button {
+        background-color: var(--error-text);
+    }
+    .modify-button {
+        background-color: var(--tutor);
+    }
+}
 
 #logo {
     width: 100%;
@@ -422,6 +462,24 @@ button {
             padding-top: 10px;
             padding-bottom: 10px;
         }
+    }
+}
+#user-transaction-table {
+    width: 100%;
+    padding: 10px;
+    border: 1px dashed var(--links);
+
+    thead {
+        font-weight: bold;
+    }
+    .pending-transaction {
+        color: var(--background-lighter)
+    }
+    .tutor-transaction {
+        color: var(--signup)
+    }
+    .student-transaction {
+        color: var(--error-text)
     }
 }
 #user-service-nav {
@@ -551,13 +609,13 @@ button {
         }
     }
     #chat-messages {
-        height: 500px;
-        min-width: 327px;
+        height: 527px;
+        min-width: 330px;
         overflow-y: scroll;
         padding: 0px 10px;
         
         &.minimized {
-            height: 352px;
+            height: 388px;
         }
         .flex-container-user {
             display: flex;
@@ -569,6 +627,13 @@ button {
             justify-content: left;
             color: var(--tutor);
         }
+        .flex-container-system {
+            display: flex;
+            justify-content: center;
+            font-size: 13px;
+            margin: 5px 0px;
+            color: var(--text);
+        }
         .message-item {
             border: 2px solid;
             border-radius: 3px;
@@ -576,27 +641,8 @@ button {
             padding: 5px 10px;
             background: var(--background-lesson);
         }
-        .lesson-item {
-
-            button {
-                margin-top: 10px;
-                margin-right: 10px;
-                width: 65px;
-
-                a {
-                    color: var(--text-white);
-                }
-            }
-            .title {
-                margin-bottom: 10px;
-                font-weight: bold;
-            }
-            .confirm-button {
-                background-color: var(--signup);
-            }
-            .cancel-button {
-                background-color: var(--error-text);
-            }
+        .message-item-system {
+            margin: 5px 0px;
         }
     }
     #chat-lesson-request {
@@ -607,16 +653,15 @@ button {
             margin-top: 0px;
             justify-content: left;
         }
-        > div {
+        > form {
             padding: 8px;
             background-color: var(--background-light);
             border: 1px dashed var(--links);
             border-radius: 3px;
+            width: 330px;
 
             select, input {
                 padding: 4px ;
-            }
-            div {
                 margin-bottom: 10px;
             }
         }
@@ -632,6 +677,11 @@ button {
             color: var(--text-white);
             padding: 6px 27px;
         }
+        #modify-request-button {
+            background-color: var(--tutor);
+            color: var(--text-white);
+            padding: 6px 21px;
+        }
         #cancel-request-button {
             background-color: var(--background-light);
             color: var(--background-lighter);
@@ -643,6 +693,7 @@ button {
 #lessons {
     flex: 2;
     margin: 0px 20px;
+    height: 670px;
 
     h2 {
         margin: 0px;
@@ -664,8 +715,12 @@ button {
         }
     }
     .lesson-container {
-        height: 567px;
+        min-width: 180px;
+        height: 540px;
         overflow-y: scroll;
+    }
+    .lesson-container.without-subnav {
+        height: 594px;
     }
     .lesson-request-item {
         display: block;
@@ -686,6 +741,16 @@ button {
         p {
             margin-bottom: 0px;
         }
+        input {
+            width: 42px;
+        }
+    }
+    .warning {
+        border: 1px solid var(--error-text);
+    }
+    .warning-text {
+        color: var(--tutor);
+        font-weight: bolder;
     }
     .lesson-view-switch {
         padding: 8px;

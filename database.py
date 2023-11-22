@@ -490,7 +490,7 @@ class Database:
         conn = sqlite3.connect(self.user_db)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        sql = f"""
+        sql = """
         SELECT 
             lessons.id, lessons.tutorId, lessons.studentId, lessons.datetime, lessons.actualDurationMinutes, lessons.proposedDurationMinutes, lessons.status, services.title, services.description, services.id as serviceId
         FROM 
@@ -500,12 +500,12 @@ class Database:
         ON
             lessons.serviceId = services.id  
         WHERE
-            (tutorId = ? OR studentId = ?) AND (lessons.status != '{LessonStatus.CANCELLED}' AND lessons.status != '{LessonStatus.EXPIRED}')
+            (tutorId = ? OR studentId = ?) AND (lessons.status != ? AND lessons.status != ?)
         ORDER BY
             datetime
         DESC
         """
-        cursor.execute(sql, (user_id, user_id))
+        cursor.execute(sql, (user_id, user_id, LessonStatus.CANCELLED, LessonStatus.EXPIRED))
         results = cursor.fetchall()
         conn.close()
         return [dict(result) for result in results]
@@ -514,7 +514,7 @@ class Database:
         conn = sqlite3.connect(self.user_db)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        sql = f"""
+        sql = """
         SELECT 
             lessons.id, lessons.tutorId, lessons.studentId, lessons.status, lessons.datetime, lessons.proposedDurationMinutes, lessons.actualDurationMinutes, services.title, services.description, services.id as serviceId
         FROM 
@@ -524,11 +524,11 @@ class Database:
         ON
             lessons.serviceId = services.id  
         WHERE
-            ((tutorId = ? AND studentId = ?) OR (tutorId = ? AND studentId = ?)) AND (lessons.status == '{LessonStatus.ACCEPTED}' OR lessons.status LIKE '{LessonStatus.CONFIRMED}%')
+            ((tutorId = ? AND studentId = ?) OR (tutorId = ? AND studentId = ?)) AND (lessons.status = ? OR lessons.status LIKE ? )
         ORDER BY
             lessons.datetime
         """
-        cursor.execute(sql, (user_id, peer_id, peer_id, user_id))
+        cursor.execute(sql, (user_id, peer_id, peer_id, user_id, LessonStatus.ACCEPTED, f"{LessonStatus.CONFIRMED}%"))
         results = cursor.fetchall()
         conn.close()
         return [dict(result) for result in results]

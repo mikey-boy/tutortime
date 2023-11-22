@@ -221,6 +221,21 @@ button {
         }
     }
 }
+.page-control {
+    font-weight: bolder;
+
+    button {
+        background: none;
+        color: var(--links);
+    }
+    p {
+        display: inline-block;
+        text-align: center;
+    }
+    div {
+        float: right
+    }
+}
 .calendar-control {
     font-weight: bolder;
     font-size: 20px;
@@ -447,6 +462,24 @@ button {
             padding-top: 10px;
             padding-bottom: 10px;
         }
+    }
+}
+#user-transaction-table {
+    width: 100%;
+    padding: 10px;
+    border: 1px dashed var(--links);
+
+    thead {
+        font-weight: bold;
+    }
+    .pending-transaction {
+        color: var(--background-lighter)
+    }
+    .tutor-transaction {
+        color: var(--signup)
+    }
+    .student-transaction {
+        color: var(--error-text)
     }
 }
 #user-service-nav {

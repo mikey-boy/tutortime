@@ -86,7 +86,29 @@ def user_account_list():
     if "username" in session:
         services = db.get_services_by_status(session["userId"], ServiceStatus.ACTIVE)
         lessons = db.get_lessons_for_user(session["userId"])
-        return render_template("user/account/list.html", services=services, lessons=lessons)
+        balance = db.get_user_balance(session["userId"])
+        original_balance = balance
+        for lesson in lessons:
+            dt = datetime.strptime(lesson["datetime"], "%Y-%m-%dT%H:%M")
+            lesson["day"] = datetime.strftime(dt, "%d/%m/%Y")
+            lesson["tutorName"] = db.get_username(lesson["tutorId"])
+            lesson["studentName"] = db.get_username(lesson["studentId"])
+            if lesson["tutorId"] == session["userId"] and lesson["status"] == LessonStatus.CONFIRMED:
+                lesson["balance"] = balance
+                balance -= lesson["actualDurationMinutes"]
+            elif lesson["studentId"] == session["userId"] and lesson["status"].startswith("accepted_") == False:
+                lesson["balance"] = balance
+                balance += lesson["proposedDurationMinutes"]
+            else:
+                lesson["balance"] = balance
+
+        return render_template(
+            "user/account/list.html",
+            user_id=session["userId"],
+            services=services,
+            lessons=lessons,
+            balance=original_balance,
+        )
 
 
 @app.route("/service/list/")
@@ -416,6 +438,8 @@ def accept_lesson(payload):
     user_id = session["userId"]
     lesson_id = payload["lessonId"]
     db.update_lesson_status(user_id, lesson_id, LessonStatus.ACCEPTED)
+    lesson = db.get_lesson_request(lesson_id)
+    db.update_user_balance(lesson["studentId"], lesson["proposedDurationMinutes"] * -1)
     _system_message(lesson_id, LessonStatus.ACCEPTED)
     emit("pageReload", to=session["room"])
 
@@ -432,21 +456,21 @@ def confirm_lesson(payload):
     _system_message(lesson_id, LessonStatus.CONFIRMED)
 
     lesson = db.get_lesson_request(lesson_id)
-    student_name = db.get_username(lesson["studentId"])
-    tutor_name = db.get_username(lesson["tutorId"])
-    message = f"{lesson['actualDurationMinutes']} minutes transferred from {student_name} to {tutor_name}"
-    if lesson["tutorId"] == user_id:
-        if lesson["status"] == LessonStatus.ACCEPTED or duration:
+    if lesson["status"] == LessonStatus.ACCEPTED or duration:
+        if lesson["tutorId"] == user_id:
             db.update_lesson_status(user_id, lesson_id, LessonStatus.CONFIRMED_TUTOR)
         else:
-            db.update_lesson_status(user_id, lesson_id, LessonStatus.CONFIRMED)
-            db.add_message(session["room"], -1, -1, datetime.now(), message)
-    else:
-        if lesson["status"] == LessonStatus.ACCEPTED or duration:
             db.update_lesson_status(user_id, lesson_id, LessonStatus.CONFIRMED_STUDENT)
-        else:
-            db.update_lesson_status(user_id, lesson_id, LessonStatus.CONFIRMED)
-            db.add_message(session["room"], -1, -1, datetime.now(), message)
+    else:
+        tutor_name = db.get_username(lesson["tutorId"])
+        message = f"{lesson['actualDurationMinutes']} minutes transferred to {tutor_name}"
+        db.add_message(session["room"], -1, -1, datetime.now(), message)
+
+        db.update_lesson_status(user_id, lesson_id, LessonStatus.CONFIRMED)
+        db.update_user_balance(lesson["tutorId"], lesson["actualDurationMinutes"])
+        if lesson["actualDurationMinutes"] != lesson["proposedDurationMinutes"]:
+            difference = lesson["proposedDurationMinutes"] - lesson["actualDurationMinutes"]
+            db.update_user_balance(lesson["studentId"], difference)
 
     emit("pageReload", to=session["room"])
 
@@ -456,6 +480,8 @@ def cancel_lesson(payload):
     user_id = session["userId"]
     lesson_id = payload["lessonId"]
     db.update_lesson_status(user_id, lesson_id, LessonStatus.CANCELLED)
+    lesson = db.get_lesson_request(lesson_id)
+    db.update_user_balance(lesson["studentId"], lesson["proposedDurationMinutes"])
     _system_message(lesson_id, LessonStatus.CANCELLED)
     emit("pageReload", to=session["room"])
 

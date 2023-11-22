@@ -130,6 +130,26 @@ class Database:
             return result[0]
         return -1
 
+    def get_user_balance(self, user_id: int):
+        conn = sqlite3.connect(self.user_db)
+        cursor = conn.cursor()
+        cursor.execute("SELECT minutes FROM users WHERE id = ?", (user_id,))
+        result = cursor.fetchone()
+        conn.close()
+        if result:
+            return result[0]
+        return 0
+
+    def update_user_balance(self, user_id: int, minutes: int):
+        current_balance = self.get_user_balance(user_id)
+        updated_balance = current_balance + minutes
+
+        conn = sqlite3.connect(self.user_db)
+        cursor = conn.cursor()
+        cursor.execute("UPDATE users SET minutes = ? WHERE id = ?", (updated_balance, user_id))
+        conn.commit()
+        conn.close()
+
     def get_username(self, user_id: int):
         conn = sqlite3.connect(self.user_db)
         cursor = conn.cursor()
@@ -156,7 +176,7 @@ class Database:
             cursor = conn.cursor()
             encoded_pass = hashlib.sha256(password.encode()).hexdigest()
             cursor.execute(
-                "INSERT INTO users (username, password, minutes) VALUES(?, ?, ?)", (username, encoded_pass, 120)
+                "INSERT INTO users (username, password, minutes) VALUES(?, ?, ?)", (username, encoded_pass, 60)
             )
             user_id = cursor.lastrowid
             conn.commit()
@@ -470,9 +490,9 @@ class Database:
         conn = sqlite3.connect(self.user_db)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        sql = """
+        sql = f"""
         SELECT 
-            lessons.id, lessons.tutorId, lessons.studentId, lessons.datetime, lessons.proposedDurationMinutes, lessons.status, services.title, services.description, services.id as serviceId
+            lessons.id, lessons.tutorId, lessons.studentId, lessons.datetime, lessons.actualDurationMinutes, lessons.proposedDurationMinutes, lessons.status, services.title, services.description, services.id as serviceId
         FROM 
             lessons 
         INNER JOIN
@@ -480,9 +500,10 @@ class Database:
         ON
             lessons.serviceId = services.id  
         WHERE
-            tutorId = ? OR studentId = ?
+            (tutorId = ? OR studentId = ?) AND (lessons.status != '{LessonStatus.CANCELLED}' AND lessons.status != '{LessonStatus.EXPIRED}')
         ORDER BY
             datetime
+        DESC
         """
         cursor.execute(sql, (user_id, user_id))
         results = cursor.fetchall()

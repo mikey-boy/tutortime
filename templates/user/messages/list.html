@@ -50,7 +50,7 @@
     <div id="lessons" x-data="{ completed: 0 }">
         <h2>Lessons</h2>
         <div class="flex-container subnav" x-show="request_service == 0 || request_service == 3">
-            <button :class="completed == 0 && 'active'" @click="completed = 0">Upcoming</button>
+            <button :class="completed == 0 && 'active'" @click="completed = 0">Scheduled</button>
             <button :class="completed == 1 && 'active'" @click="completed = 1">Completed</button>
         </div>
         <div class="lesson-container" x-show="request_service == 0 || request_service == 3">

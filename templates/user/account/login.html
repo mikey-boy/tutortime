@@ -11,7 +11,7 @@
             <label for="password">Password:</label>
             <input type="password" name="password" required>
             <button type="submit" class="login-button">Login</button>
-            <p class="error-text">{{ failure_msg }}</p>
+            <p class="error-text">{{ error_msg }}</p>
         </form>
         <hr>
         <a href="{{ url_for('user_account_create') }}"><button type="submit" class="signup-button">Create account</button></a>

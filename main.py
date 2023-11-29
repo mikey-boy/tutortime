@@ -259,7 +259,7 @@ def user_calendar_list():
 @app.route("/user/messages/list/<int:user_id>")
 def user_messages_list(user_id=None):
     if "username" not in session:
-        return render_template("error/not_logged_in.html")
+        return redirect("/user/account/login")
 
     user1 = {"id": session["userId"], "name": session["username"]}
     user2 = {}
@@ -315,22 +315,6 @@ def user_messages_list(user_id=None):
         lessons=lessons,
         messages=messages,
     )
-
-
-def _system_message(lesson, status):
-    dt = datetime.strptime(lesson["datetime"], "%Y-%m-%dT%H:%M")
-    day = dt.strftime("%Y-%m-%d")
-    time = dt.strftime("%H:%M")
-    service = db.get_service_by_id(lesson["serviceId"])
-    if status == LessonStatus.ACCEPTED:
-        message = f"{session['username']} accepted '{service['title']}' scheduled for {day} @ {time}"
-    elif status == LessonStatus.CANCELLED:
-        message = f"{session['username']} cancelled '{service['title']}' scheduled for {day} @ {time}"
-    else:
-        message = f"{session['username']} confirmed '{service['title']}' on {day} @ {time} for {lesson['actualDurationMinutes']} minutes"
-
-    now = datetime.now().strftime("%Y-%m-%dT%H:%M")
-    db.add_message(session["room"], -1, -1, now, message)
 
 
 @socketio.on("connect")
@@ -390,6 +374,22 @@ def _user_lesson_modify(lesson, accepted_states):
         abort(403)
 
 
+def _system_message(lesson, status):
+    dt = datetime.strptime(lesson["datetime"], "%Y-%m-%dT%H:%M")
+    day = dt.strftime("%Y-%m-%d")
+    time = dt.strftime("%H:%M")
+    service = db.get_service_by_id(lesson["serviceId"])
+    if status == LessonStatus.ACCEPTED:
+        message = f"{session['username']} accepted '{service['title']}' scheduled for {day} @ {time}"
+    elif status == LessonStatus.CANCELLED:
+        message = f"{session['username']} cancelled '{service['title']}' scheduled for {day} @ {time}"
+    else:
+        message = f"{session['username']} confirmed '{service['title']}' on {day} @ {time} for {lesson['actualDurationMinutes']} minutes"
+
+    now = datetime.now().strftime("%Y-%m-%dT%H:%M")
+    db.add_message(session["room"], -1, -1, now, message)
+
+
 @socketio.on("modifyLesson")
 def modify_lesson(payload):
     lesson = db.get_lesson_request(payload["lessonId"])
@@ -411,6 +411,10 @@ def modify_lesson(payload):
 def accept_lesson(payload):
     lesson = db.get_lesson_request(payload["lessonId"])
     _user_lesson_modify(lesson, [LessonStatus.ACCEPTED_STUDENT, LessonStatus.ACCEPTED_TUTOR])
+    if lesson["status"] == LessonStatus.ACCEPTED_STUDENT and lesson["studentId"] == session["userId"]:
+        abort(403)
+    if lesson["status"] == LessonStatus.ACCEPTED_TUTOR and lesson["tutorId"] == session["userId"]:
+        abort(403)
 
     db.update_lesson_status(lesson["id"], LessonStatus.ACCEPTED)
     db.update_user_balance(lesson["studentId"], lesson["proposedDurationMinutes"] * -1)
@@ -422,6 +426,10 @@ def accept_lesson(payload):
 def confirm_lesson(payload):
     lesson = db.get_lesson_request(payload["lessonId"])
     _user_lesson_modify(lesson, [LessonStatus.ACCEPTED, LessonStatus.CONFIRMED_STUDENT, LessonStatus.CONFIRMED_TUTOR])
+    if lesson["status"] == LessonStatus.CONFIRMED_STUDENT and lesson["studentId"] == session["userId"]:
+        abort(403)
+    if lesson["status"] == LessonStatus.CONFIRMED_TUTOR and lesson["tutorId"] == session["userId"]:
+        abort(403)
 
     duration = payload.get("duration", "")
     if duration:

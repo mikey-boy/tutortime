@@ -305,6 +305,7 @@ def user_messages_list(user_id=None):
             message["time"] = dt.strftime("%H:%M")
             message["duration"] = lesson["proposedDurationMinutes"]
 
+    today = datetime.now().strftime("%Y-%m-%d")
     contacts = db.get_contacts_of_user(user1["id"])
     return render_template(
         "user/messages/list.html",
@@ -314,6 +315,7 @@ def user_messages_list(user_id=None):
         services=services,
         lessons=lessons,
         messages=messages,
+        today=today,
     )
 
 

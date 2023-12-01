@@ -11,7 +11,7 @@
             <label for="password">Password:</label>
             <input type="password" name="password" required>
             <button type="submit" class="signup-button">Create account</button>
-            <p class="error-text">{{ session.get("failed-login-message", "") }}</p>
+            <p class="error-text">{{ error_msg }}</p>
         </form>
     </div>
 </div>

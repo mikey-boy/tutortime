@@ -26,7 +26,7 @@
                 <input id="service-or-lesson-id" type="hidden">
                 <input id="lesson-peer-id" type="hidden" value="{{ peer['id'] }}">
                 <label for="lesson-date">Datetime: </label>
-                <input id="lesson-date" name="lesson-date" type="date" required>
+                <input id="lesson-date" name="lesson-date" type="date" min="{{ today }}" required>
                 <input id="lesson-time" name="lesson-time" type="time" required>
                 <label for="lesson-duration">Duration: </label>
                 <select id="lesson-duration">

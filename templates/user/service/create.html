@@ -12,7 +12,7 @@
             <tbody>
                 <tr>
                     <td>
-                        <label for="title">Title:</label>
+                        <label for="title"><i class="fa-solid fa-asterisk fa-2xs error-text"></i> Title:</i></label>
                     </td>
                     <td>
                         <textarea id="service-title" rows="1" cols="120" name="title" required>{{ service.get('title', '') }}</textarea>
@@ -20,7 +20,7 @@
                 </tr>
                 <tr>
                     <td>
-                        <label for="description">Description:</label>
+                        <label for="description"><i class="fa-solid fa-asterisk fa-2xs error-text"></i> Description:</label>
                     </td>
                     <td>
                         <textarea id="service-description" rows="7" cols="120" name="description" required>{{ service.get('description', '') }}</textarea>
@@ -28,7 +28,7 @@
                 </tr>
                 <tr>
                     <td>
-                        <label for="category">Category:</label>
+                        <label for="category"><i class="fa-solid fa-asterisk fa-2xs error-text"></i> Category:</label>
                     </td>
                     <td>
                         <select name="category" required>
@@ -127,6 +127,7 @@
                 </tr>
             </tbody>
         </table>
+        <p class="error-text">{{ error_msg }}</p>
         <div class="button-container">
             {% if service %}
                 <button type="submit">Update service</button>

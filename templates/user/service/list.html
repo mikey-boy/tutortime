@@ -1,41 +1,37 @@
 {% extends "home.html" %}
 
 {% block content %}
-    {% if session.get("username", None) != None %}
-        <table id="user-service-nav">
-            <thead>
-                <tr x-data="{ status: '{{ status }}' }">
-                    <th><h4><a class="user-service-status" :class="'{{ status }}' == 'active' && 'active-subnav-header'" href="{{ url_for('user_service_list', status='active')}}">Active</a></h4></th>
-                    <th><h4><a class="user-service-status" :class="'{{ status }}' == 'paused' && 'active-subnav-header'" href="{{ url_for('user_service_list', status='paused')}}">Paused</a></h4></th>
-                    <th><a href="{{ url_for('user_service_create')}}"><button id="create-service">New service</button></a></th>
+    <table id="user-service-nav">
+        <thead>
+            <tr x-data="{ status: '{{ status }}' }">
+                <th><h4><a class="user-service-status" :class="'{{ status }}' == 'active' && 'active-subnav-header'" href="{{ url_for('user_service_list', status='active')}}">Active</a></h4></th>
+                <th><h4><a class="user-service-status" :class="'{{ status }}' == 'paused' && 'active-subnav-header'" href="{{ url_for('user_service_list', status='paused')}}">Paused</a></h4></th>
+                <th><a href="{{ url_for('user_service_create')}}"><button id="create-service">New service</button></a></th>
+            </tr>
+        </thead>
+    </table>
+    <table id="user-service-table">
+        <thead>
+            <th>Title</th>
+            <th>Description</th>
+            <th></th>
+        </thead>
+        <tbody>
+            {% for service in services %}
+                <tr>
+                    <td>{{ service.title }}</td>
+                    <td>{{ service.description }}</td>
+                    <td>
+                        <a href="/user/service/update/{{ service.id }}"><i class="fa-regular fa-pen-to-square"></i></a>
+                        {% if status == 'active' %}
+                            <a href="/user/service/pause/{{ service.id }}"><i class="fa-regular fa-circle-pause"></i></a>
+                        {% else %}
+                            <a href="/user/service/activate/{{ service.id }}"><i class="fa-regular fa-circle-play"></i></a>
+                        {% endif %}
+                        <a href="/user/service/delete/{{ service.id }}"><i class="fa-regular fa-trash-can"></i></a>
+                    </td>
                 </tr>
-            </thead>
-        </table>
-        <table id="user-service-table">
-            <thead>
-                <th>Title</th>
-                <th>Description</th>
-                <th></th>
-            </thead>
-            <tbody>
-                {% for service in services %}
-                    <tr>
-                        <td>{{ service.title }}</td>
-                        <td>{{ service.description }}</td>
-                        <td>
-                            <a href="/user/service/update/{{ service.id }}"><i class="fa-regular fa-pen-to-square"></i></a>
-                            {% if status == 'active' %}
-                                <a href="/user/service/pause/{{ service.id }}"><i class="fa-regular fa-circle-pause"></i></a>
-                            {% else %}
-                                <a href="/user/service/activate/{{ service.id }}"><i class="fa-regular fa-circle-play"></i></a>
-                            {% endif %}
-                            <a href="/user/service/delete/{{ service.id }}"><i class="fa-regular fa-trash-can"></i></a>
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p><a href="{{ url_for('user_account_login') }}">Login</a> or <a href="{{ url_for('user_account_create') }}">create an account</a> to start giving lessons on the site</p>
-    {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
 {% endblock %}

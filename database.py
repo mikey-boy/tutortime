@@ -476,15 +476,21 @@ class Database:
         conn.commit()
         conn.close()
 
-    def update_lesson_status(self, user_id: int, lesson_id: int, status: LessonStatus):
+    def update_lesson_status(self, lesson_id: int, status: LessonStatus):
         conn = sqlite3.connect(self.user_db)
         cursor = conn.cursor()
-        cursor.execute(
-            "UPDATE lessons SET status = ? WHERE id = ? AND (tutorId = ? OR studentId = ?)",
-            (status, lesson_id, user_id, user_id),
-        )
+        cursor.execute("UPDATE lessons SET status = ? WHERE id = ?", (status, lesson_id))
         conn.commit()
         conn.close()
+
+    def get_lesson_by_id(self, lesson_id: int):
+        conn = sqlite3.connect(self.user_db)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("SELECT tutorId, studentId, status FROM lessons WHERE id = ?", (lesson_id,))
+        result = cursor.fetchone()
+        conn.close()
+        return dict(result)
 
     def get_lessons_for_user(self, user_id: int):
         conn = sqlite3.connect(self.user_db)

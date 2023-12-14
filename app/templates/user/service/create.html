@@ -3,10 +3,10 @@
 {% block title %}Signup{% endblock %}
 {% block content %}
 <div id="user-service-creation">
-    {% if service.get('title') == None %}
-    <form action="{{ url_for('user_service_create') }}" method="POST" enctype="multipart/form-data">
+    {% if service %}
+    <form action="{{ url_for('services.user_service_update', service_id=service.id) }}" method="POST" enctype="multipart/form-data">
     {% else %}
-    <form action="{{ url_for('user_service_update', service_id=service.id) }}" method="POST" enctype="multipart/form-data">
+    <form action="{{ url_for('services.user_service_create') }}" method="POST" enctype="multipart/form-data">
     {% endif %}
         <table id="service-creation-table">
             <tbody>
@@ -15,7 +15,7 @@
                         <label for="title"><i class="fa-solid fa-asterisk fa-2xs error-text"></i> Title:</i></label>
                     </td>
                     <td>
-                        <textarea id="service-title" rows="1" cols="120" name="title" required>{{ service.get('title', '') }}</textarea>
+                        <textarea id="service-title" rows="1" cols="120" name="title" required>{{ service.title if service }}</textarea>
                     </td>
                 </tr>
                 <tr>
@@ -23,7 +23,7 @@
                         <label for="description"><i class="fa-solid fa-asterisk fa-2xs error-text"></i> Description:</label>
                     </td>
                     <td>
-                        <textarea id="service-description" rows="7" cols="120" name="description" required>{{ service.get('description', '') }}</textarea>
+                        <textarea id="service-description" rows="7" cols="120" name="description" required>{{ service.description if service }}</textarea>
                     </td>
                 </tr>
                 <tr>
@@ -32,37 +32,33 @@
                     </td>
                     <td>
                         <select name="category" required>
-                            {% if service.get('category') == None %}
-                                <option value="" disabled selected>Select a category</option>
-                            {% else %}
-                                <option value="" disabled>Select a category</option>
-                            {% endif %}
+                            <option value="" disabled>Select a category</option>
                             
-                            {% if service.get('category') == 'language' %}
+                            {% if service and service.category == "language" %}
                                 <option value="language" selected>Language learning</option>
                             {% else %}
                                 <option value="language">Language learning</option>
                             {% endif %}
                             
-                            {% if service.get('category') == 'software' %}
+                            {% if service and service.category == "software" %}
                                 <option value="software" selected>Software development</option>
                             {% else %}
                                 <option value="software">Software development</option>
                             {% endif %}
 
-                            {% if service.get('category') == 'music' %}
+                            {% if service and service.category == "music" %}
                                 <option value="music" selected>Music lessons</option>
                             {% else %}
                                 <option value="music">Music lessons</option>
                             {% endif %}
 
-                            {% if service.get('category') == 'wellness' %}
+                            {% if service and service.category == "wellness" %}
                                 <option value="wellness" selected>Wellness (i.e. meditation, yoga)</option>
                             {% else %}
                                 <option value="wellness">Wellness (i.e. meditation, yoga)</option>
                             {% endif %}
                             
-                            {% if service.get('category') == 'other' %}
+                            {% if service and service.category == "other" %}
                                 <option value="other" selected>Other</option>
                             {% else %}
                                 <option value="other">Other</option>
@@ -90,7 +86,7 @@
                                 <tr>
                                     <td>morning</td>
                                     {% for i in range(7) %}
-                                        {% if i|string ~ '-0' in service.available %}   
+                                        {% if i|string ~ '-0' in availability %}   
                                             <td><input type="checkbox" name="{{ i }}-0" checked></td>
                                         {% else %}
                                             <td><input type="checkbox" name="{{ i }}-0"></td>
@@ -100,7 +96,7 @@
                                 <tr>
                                     <td>afternoon</td>
                                     {% for i in range(7) %}
-                                        {% if i|string ~ '-1' in service.available %}
+                                        {% if i|string ~ '-1' in availability %}
                                             <td><input type="checkbox" name="{{ i }}-1" checked></td>
                                         {% else %}
                                             <td><input type="checkbox" name="{{ i }}-1"></td>
@@ -110,7 +106,7 @@
                                 <tr>
                                     <td>evening</td>
                                     {% for i in range(7) %}
-                                        {% if i|string ~ '-2' in service.available %}   
+                                        {% if i|string ~ '-2' in availability %}   
                                             <td><input type="checkbox" name="{{ i }}-2" checked></td>
                                         {% else %}
                                             <td><input type="checkbox" name="{{ i }}-2"></td>

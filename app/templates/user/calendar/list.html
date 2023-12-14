@@ -57,7 +57,7 @@
                                             <span class="lesson-modal open-right" x-show="modal == {{ lesson.id }}">
                                         {% endif %}
                                                 <button x-on:click="modal = -1"><i class="fa-regular fa-circle-xmark fa-xl"></i></button>
-                                                <a href="{{ url_for('service_list', service_id=lesson.serviceId) }}"><h3 class="truncated-text">{{ lesson.title }}</h3></a>
+                                                <a href="{{ url_for('services.service_list', service_id=lesson.serviceId) }}"><h3 class="truncated-text">{{ lesson.title }}</h3></a>
                                                 <p>Time: {{ lesson.start_time }} - {{ lesson.end_time }}</p>
                                                 <p class="truncated-text">Description: {{ lesson.description }}</p>
                                                 <p>Tutor: {{ lesson.tutorName }}</p>

@@ -47,30 +47,30 @@
             <button id="send-message-button" @click="sendMessage()">Send</button>
         </div>
     </div>
-    <div id="lessons" x-data="{ completed: 0 }">
+    <div id="lessons" x-data="{ completed: 'False' }">
         <h2>Lessons</h2>
         <div class="flex-container subnav" x-show="request_service == 0 || request_service == 3">
-            <button :class="completed == 0 && 'active'" @click="completed = 0">Scheduled</button>
-            <button :class="completed == 1 && 'active'" @click="completed = 1">Completed</button>
+            <button :class="completed == 'False' && 'active'" @click="completed = 'False'">Scheduled</button>
+            <button :class="completed == 'True' && 'active'" @click="completed = 'True'">Completed</button>
         </div>
         <div class="lesson-container" x-show="request_service == 0 || request_service == 3">
             {% for lesson in lessons %}
-                <div class="lesson-item lesson-confirmed-item" :class="'{{ lesson.modified }}' == 'True' && '{{ lesson.status }}' != 'confirmed' ? 'warning' : ''" x-data="{ modify: false }" x-show="{{ lesson.completed }} == completed">
+                <div class="lesson-item lesson-confirmed-item" :class="'{{ lesson.modified }}' == 'True' && '{{ lesson.status }}' != 'confirmed' ? 'warning' : ''" x-data="{ modify: false }" x-show="'{{ lesson.completed }}' == completed">
                     <a href="{{ url_for('services.service_list', service_id=lesson.service_id) }}"><h4>{{ lesson.title }}</h4></a>
                     <p>Day: {{ lesson.day }}</p>
                     <p>Time: {{ lesson.time }}</p>
                     {% if lesson.modified and lesson.status != 'confirmed' %}
-                        <p x-show="modify == false">Scheduled duration: {{ lesson.proposedDurationMinutes }} minutes</p>
-                        <p class='warning-text' x-show="modify == false">Modified duration: {{ lesson.actualDurationMinutes }} minutes</p>
+                        <p x-show="modify == false">Scheduled duration: {{ lesson.proposed_duration }} minutes</p>
+                        <p class='warning-text' x-show="modify == false">Modified duration: {{ lesson.actual_duration }} minutes</p>
                     {% else %}
-                        <p x-show="modify == false">Duration: {{ lesson.proposedDurationMinutes }} minutes</p>
+                        <p x-show="modify == false">Duration: {{ lesson.proposed_duration }} minutes</p>
                     {% endif %}
 
                     {% if lesson.completed %}
                         {% if lesson.status == 'confirmed' %}
                             <p>Status: confirmed</p>
-                        {% elif lesson.status == 'accepted' or (lesson.status == 'confirmed_tutor' and lesson.tutorId != user.id) or (lesson.status == 'confirmed_student' and lesson.studentId != user.id) %}
-                            <p x-show="modify == true">Duration: <input type="number" id="{{ lesson.id }}-duration" min="0" step="15" value="{{ lesson.proposedDurationMinutes }}"/>  minutes</p>
+                        {% elif lesson.status == 'accepted' or (lesson.status == 'confirmed_tutor' and lesson.tutor_id != user.id) or (lesson.status == 'confirmed_student' and lesson.student_id != user.id) %}
+                            <p x-show="modify == true">Duration: <input type="number" id="{{ lesson.id }}-duration" min="0" step="15" value="{{ lesson.proposed_duration }}"/>  minutes</p>
                             <p>Status: pending confirmation</p>
                             <button class='accept-button' @click="sendConfirmRequest({{ lesson.id }})" x-show="modify == false">Confirm</button>
                             <button class='accept-button' @click="sendConfirmRequestModify({{ lesson.id }})" x-show="modify">Confirm</button>
@@ -153,7 +153,7 @@
             messageContainer.innerHTML += content;
         }
         function createLessonItem(message) {
-            if (message.status == 'accepted' || message.status == 'cancelled'|| message.status.startsWith('confirmed')) {
+            if (message.lesson.status == 'accepted' || message.lesson.status == 'cancelled'|| message.lesson.status.startsWith('confirmed')) {
                 return;
             }
 
@@ -167,16 +167,16 @@
             
             var span = document.createElement("span")
             span.className = "message-item lesson-item"
-            span.innerHTML = `<div class="title">${message.serviceTitle}</div>`
-            span.innerHTML +=`<div>Day: ${message.day}</div>`
-            span.innerHTML +=`<div>Time: ${message.time}</div>`
-            span.innerHTML +=`<div>Duration: ${message.duration} minutes</div>`
+            span.innerHTML = `<div class="title">${message.lesson.title}</div>`
+            span.innerHTML +=`<div>Day: ${message.lesson.day}</div>`
+            span.innerHTML +=`<div>Time: ${message.lesson.time}</div>`
+            span.innerHTML +=`<div>Duration: ${message.lesson.proposed_duration} minutes</div>`
             
             var acceptButton = `<button class='accept-button' @click="sendAcceptRequest(${message.lesson_id})">Accept</button> `;
             var cancelButton = `<button class='cancel-button' @click="sendCancelRequest(${message.lesson_id})">Cancel</button> `
             var modifyButton = `<button class='modify-button' @click="modifyRequest(${message.lesson_id}); request_service = 3;">Modify</button> `
 
-            if (message.status == 'accepted_student' || message.status == 'accepted_tutor') {
+            if (message.lesson.status == 'accepted_student' || message.lesson.status == 'accepted_tutor') {
                 span.innerHTML +='<div>Status: pending</div>';
                 if (message.sender != {{ user.id }}) {
                     span.innerHTML += acceptButton;
@@ -184,14 +184,15 @@
                 span.innerHTML += modifyButton;
                 span.innerHTML += cancelButton
             } else {
-                span.innerHTML +=`<div>Status: ${message.status}</div>`;
+                span.innerHTML +=`<div>Status: ${message.lesson.status}</div>`;
             }
             div.appendChild(span);
             messageContainer.appendChild(div);
         }
         function createChatItems(messages) {
             messages.forEach((message, index) => {
-                if ("lesson_id" in message) {
+                console.log(message)
+                if ("lesson" in message) {
                     createLessonItem(message);
                 } else {
                     createMessageItem(message);

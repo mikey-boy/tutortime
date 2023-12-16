@@ -4,12 +4,13 @@ import logging
 import os
 import uuid
 from enum import StrEnum, auto
-from typing import List, Self
+from typing import List, Optional, Self
 
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import ForeignKey, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.sql import func
 from werkzeug.datastructures import FileStorage
 
 from app import app
@@ -55,7 +56,10 @@ class User(Base):
     password: Mapped[str] = mapped_column()
     timezone: Mapped[int] = mapped_column()
     minutes: Mapped[int] = mapped_column(default=60)
-    services: Mapped[List["Service"]] = relationship()
+    services: Mapped[List["Service"]] = relationship(back_populates="user")
+
+    def to_json(self) -> dict:
+        return {"id": self.id, "username": self.username}
 
     def add(self) -> bool:
         try:
@@ -110,20 +114,21 @@ class Service(Base):
     __tablename__ = "service"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    user: Mapped["User"] = mapped_column(ForeignKey("user.id"))
+    user: Mapped["User"] = relationship(back_populates="services")
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
     title: Mapped[str] = mapped_column()
     description: Mapped[str] = mapped_column()
     category: Mapped[ServiceCategory] = mapped_column()
     status: Mapped[ServiceStatus] = mapped_column(default=ServiceStatus.ACTIVE)
     availability: Mapped[int] = mapped_column()
     minutes: Mapped[int] = mapped_column(default=0)
-    images: Mapped[List["Image"]] = relationship()
-    lessons: Mapped[List["Lesson"]] = relationship()
+    images: Mapped[List["Image"]] = relationship(back_populates="service")
+    lessons: Mapped[List["Lesson"]] = relationship(back_populates="service")
 
     def to_json(self) -> dict:
         data = {
             "id": self.id,
-            "user_id": self.user,
+            "user_id": self.user_id,
             "title": self.title,
         }
         return data
@@ -161,14 +166,15 @@ class Service(Base):
         return db.session.scalars(stmt)
 
     def get_lessons_with_user(self, student_id):
-        return [lesson for lesson in self.lessons if lesson.student == student_id]
+        return [lesson for lesson in self.lessons if lesson.student_id == student_id]
 
 
 class Image(Base):
     __tablename__ = "image"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    service: Mapped["Service"] = mapped_column(ForeignKey("service.id"))
+    service_id: Mapped[int] = mapped_column(ForeignKey("service.id"))
+    service: Mapped["Service"] = relationship(back_populates="images")
     filename: Mapped[str] = mapped_column()
     path: Mapped[str] = mapped_column()
 
@@ -197,20 +203,25 @@ class Lesson(Base):
     __tablename__ = "lesson"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    tutor: Mapped["User"] = mapped_column(ForeignKey("user.id"))
-    student: Mapped["User"] = mapped_column(ForeignKey("user.id"))
-    service: Mapped["Service"] = mapped_column(ForeignKey("service.id"))
+    tutor_id: Mapped[int] = mapped_column()
+    student_id: Mapped[int] = mapped_column()
+    service_id: Mapped[int] = mapped_column(ForeignKey("service.id"))
+    service: Mapped["Service"] = relationship(back_populates="lessons")
     timestamp: Mapped[datetime.datetime] = mapped_column()
     proposed_duration: Mapped[int] = mapped_column()
     actual_duration: Mapped[int] = mapped_column()
     status: Mapped[LessonStatus] = mapped_column()
+    message: Mapped["Message"] = relationship(back_populates="lesson")
 
     def to_json(self) -> dict:
         data = {
+            "id": self.id,
             "title": self.service.title,
             "status": self.status,
             "day": self.timestamp.strftime("%Y-%m-%d"),
             "time": self.timestamp.strftime("%H:%M"),
+            "proposed_duration": self.proposed_duration,
+            "actual_duration": self.actual_duration,
             "modified": self.proposed_duration != self.actual_duration,
             "service_id": self.service.id,
             "completed": self.timestamp < datetime.datetime.now(),
@@ -220,6 +231,14 @@ class Lesson(Base):
     def add(self) -> None:
         db.session.add(self)
         db.session.commit()
+    
+    def get(id: int) -> Self:
+        stmt = select(Lesson).where(Lesson.id == id)
+        return db.session.scalar(stmt)
+    
+    def update_status(self, status: LessonStatus) -> None:
+        self.status = status
+        db.session.commit()
 
 
 class Room(Base):
@@ -228,7 +247,7 @@ class Room(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     user1: Mapped[int] = mapped_column()
     user2: Mapped[int] = mapped_column()
-    messages: Mapped[List["Message"]] = relationship()
+    messages: Mapped[List["Message"]] = relationship(back_populates="room")
 
     def __init__(self, user1: int, user2: int):
         self.user1 = min(user1, user2)
@@ -249,33 +268,19 @@ class Message(Base):
     __tablename__ = "message"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    room: Mapped["Room"] = mapped_column(ForeignKey("room.id"))
+    room_id: Mapped[int] = mapped_column(ForeignKey("room.id"))
+    room: Mapped["Room"] = relationship(back_populates="messages")
     sender: Mapped[int] = mapped_column()
-    reciever: Mapped[int] = mapped_column()
-    message: Mapped[str] = mapped_column(nullable=True)
-    timestamp: Mapped[datetime.datetime] = mapped_column()
-    lesson: Mapped["Lesson"] = mapped_column(ForeignKey("lesson.id"), nullable=True)
-
-    def __init__(self, room: int, sender: int, receiver: int, message: str = "", lesson: Lesson = None):
-        self.room = room
-        self.sender = sender
-        self.reciever = receiver
-        self.timestamp = datetime.datetime.now()
-        if message:
-            self.message = message
-        if lesson:
-            self.lesson = lesson
+    receiver: Mapped[int] = mapped_column()
+    message: Mapped[Optional[str]] = mapped_column()
+    timestamp: Mapped[datetime.datetime] = mapped_column(server_default=func.now())
+    lesson_id: Mapped[Optional[int]] = mapped_column(ForeignKey("lesson.id"))
+    lesson: Mapped[Optional["Lesson"]] = relationship(back_populates="message")
 
     def to_json(self) -> dict:
-        data = {"sender": self.sender, "reciever": self.reciever, "message": self.message}
+        data = {"sender": self.sender, "receiver": self.receiver, "message": self.message}
         if self.lesson:
-            data["lesson"] = {
-                "day": self.lesson.timestamp.strftime("%Y-%m-%d"),
-                "time": self.lesson.timestamp.strftime("%H:%M"),
-                "status": self.lesson.status,
-                "duration": self.lesson.proposed_duration,
-                "title": self.lesson.title,
-            }
+            data["lesson"] = self.lesson.to_json()
         return data
 
     def add(self) -> None:

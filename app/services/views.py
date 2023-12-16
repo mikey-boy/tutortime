@@ -15,7 +15,7 @@ def service_list():
 @services_bp.route("/service/display/<int:service_id>")
 def service_display(service_id):
     service = Service.get(service_id)
-    user = User.get(service.user)
+    user = User.get(service.user.id)
     if service:
         availability = availability_to_list(service.availability)
         return render_template("service/display.html", service=service, user=user, availability=availability)
@@ -48,7 +48,7 @@ def user_service_create():
             return ("user/service/create.html", error_msg)
 
         service = Service(
-            user=session["user_id"], title=title, description=description, category=category, availability=availability
+            user_id=session["user_id"], title=title, description=description, category=category, availability=availability
         )
         service.add()
 
@@ -94,7 +94,7 @@ def user_service_update(service_id):
 
         for image in images:
             if image.filename:
-                Image(service=service.id, image=image).add()
+                Image(service_id=service.id, image=image).add()
         return redirect(f"/user/service/list/{service.status}")
 
 

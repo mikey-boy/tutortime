@@ -3,6 +3,14 @@ import os
 import sqlite3
 from enum import StrEnum, auto
 
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import Integer, String
+from sqlalchemy.orm import mapped_column
+
+from main import app
+
+db = SQLAlchemy(app)
+
 
 def _crud(db: str, query: str):
     conn = sqlite3.connect(db)

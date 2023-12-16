@@ -1,3 +1,4 @@
+from messages.views import messages_bp
 from models import db
 from sassutils.wsgi import SassMiddleware
 from services.views import services_bp
@@ -13,6 +14,7 @@ def main():
 
     app.register_blueprint(services_bp)
     app.register_blueprint(users_bp)
+    app.register_blueprint(messages_bp)
     with app.app_context():
         db.create_all()
 

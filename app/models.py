@@ -1,3 +1,4 @@
+import datetime
 import hashlib
 import logging
 import os
@@ -84,15 +85,25 @@ class User(Base):
         return None
 
     def get_service(self, service_id: int):
-        stmt = select(Service).join(User.services).where(Service.id == service_id)
-        return db.session.scalar(stmt)
+        for service in self.services:
+            if service.id == service_id:
+                return service
 
     def get_services(self, status: ServiceStatus = None):
-        if status is None:
-            stmt = select(Service).join(User.services)
-        else:
-            stmt = select(Service).join(User.services).where(Service.status == status)
-        return db.session.scalars(stmt)
+        if status:
+            return [service for service in self.services if service.status == status]
+        return self.services
+
+    def get_contacts(self):
+        stmt = select(Room).where((Room.user1 == self.id) | (Room.user2 == self.id))
+        rooms = db.session.scalars(stmt)
+        users = []
+        for room in rooms:
+            if room.user1 == self.id:
+                users.append(User.get(room.user2))
+            else:
+                users.append(User.get(room.user1))
+        return users
 
 
 class Service(Base):
@@ -102,11 +113,20 @@ class Service(Base):
     user: Mapped["User"] = mapped_column(ForeignKey("user.id"))
     title: Mapped[str] = mapped_column()
     description: Mapped[str] = mapped_column()
-    category: Mapped[str] = mapped_column()
+    category: Mapped[ServiceCategory] = mapped_column()
+    status: Mapped[ServiceStatus] = mapped_column(default=ServiceStatus.ACTIVE)
     availability: Mapped[int] = mapped_column()
-    status: Mapped[str] = mapped_column(default=ServiceStatus.ACTIVE)
     minutes: Mapped[int] = mapped_column(default=0)
-    images: Mapped[List["Image"]] = relationship("Image")
+    images: Mapped[List["Image"]] = relationship()
+    lessons: Mapped[List["Lesson"]] = relationship()
+
+    def to_json(self) -> dict:
+        data = {
+            "id": self.id,
+            "user_id": self.user,
+            "title": self.title,
+        }
+        return data
 
     def add(self) -> None:
         db.session.add(self)
@@ -140,6 +160,9 @@ class Service(Base):
             stmt = select(Service).where(Service.category == category)
         return db.session.scalars(stmt)
 
+    def get_lessons_with_user(self, student_id):
+        return [lesson for lesson in self.lessons if lesson.student == student_id]
+
 
 class Image(Base):
     __tablename__ = "image"
@@ -167,4 +190,94 @@ class Image(Base):
             logging.warning(f"Image not found on server: '{self.path}'")
 
         db.session.delete(self)
+        db.session.commit()
+
+
+class Lesson(Base):
+    __tablename__ = "lesson"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    tutor: Mapped["User"] = mapped_column(ForeignKey("user.id"))
+    student: Mapped["User"] = mapped_column(ForeignKey("user.id"))
+    service: Mapped["Service"] = mapped_column(ForeignKey("service.id"))
+    timestamp: Mapped[datetime.datetime] = mapped_column()
+    proposed_duration: Mapped[int] = mapped_column()
+    actual_duration: Mapped[int] = mapped_column()
+    status: Mapped[LessonStatus] = mapped_column()
+
+    def to_json(self) -> dict:
+        data = {
+            "title": self.service.title,
+            "status": self.status,
+            "day": self.timestamp.strftime("%Y-%m-%d"),
+            "time": self.timestamp.strftime("%H:%M"),
+            "modified": self.proposed_duration != self.actual_duration,
+            "service_id": self.service.id,
+            "completed": self.timestamp < datetime.datetime.now(),
+        }
+        return data
+
+    def add(self) -> None:
+        db.session.add(self)
+        db.session.commit()
+
+
+class Room(Base):
+    __tablename__ = "room"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user1: Mapped[int] = mapped_column()
+    user2: Mapped[int] = mapped_column()
+    messages: Mapped[List["Message"]] = relationship()
+
+    def __init__(self, user1: int, user2: int):
+        self.user1 = min(user1, user2)
+        self.user2 = max(user1, user2)
+
+    def add(self) -> None:
+        db.session.add(self)
+        db.session.commit()
+
+    def get(user1: int, user2: int) -> Self | None:
+        if user1 > user2:
+            user1, user2 = user2, user1
+        stmt = select(Room).where(Room.user1 == user1).where(Room.user2 == user2)
+        return db.session.scalar(stmt)
+
+
+class Message(Base):
+    __tablename__ = "message"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    room: Mapped["Room"] = mapped_column(ForeignKey("room.id"))
+    sender: Mapped[int] = mapped_column()
+    reciever: Mapped[int] = mapped_column()
+    message: Mapped[str] = mapped_column(nullable=True)
+    timestamp: Mapped[datetime.datetime] = mapped_column()
+    lesson: Mapped["Lesson"] = mapped_column(ForeignKey("lesson.id"), nullable=True)
+
+    def __init__(self, room: int, sender: int, receiver: int, message: str = "", lesson: Lesson = None):
+        self.room = room
+        self.sender = sender
+        self.reciever = receiver
+        self.timestamp = datetime.datetime.now()
+        if message:
+            self.message = message
+        if lesson:
+            self.lesson = lesson
+
+    def to_json(self) -> dict:
+        data = {"sender": self.sender, "reciever": self.reciever, "message": self.message}
+        if self.lesson:
+            data["lesson"] = {
+                "day": self.lesson.timestamp.strftime("%Y-%m-%d"),
+                "time": self.lesson.timestamp.strftime("%H:%M"),
+                "status": self.lesson.status,
+                "duration": self.lesson.proposed_duration,
+                "title": self.lesson.title,
+            }
+        return data
+
+    def add(self) -> None:
+        db.session.add(self)
         db.session.commit()

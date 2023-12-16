@@ -15,9 +15,10 @@ def service_list():
 @services_bp.route("/service/display/<int:service_id>")
 def service_display(service_id):
     service = Service.get(service_id)
+    user = User.get(service.user)
     if service:
         availability = availability_to_list(service.availability)
-        return render_template("service/display.html", service=service, availability=availability)
+        return render_template("service/display.html", service=service, user=user, availability=availability)
     abort(404)
 
 

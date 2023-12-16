@@ -4,7 +4,7 @@
     <div class="post-flex-container">
         <div class="post" x-data="{ image: 0 }">
             <h2>{{ service.title }}</h2>
-            <p>offered by: {{ service.username }}</p>
+            <p>offered by: {{ user.username }}</p>
             <div class="availability-flex-container">
                 <span class="image-container">
                     {% if service['images'] == [] %}
@@ -70,7 +70,7 @@
                 </div>
             </div>
             <p>{{ service.description }}</p>
-            {# <a href="{{ url_for('messages.user_messages_list', user_id=service.userId) }}"><button class="message-tutor-button"><i class="fa-regular fa-paper-plane"></i> Message tutor</button></a> #}
+            <a href="{{ url_for('messages.messages_list', user_id=user.id) }}"><button class="message-tutor-button"><i class="fa-regular fa-paper-plane"></i> Message tutor</button></a>
         </div>
     </div>
 {% endblock %}

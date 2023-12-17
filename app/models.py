@@ -43,7 +43,6 @@ class LessonStatus(StrEnum):
     CONFIRMED_STUDENT = auto()
     CONFIRMED_TUTOR = auto()
 
-
 db = SQLAlchemy(model_class=Base)
 db.init_app(app)
 
@@ -73,7 +72,7 @@ class User(Base):
         db.session.delete(self)
         db.session.commit()
 
-    def update_balance(self, minutes: int):
+    def update_minutes(self, minutes:int) -> None:
         self.minutes += minutes
         db.session.commit()
 
@@ -165,8 +164,8 @@ class Service(Base):
             stmt = select(Service).where(Service.category == category)
         return db.session.scalars(stmt)
 
-    def get_lessons_with_user(self, student_id):
-        return [lesson for lesson in self.lessons if lesson.student_id == student_id]
+    def get_lessons_with_user(self, student_id: int, statuses: list(LessonStatus)):
+        return [lesson for lesson in self.lessons if lesson.student_id == student_id and lesson.status in statuses]
 
 
 class Image(Base):
@@ -203,8 +202,10 @@ class Lesson(Base):
     __tablename__ = "lesson"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    tutor_id: Mapped[int] = mapped_column()
-    student_id: Mapped[int] = mapped_column()
+    tutor_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
+    tutor: Mapped["User"] = relationship(foreign_keys=tutor_id)
+    student_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
+    student: Mapped["User"] = relationship(foreign_keys=student_id)
     service_id: Mapped[int] = mapped_column(ForeignKey("service.id"))
     service: Mapped["Service"] = relationship(back_populates="lessons")
     timestamp: Mapped[datetime.datetime] = mapped_column()
@@ -217,6 +218,8 @@ class Lesson(Base):
         data = {
             "id": self.id,
             "title": self.service.title,
+            "tutor_id": self.tutor_id,
+            "student_id": self.student_id,
             "status": self.status,
             "day": self.timestamp.strftime("%Y-%m-%d"),
             "time": self.timestamp.strftime("%H:%M"),
@@ -236,6 +239,12 @@ class Lesson(Base):
         stmt = select(Lesson).where(Lesson.id == id)
         return db.session.scalar(stmt)
     
+    def update(self, timestamp: datetime, proposed_duration: int, actual_duration: int):
+        self.timestamp = timestamp
+        self.proposed_duration = proposed_duration
+        self.actual_duration = actual_duration
+        db.session.commit()
+
     def update_status(self, status: LessonStatus) -> None:
         self.status = status
         db.session.commit()
@@ -270,19 +279,23 @@ class Message(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     room_id: Mapped[int] = mapped_column(ForeignKey("room.id"))
     room: Mapped["Room"] = relationship(back_populates="messages")
-    sender: Mapped[int] = mapped_column()
-    receiver: Mapped[int] = mapped_column()
+    sender_id: Mapped[Optional[int]] = mapped_column()
+    receiver_id: Mapped[Optional[int]] = mapped_column()
     message: Mapped[Optional[str]] = mapped_column()
     timestamp: Mapped[datetime.datetime] = mapped_column(server_default=func.now())
     lesson_id: Mapped[Optional[int]] = mapped_column(ForeignKey("lesson.id"))
     lesson: Mapped[Optional["Lesson"]] = relationship(back_populates="message")
 
     def to_json(self) -> dict:
-        data = {"sender": self.sender, "receiver": self.receiver, "message": self.message}
+        data = {"sender": self.sender_id, "receiver": self.receiver_id, "message": self.message}
         if self.lesson:
             data["lesson"] = self.lesson.to_json()
         return data
 
     def add(self) -> None:
         db.session.add(self)
+        db.session.commit()
+
+    def swap_sender(self) -> None:
+        self.sender_id, self.receiver_id = self.receiver_id, self.sender_id
         db.session.commit()

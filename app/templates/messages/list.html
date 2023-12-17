@@ -26,7 +26,8 @@
                 <input id="service-or-lesson-id" type="hidden">
                 <input id="lesson-peer-id" type="hidden" value="{{ peer.id }}">
                 <label for="lesson-date">Datetime: </label>
-                <input id="lesson-date" name="lesson-date" type="date" min="{{ today }}" required>
+                {# <input id="lesson-date" name="lesson-date" type="date" min="{{ today }}" required> #}
+                <input id="lesson-date" name="lesson-date" type="date" required>
                 <input id="lesson-time" name="lesson-time" type="time" required>
                 <label for="lesson-duration">Duration: </label>
                 <select id="lesson-duration">
@@ -112,26 +113,28 @@
         const services = {{ services|tojson }};
         
         function modifyRequest(lesson_id) {
-            messages.forEach((message, index) => {
-                if (message.lesson_id == lesson_id) {
-                    document.getElementById("service-or-lesson-id").value = message.lesson_id;
-                    document.getElementById("service-title").innerHTML = `${message.serviceTitle}`;
-                    document.getElementById("lesson-date").value = `${message.day}`;
-                    document.getElementById("lesson-time").value = `${message.time}`;
-                    document.getElementById("lesson-duration").value = message.duration;
+            for (const message of messages) {
+                if ("lesson" in message && message.lesson.id == lesson_id) {
+                    document.getElementById("service-or-lesson-id").value = message.lesson.id;
+                    document.getElementById("service-title").innerHTML = `${message.lesson.title}`;
+                    document.getElementById("lesson-date").value = `${message.lesson.day}`;
+                    document.getElementById("lesson-time").value = `${message.lesson.time}`;
+                    document.getElementById("lesson-duration").value = message.lesson.proposed_duration;
+                    break;
                 }
-            });
+            }
         }
         function lessonRequest(service_id) {
-            services.forEach((service, index) => {
+            for (const service of services) {
                 if (service.id == service_id) {
                     document.getElementById("service-or-lesson-id").value = service.id;
                     document.getElementById("service-title").innerHTML = `${service.title}`;
                     document.getElementById("lesson-date").value = "";
                     document.getElementById("lesson-time").value = "";
                     document.getElementById("lesson-duration").value = "15";
+                    break;
                 }
-            });
+            }
         }
         function clearRadioButtons(){
             var radioButtons = document.getElementsByName('service');
@@ -143,7 +146,7 @@
         function createMessageItem(message) {
             var messageContainer = document.getElementById("chat-messages");
             
-            if (message.sender === -1 ){
+            if (message.sender == null){
                 var content = `<div class="flex-container-system"><span class="message-item-system">${message.message}</span></div>`
             } else if (message.sender === {{ user.id }}) {
                 var content = `<div class="flex-container-user"><span class="message-item">${message.message}</span></div>`
@@ -172,9 +175,9 @@
             span.innerHTML +=`<div>Time: ${message.lesson.time}</div>`
             span.innerHTML +=`<div>Duration: ${message.lesson.proposed_duration} minutes</div>`
             
-            var acceptButton = `<button class='accept-button' @click="sendAcceptRequest(${message.lesson_id})">Accept</button> `;
-            var cancelButton = `<button class='cancel-button' @click="sendCancelRequest(${message.lesson_id})">Cancel</button> `
-            var modifyButton = `<button class='modify-button' @click="modifyRequest(${message.lesson_id}); request_service = 3;">Modify</button> `
+            var acceptButton = `<button class='accept-button' @click="sendAcceptRequest(${message.lesson.id})">Accept</button> `;
+            var cancelButton = `<button class='cancel-button' @click="sendCancelRequest(${message.lesson.id})">Cancel</button> `
+            var modifyButton = `<button class='modify-button' @click="modifyRequest(${message.lesson.id}); request_service = 3;">Modify</button> `
 
             if (message.lesson.status == 'accepted_student' || message.lesson.status == 'accepted_tutor') {
                 span.innerHTML +='<div>Status: pending</div>';
@@ -191,7 +194,6 @@
         }
         function createChatItems(messages) {
             messages.forEach((message, index) => {
-                console.log(message)
                 if ("lesson" in message) {
                     createLessonItem(message);
                 } else {
@@ -224,17 +226,17 @@
             }
         }
         function sendAcceptRequest(lesson_id) {
-            socketio.emit("acceptLesson", { lesson_id: lesson_id });
+            socketio.emit("acceptLesson", { "lesson_id": lesson_id });
         }
         function sendConfirmRequest(lesson_id) {
-            socketio.emit("confirmLesson", { lesson_id: lesson_id });
+            socketio.emit("confirmLesson", { "lesson_id": lesson_id });
         }
         function sendConfirmRequestModify(lesson_id) {
-            var durationInput = document.getElementById(`${lesson_id}-duration`);
-            socketio.emit("confirmLesson", { lesson_id: lesson_id, duration: durationInput.value });
+            var duration = document.getElementById(`${lesson_id}-duration`).value;
+            socketio.emit("confirmLesson", { "lesson_id": lesson_id, "duration": duration });
         }
         function sendCancelRequest(lesson_id) {
-            socketio.emit("cancelLesson", { lesson_id: lesson_id });
+            socketio.emit("cancelLesson", { "lesson_id": lesson_id });
         }
 
         var socketio = io();

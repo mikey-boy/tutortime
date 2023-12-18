@@ -4,9 +4,9 @@
 {% block content %}
 <div id="user-service-creation">
     {% if service %}
-    <form action="{{ url_for('services.user_service_update', service_id=service.id) }}" method="POST" enctype="multipart/form-data">
+    <form action="{{ url_for('service.user_service_update', service_id=service.id) }}" method="POST" enctype="multipart/form-data">
     {% else %}
-    <form action="{{ url_for('services.user_service_create') }}" method="POST" enctype="multipart/form-data">
+    <form action="{{ url_for('service.user_service_create') }}" method="POST" enctype="multipart/form-data">
     {% endif %}
         <table id="service-creation-table">
             <tbody>
@@ -32,7 +32,11 @@
                     </td>
                     <td>
                         <select name="category" required>
-                            <option value="" disabled>Select a category</option>
+                            {% if not service %}
+                                <option value="" disabled selected>Select a category</option>
+                            {% else %}
+                                <option value="" disabled>Select a category</option>
+                            {% endif %}
                             
                             {% if service and service.category == "language" %}
                                 <option value="language" selected>Language learning</option>

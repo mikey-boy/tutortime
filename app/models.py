@@ -1,8 +1,8 @@
-import datetime
 import hashlib
 import logging
 import os
 import uuid
+from datetime import datetime
 from enum import StrEnum, auto
 from typing import List, Optional, Self
 
@@ -56,9 +56,6 @@ class User(Base):
     timezone: Mapped[int] = mapped_column()
     minutes: Mapped[int] = mapped_column(default=60)
     services: Mapped[List["Service"]] = relationship(back_populates="user")
-
-    def to_json(self) -> dict:
-        return {"id": self.id, "username": self.username}
 
     def add(self) -> bool:
         try:
@@ -208,7 +205,7 @@ class Lesson(Base):
     student: Mapped["User"] = relationship(foreign_keys=student_id)
     service_id: Mapped[int] = mapped_column(ForeignKey("service.id"))
     service: Mapped["Service"] = relationship(back_populates="lessons")
-    timestamp: Mapped[datetime.datetime] = mapped_column()
+    timestamp: Mapped[datetime] = mapped_column()
     proposed_duration: Mapped[int] = mapped_column()
     actual_duration: Mapped[int] = mapped_column()
     status: Mapped[LessonStatus] = mapped_column()
@@ -218,8 +215,11 @@ class Lesson(Base):
         data = {
             "id": self.id,
             "title": self.service.title,
+            "description": self.service.description,
             "tutor_id": self.tutor_id,
+            "tutor_name": self.tutor.username,
             "student_id": self.student_id,
+            "student_name": self.student.username,
             "status": self.status,
             "day": self.timestamp.strftime("%Y-%m-%d"),
             "time": self.timestamp.strftime("%H:%M"),
@@ -227,7 +227,7 @@ class Lesson(Base):
             "actual_duration": self.actual_duration,
             "modified": self.proposed_duration != self.actual_duration,
             "service_id": self.service.id,
-            "completed": self.timestamp < datetime.datetime.now(),
+            "completed": self.timestamp < datetime.now(),
         }
         return data
 
@@ -238,6 +238,10 @@ class Lesson(Base):
     def get(id: int) -> Self:
         stmt = select(Lesson).where(Lesson.id == id)
         return db.session.scalar(stmt)
+    
+    def get_for_user(user_id: int):
+        stmt = select(Lesson).where((Lesson.student_id == user_id) | (Lesson.tutor_id == user_id))
+        return db.session.scalars(stmt)
     
     def update(self, timestamp: datetime, proposed_duration: int, actual_duration: int):
         self.timestamp = timestamp
@@ -282,7 +286,7 @@ class Message(Base):
     sender_id: Mapped[Optional[int]] = mapped_column()
     receiver_id: Mapped[Optional[int]] = mapped_column()
     message: Mapped[Optional[str]] = mapped_column()
-    timestamp: Mapped[datetime.datetime] = mapped_column(server_default=func.now())
+    timestamp: Mapped[datetime] = mapped_column(server_default=func.now())
     lesson_id: Mapped[Optional[int]] = mapped_column(ForeignKey("lesson.id"))
     lesson: Mapped[Optional["Lesson"]] = relationship(back_populates="message")
 

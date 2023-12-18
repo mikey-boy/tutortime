@@ -8,7 +8,7 @@
         <h2>Contacts</h2>
         <ul>
             {% for contact in contacts %}
-                <a href="{{ url_for('messages.messages_list', user_id=contact.id) }}">
+                <a href="{{ url_for('message.message_list', user_id=contact.id) }}">
                     <li :class="{{ peer.id }} == {{ contact.id }} && 'active'">{{ contact.username }}</li>
                 </a>
             {% endfor %}
@@ -57,7 +57,7 @@
         <div class="lesson-container" x-show="request_service == 0 || request_service == 3">
             {% for lesson in lessons %}
                 <div class="lesson-item lesson-confirmed-item" :class="'{{ lesson.modified }}' == 'True' && '{{ lesson.status }}' != 'confirmed' ? 'warning' : ''" x-data="{ modify: false }" x-show="'{{ lesson.completed }}' == completed">
-                    <a href="{{ url_for('services.service_list', service_id=lesson.service_id) }}"><h4>{{ lesson.title }}</h4></a>
+                    <a href="{{ url_for('service.service_list', service_id=lesson.service_id) }}"><h4>{{ lesson.title }}</h4></a>
                     <p>Day: {{ lesson.day }}</p>
                     <p>Time: {{ lesson.time }}</p>
                     {% if lesson.modified and lesson.status != 'confirmed' %}

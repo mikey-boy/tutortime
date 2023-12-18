@@ -1,8 +1,8 @@
-from messages.views import messages_bp
+from message.views import message_bp
 from models import db
 from sassutils.wsgi import SassMiddleware
-from services.views import services_bp
-from users.views import users_bp
+from service.views import service_bp
+from user.views import user_bp
 
 from app import app
 
@@ -12,9 +12,9 @@ def main():
     app.wsgi_app = SassMiddleware(app.wsgi_app, {__name__: ("static/scss", "static/css", "static/css")})
     app.config.from_object("config")
 
-    app.register_blueprint(services_bp)
-    app.register_blueprint(users_bp)
-    app.register_blueprint(messages_bp)
+    app.register_blueprint(service_bp)
+    app.register_blueprint(user_bp)
+    app.register_blueprint(message_bp)
     with app.app_context():
         db.create_all()
 

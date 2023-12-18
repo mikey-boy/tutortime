@@ -70,7 +70,7 @@
                 </div>
             </div>
             <p>{{ service.description }}</p>
-            <a href="{{ url_for('messages.messages_list', user_id=user.id) }}"><button class="message-tutor-button"><i class="fa-regular fa-paper-plane"></i> Message tutor</button></a>
+            <a href="{{ url_for('message.message_list', user_id=user.id) }}"><button class="message-tutor-button"><i class="fa-regular fa-paper-plane"></i> Message tutor</button></a>
         </div>
     </div>
 {% endblock %}

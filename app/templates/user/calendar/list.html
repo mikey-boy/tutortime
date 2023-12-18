@@ -35,16 +35,16 @@
                     {% endif %}
                             {{ j }}
                             {% for lesson in calendar[i]["lessons"] %}
-                                {% if lesson.day == j and lesson.status != 'cancelled' %}
+                                {% if lesson.day == "%d-%d-%d" % (calendar[i].year, calendar[i].month, j) %}
                                     <div class="relative-container">
                                     {% if lesson.status == 'pending' %}
                                         <button class="calendar-lesson pending" x-on:click="modal = modal == {{ lesson.id }} ? -1 : {{ lesson.id }}">
-                                    {% elif lesson.is_tutor %}
+                                    {% elif lesson.tutor_id == session["user_id"] %}
                                         <button class="calendar-lesson tutor" x-on:click="modal = modal == {{ lesson.id }} ? -1 : {{ lesson.id }}">
                                     {% else %}
                                         <button class="calendar-lesson student" x-on:click="modal = modal == {{ lesson.id }} ? -1 : {{ lesson.id }}">
                                     {% endif %}
-                                            <b>{{ lesson.start_time }} - {{ lesson.end_time }}</b><br>
+                                            <b>{{ lesson.time }}</b><br>
                                             {% if lesson.status == 'pending' %}
                                                 {{ lesson.title }} (pending)
                                             {% else %}    
@@ -57,11 +57,12 @@
                                             <span class="lesson-modal open-right" x-show="modal == {{ lesson.id }}">
                                         {% endif %}
                                                 <button x-on:click="modal = -1"><i class="fa-regular fa-circle-xmark fa-xl"></i></button>
-                                                <a href="{{ url_for('services.service_list', service_id=lesson.serviceId) }}"><h3 class="truncated-text">{{ lesson.title }}</h3></a>
-                                                <p>Time: {{ lesson.start_time }} - {{ lesson.end_time }}</p>
+                                                <a href="{{ url_for('service.service_list', service_id=lesson.serviceId) }}"><h3 class="truncated-text">{{ lesson.title }}</h3></a>
+                                                <p>Time: {{ lesson.time }}</p>
+                                                <p>Duration: {{ lesson.proposed_duration }} minutes</p>
                                                 <p class="truncated-text">Description: {{ lesson.description }}</p>
-                                                <p>Tutor: {{ lesson.tutorName }}</p>
-                                                <p>Student: {{ lesson.studentName }}</p>
+                                                <p>Tutor: {{ lesson.tutor_name }}</p>
+                                                <p>Student: {{ lesson.student_name }}</p>
                                             </span>
                                     </div> 
                                 {% endif %}

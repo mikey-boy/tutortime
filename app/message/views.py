@@ -10,14 +10,14 @@ from utils import dt_to_str, str_to_dt
 
 from app import socketio
 
-messages_bp = Blueprint("messages", __name__)
+message_bp = Blueprint("message", __name__)
 
 
-@messages_bp.route("/messages/list/")
-@messages_bp.route("/messages/list/<int:user_id>")
-def messages_list(user_id=None):
+@message_bp.route("/message/list/")
+@message_bp.route("/message/list/<int:user_id>")
+def message_list(user_id=None):
     if session.get("user_id") is None:
-        return render_template("error/not_logged_in.html")
+        return render_template("error/not_logged_in.html", action="talk to other users on the platform")
 
     user1 = User.get(session["user_id"])
     if user_id:
@@ -27,7 +27,7 @@ def messages_list(user_id=None):
         if contacts:
             user2 = User.get(contacts[0].id)
         else:
-            return render_template("messages/list.html", error_text="Browse the service listings to start a chat")
+            return render_template("message/list.html", error_text="Browse the service listings to start a chat")
 
     room = Room.get(user1.id, user2.id)
     if room is None:
@@ -41,18 +41,21 @@ def messages_list(user_id=None):
         lessons += service.get_lessons_with_user(user2.id, statuses)
     for service in user2.services:
         lessons += service.get_lessons_with_user(user1.id, statuses)
+    sorted_lessons = sorted([lesson for lesson in lessons if lesson.timestamp < datetime.now()], key=lambda d: d.timestamp, reverse=True)
+    sorted_lessons += sorted([lesson for lesson in lessons if lesson.timestamp >= datetime.now()], key=lambda d: d.timestamp, reverse=False)
+
     services = user1.get_services(ServiceStatus.ACTIVE) + user2.get_services(ServiceStatus.ACTIVE)
 
     today = datetime.now().strftime("%Y-%m-%d")
-    contacts_json = [contact.to_json() for contact in user1.get_contacts()]
     messages_json = [message.to_json() for message in room.messages]
     services_json = [service.to_json() for service in services]
-    lessons_json = [lesson.to_json() for lesson in lessons]
+    lessons_json = [lesson.to_json() for lesson in sorted_lessons]
+    sorted_lessons_json = []
     return render_template(
-        "messages/list.html",
-        user=user1.to_json(),
-        peer=user2.to_json(),
-        contacts=contacts_json,
+        "message/list.html",
+        user=user1,
+        peer=user2,
+        contacts=user1.get_contacts(),
         messages=messages_json,
         services=services_json,
         lessons=lessons_json,

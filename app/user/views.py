@@ -1,15 +1,20 @@
-from flask import Blueprint, redirect, render_template, request, session
-from models import User
+import calendar
+import hashlib
+from datetime import date
+
+from dateutil.relativedelta import relativedelta
+from flask import Blueprint, abort, redirect, render_template, request, session
+from models import Lesson, User
 
 # from ..services.models import LessonStatus, ServiceStatus
 
-users_bp = Blueprint("users", __name__)
+user_bp = Blueprint("user", __name__)
 
 
-@users_bp.route("/user/account/login", methods=["GET", "POST"])
+@user_bp.route("/user/account/login", methods=["GET", "POST"])
 def user_account_login():
     if request.method == "GET":
-        if "username" in session:
+        if session.get("user_id") is not None:
             return redirect("/service/list/")
         return render_template("user/account/login.html")
     else:
@@ -26,17 +31,17 @@ def user_account_login():
         return redirect("/service/list/")
 
 
-@users_bp.route("/user/account/logout")
+@user_bp.route("/user/account/logout")
 def user_account_logout():
-    if "user_id" in session:
+    if session.get("user_id") is not None:
         del session["user_id"]
     return redirect("/service/list/")
 
 
-@users_bp.route("/user/account/create", methods=["GET", "POST"])
+@user_bp.route("/user/account/create", methods=["GET", "POST"])
 def user_account_create():
     if request.method == "GET":
-        if "user" in session:
+        if session.get("user_id") is not None:
             return redirect("/service/list/")
         return render_template("user/account/create.html")
     else:
@@ -45,7 +50,8 @@ def user_account_create():
         if username is None or password is None:
             return render_template("user/account/create.html", error_msg="Please provide a username and password")
 
-        user = User(username=username, password=password, timezone="America/Toronto")
+        encoded_password = hashlib.sha256(password.encode()).hexdigest()
+        user = User(username=username, password=encoded_password, timezone="America/Toronto")
         if user.add() is False:
             return render_template("user/account/create.html", error_msg="User account already exists")
 
@@ -83,3 +89,30 @@ def user_account_create():
 #         lessons=lessons,
 #         balance=original_balance,
 #     )
+
+
+@user_bp.route("/user/calendar/list")
+def user_calendar_list():
+    if session.get("user_id") is None:
+        return render_template("error/not_logged_in.html", action="view your calendar")
+
+    lessons = list(Lesson.get_for_user(session["user_id"]))
+
+    cal = []
+    today = date.today()
+    for i in range(-12, 13):
+        cur_month = today + relativedelta(months=i)
+        monthrange = calendar.monthrange(cur_month.year, cur_month.month)
+        month = {}
+        month["year"] = cur_month.year
+        month["month"] = cur_month.month
+        month["month_name"] = calendar.month_name[cur_month.month]
+        month["month_offset"] = monthrange[0]
+        month["month_length"] = monthrange[1]
+        month["lessons"] = []
+        for lesson in lessons:
+            if cur_month.month == lesson.timestamp.month and cur_month.year == lesson.timestamp.year:
+                month["lessons"].append(lesson.to_json())
+        cal.append(month)
+
+    return render_template("user/calendar/list.html", lessons=lessons, calendar=cal, today=today.day)

@@ -15,7 +15,7 @@
         <div class="post-grid-container">
             {% for service in services %}
                 <div class="post" x-show="'{{ service.category }}' == category || 'all' == category" x-data="{ image: 0 }">
-                    <a href="{{ url_for('services.service_display', service_id=service.id) }}">
+                    <a href="{{ url_for('service.service_display', service_id=service.id) }}">
                         <div class="image-container">
                             {% if service['images'] == [] %}
                                 <img src="/static/img/terminal.jpg" alt="Default thumbnail">
@@ -30,11 +30,11 @@
                             {% endif %}
                         </div>
                     </a>
-                    <a href="{{ url_for('services.service_display', service_id=service.id) }}">
+                    <a href="{{ url_for('service.service_display', service_id=service.id) }}">
                         <h3>{{ service.title }}</h3>
                     </a>
                     <p class="truncated-text">{{ service.description }}</p>
-                    <p>{{ service.username }}</p>
+                    <p>{{ service.user.username }}</p>
                 </div>
             {% endfor %}
         </div>

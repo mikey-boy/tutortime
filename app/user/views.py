@@ -3,12 +3,18 @@ import hashlib
 from datetime import date
 
 from dateutil.relativedelta import relativedelta
-from flask import Blueprint, abort, redirect, render_template, request, session
-from models import Lesson, User
-
-# from ..services.models import LessonStatus, ServiceStatus
+from flask import Blueprint, redirect, render_template, request, session
+from models import Lesson, LessonStatus, ServiceStatus, User
 
 user_bp = Blueprint("user", __name__)
+statuses = [
+    LessonStatus.ACCEPTED,
+    LessonStatus.ACCEPTED_STUDENT,
+    LessonStatus.ACCEPTED_TUTOR,
+    LessonStatus.CONFIRMED,
+    LessonStatus.CONFIRMED_STUDENT,
+    LessonStatus.CONFIRMED_TUTOR,
+]
 
 
 @user_bp.route("/user/account/login", methods=["GET", "POST"])
@@ -59,36 +65,23 @@ def user_account_create():
         return redirect("/service/list/")
 
 
-# @user_bp.route("/user/account/list")
-# def user_account_list():
-#     if "username" not in session:
-#         return render_template("error/not_logged_in.html")
+@user_bp.route("/user/account/list")
+def user_account_list():
+    if session.get("user_id") is None:
+        return render_template("error/not_logged_in.html", action="view your profile")
 
-#     services = db.get_services_by_status(session["userId"], ServiceStatus.ACTIVE)
-#     lessons = db.get_lessons_for_user(session["userId"])
-#     balance = db.get_user_balance(session["userId"])
-#     original_balance = balance
-#     for lesson in lessons:
-#         dt = datetime.strptime(lesson["datetime"], "%Y-%m-%dT%H:%M")
-#         lesson["day"] = datetime.strftime(dt, "%d/%m/%Y")
-#         lesson["tutorName"] = db.get_username(lesson["tutorId"])
-#         lesson["studentName"] = db.get_username(lesson["studentId"])
-#         if lesson["tutorId"] == session["userId"] and lesson["status"] == LessonStatus.CONFIRMED:
-#             lesson["balance"] = balance
-#             balance -= lesson["actualDurationMinutes"]
-#         elif lesson["studentId"] == session["userId"] and lesson["status"].startswith("accepted_") == False:
-#             lesson["balance"] = balance
-#             balance += lesson["proposedDurationMinutes"]
-#         else:
-#             lesson["balance"] = balance
+    user = User.get(session["user_id"])
+    services = user.get_services(ServiceStatus.ACTIVE)
+    lessons = [lesson.to_json() for lesson in Lesson.get_lessons_for_user(user.id, statuses, False)]
 
-#     return render_template(
-#         "user/account/list.html",
-#         user_id=session["userId"],
-#         services=services,
-#         lessons=lessons,
-#         balance=original_balance,
-#     )
+    minutes = user.minutes
+    for lesson in lessons:
+        lesson["balance"] = minutes
+        if lesson["tutor_id"] == session["user_id"] and lesson["status"] == LessonStatus.CONFIRMED:
+            minutes -= lesson["actual_duration"]
+        elif lesson["student_id"] == session["user_id"] and lesson["status"].startswith("accepted_") is False:
+            minutes += lesson["proposed_duration"]
+    return render_template("user/account/list.html", user=user, services=services, lessons=lessons)
 
 
 @user_bp.route("/user/calendar/list")
@@ -96,7 +89,7 @@ def user_calendar_list():
     if session.get("user_id") is None:
         return render_template("error/not_logged_in.html", action="view your calendar")
 
-    lessons = list(Lesson.get_for_user(session["user_id"]))
+    lessons = list(Lesson.get_lessons_for_user(session["user_id"], statuses))
 
     cal = []
     today = date.today()

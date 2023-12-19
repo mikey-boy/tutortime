@@ -1,5 +1,5 @@
 # Byte-compiled / optimized / DLL files
-__pycache__/
+__pycache__
 *.py[cod]
 *$py.class
 
@@ -160,6 +160,5 @@ cython_debug/
 #.idea/
 
 # Project specific
-db
-static/uploads
-static/css
+app/static/uploads
+app/static/css

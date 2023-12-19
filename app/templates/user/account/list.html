@@ -4,7 +4,7 @@
     <h2>Transactions</h2>
     <div x-data="{ page: 0 }">
         <div class="page-control">
-            <p>Current Balance: {{ balance }} minutes</p>
+            <p>Current Balance: {{ user.minutes }} minutes</p>
             {% if lessons|length > 10 %}
                 <div>
                     <button @click="page = page == 0 ? page : page - 1"><i class="fa-solid fa-chevron-left fa-xl"></i></button>
@@ -30,27 +30,27 @@
                     <tr x-show="page == {{i//10}}" >
                         <td>{{ lessons[i]['day'] }}</td>
                         <td>{{ lessons[i]['title'] }}</td>
-                        <td>{{ lessons[i]['tutorName'] }}</td>
-                        <td>{{ lessons[i]['studentName'] }}</td>
+                        <td>{{ lessons[i]['tutor_name'] }}</td>
+                        <td>{{ lessons[i]['student_name'] }}</td>
 
-                        {% if lessons[i]['tutorId'] == user_id %}
+                        {% if lessons[i]['tutor_id'] == user.id %}
                             {% if lessons[i]['status'] == 'confirmed'%}
                                 <td>{{ lessons[i]['status'] }}</td>
-                                <td class="tutor-transaction">+{{ lessons[i]['actualDurationMinutes'] }}</td>
+                                <td class="tutor-transaction">+{{ lessons[i]['actual_duration'] }}</td>
                             {% else %}
                                 <td>pending confirmation</td>
-                                <td class="pending-transaction">(+{{ lessons[i]['actualDurationMinutes'] }})</td>
+                                <td class="pending-transaction">(+{{ lessons[i]['actual_duration'] }})</td>
                             {% endif %}
                         {% else %}
                             {% if lessons[i]['status'] == 'accepted_student' or lessons[i]['status'] == 'accepted_tutor' %}
                                 <td>pending acceptance</td>
-                                <td class="pending-transaction">(-{{ lessons[i]['actualDurationMinutes'] }})</td>
+                                <td class="pending-transaction">(-{{ lessons[i]['actual_duration'] }})</td>
                             {% elif lessons[i]['status'] == 'confirmed_student' or lessons[i]['status'] == 'confirmed_tutor' %}
                                 <td>pending confirmation</td>
-                                <td class="student-transaction">-{{ lessons[i]['actualDurationMinutes'] }}</td>
+                                <td class="student-transaction">-{{ lessons[i]['actual_duration'] }}</td>
                             {% else %}
                                 <td>{{ lessons[i]['status'] }}</td>
-                                <td class="student-transaction">-{{ lessons[i]['actualDurationMinutes'] }}</td>
+                                <td class="student-transaction">-{{ lessons[i]['actual_duration'] }}</td>
                             {% endif %}
                         {% endif %}
                         <td>{{ lessons[i]['balance'] }}</td>

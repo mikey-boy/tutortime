@@ -48,14 +48,18 @@ def user_service_create():
             return ("user/service/create.html", error_msg)
 
         service = Service(
-            user_id=session["user_id"], title=title, description=description, category=category, availability=availability
+            user_id=session["user_id"],
+            title=title,
+            description=description,
+            category=category,
+            availability=availability,
         )
         service.add()
 
         images = request.files.getlist("images")
         for image in images:
             if image.filename:
-                Image(service=service.id, image=image).add()
+                Image(service_id=service.id, image=image).add()
 
         return redirect("/user/service/list/active")
 

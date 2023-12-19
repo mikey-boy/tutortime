@@ -7,7 +7,7 @@ from enum import StrEnum, auto
 from typing import List, Optional, Self
 
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import ForeignKey, select
+from sqlalchemy import ForeignKey, desc, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
@@ -43,6 +43,7 @@ class LessonStatus(StrEnum):
     CONFIRMED_STUDENT = auto()
     CONFIRMED_TUTOR = auto()
 
+
 db = SQLAlchemy(model_class=Base)
 db.init_app(app)
 
@@ -69,7 +70,7 @@ class User(Base):
         db.session.delete(self)
         db.session.commit()
 
-    def update_minutes(self, minutes:int) -> None:
+    def update_minutes(self, minutes: int) -> None:
         self.minutes += minutes
         db.session.commit()
 
@@ -161,7 +162,7 @@ class Service(Base):
             stmt = select(Service).where(Service.category == category)
         return db.session.scalars(stmt)
 
-    def get_lessons_with_user(self, student_id: int, statuses: list(LessonStatus)):
+    def get_lessons(self, student_id: int, statuses: list(LessonStatus)):
         return [lesson for lesson in self.lessons if lesson.student_id == student_id and lesson.status in statuses]
 
 
@@ -174,8 +175,8 @@ class Image(Base):
     filename: Mapped[str] = mapped_column()
     path: Mapped[str] = mapped_column()
 
-    def __init__(self, service: int, image: FileStorage):
-        self.service = service
+    def __init__(self, service_id: int, image: FileStorage):
+        self.service_id = service_id
         self.filename = image.filename
         self.path = os.path.join(app.config["IMAGE_FOLDER"], str(uuid.uuid4()))
 
@@ -234,15 +235,23 @@ class Lesson(Base):
     def add(self) -> None:
         db.session.add(self)
         db.session.commit()
-    
+
     def get(id: int) -> Self:
         stmt = select(Lesson).where(Lesson.id == id)
         return db.session.scalar(stmt)
-    
-    def get_for_user(user_id: int):
-        stmt = select(Lesson).where((Lesson.student_id == user_id) | (Lesson.tutor_id == user_id))
+
+    def get_lessons_for_user(user_id: int, statuses: list(LessonStatus), asc: bool = True):
+        stmt = (
+            select(Lesson)
+            .where((Lesson.student_id == user_id) | (Lesson.tutor_id == user_id))
+            .where(Lesson.status.in_(statuses))
+        )
+        if asc:
+            stmt = stmt.order_by(Lesson.timestamp)
+        else:
+            stmt = stmt.order_by(desc(Lesson.timestamp))
         return db.session.scalars(stmt)
-    
+
     def update(self, timestamp: datetime, proposed_duration: int, actual_duration: int):
         self.timestamp = timestamp
         self.proposed_duration = proposed_duration

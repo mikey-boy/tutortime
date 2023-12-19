@@ -4,8 +4,7 @@ from datetime import datetime
 
 from flask import Blueprint, abort, render_template, session
 from flask_socketio import SocketIO, emit, join_room, leave_room, send
-from models import (Lesson, LessonStatus, Message, Room, Service,
-                    ServiceStatus, User)
+from models import Lesson, LessonStatus, Message, Room, Service, ServiceStatus, User
 from utils import dt_to_str, str_to_dt
 
 from app import socketio
@@ -36,13 +35,22 @@ def message_list(user_id=None):
     session["room"] = room.id
 
     lessons = []
-    statuses = [LessonStatus.ACCEPTED, LessonStatus.CONFIRMED, LessonStatus.CONFIRMED_STUDENT, LessonStatus.CONFIRMED_TUTOR]
+    statuses = [
+        LessonStatus.ACCEPTED,
+        LessonStatus.CONFIRMED,
+        LessonStatus.CONFIRMED_STUDENT,
+        LessonStatus.CONFIRMED_TUTOR,
+    ]
     for service in user1.services:
-        lessons += service.get_lessons_with_user(user2.id, statuses)
+        lessons += service.get_lessons(user2.id, statuses)
     for service in user2.services:
-        lessons += service.get_lessons_with_user(user1.id, statuses)
-    sorted_lessons = sorted([lesson for lesson in lessons if lesson.timestamp < datetime.now()], key=lambda d: d.timestamp, reverse=True)
-    sorted_lessons += sorted([lesson for lesson in lessons if lesson.timestamp >= datetime.now()], key=lambda d: d.timestamp, reverse=False)
+        lessons += service.get_lessons(user1.id, statuses)
+    sorted_lessons = sorted(
+        [lesson for lesson in lessons if lesson.timestamp < datetime.now()], key=lambda d: d.timestamp, reverse=True
+    )
+    sorted_lessons += sorted(
+        [lesson for lesson in lessons if lesson.timestamp >= datetime.now()], key=lambda d: d.timestamp, reverse=False
+    )
 
     services = user1.get_services(ServiceStatus.ACTIVE) + user2.get_services(ServiceStatus.ACTIVE)
 
@@ -50,7 +58,6 @@ def message_list(user_id=None):
     messages_json = [message.to_json() for message in room.messages]
     services_json = [service.to_json() for service in services]
     lessons_json = [lesson.to_json() for lesson in sorted_lessons]
-    sorted_lessons_json = []
     return render_template(
         "message/list.html",
         user=user1,
@@ -116,6 +123,7 @@ def create_lesson(payload):
     message.add()
     emit("createLesson", message.to_json(), to=session["room"])
 
+
 def _user_lesson_modify(lesson: Lesson, accepted_states: list(LessonStatus)):
     if "user_id" not in session:
         abort(401)
@@ -134,9 +142,12 @@ def _system_message(lesson: Lesson, status: LessonStatus) -> None:
     elif status == LessonStatus.CANCELLED:
         message = f"{user.username} cancelled '{lesson.service.title}' scheduled for {day} @ {time}"
     else:
-        message = f"{user.username} confirmed '{lesson.service.title}' on {day} @ {time} for {lesson.actual_duration} minutes"
+        message = (
+            f"{user.username} confirmed '{lesson.service.title}' on {day} @ {time} for {lesson.actual_duration} minutes"
+        )
 
     Message(room_id=session["room"], message=message).add()
+
 
 @socketio.on("modifyLesson")
 def modify_lesson(payload):
@@ -161,7 +172,7 @@ def modify_lesson(payload):
 def accept_lesson(payload):
     lesson = Lesson.get(payload["lesson_id"])
     _user_lesson_modify(lesson, [LessonStatus.ACCEPTED_STUDENT, LessonStatus.ACCEPTED_TUTOR])
-    
+
     if lesson.status == LessonStatus.ACCEPTED_STUDENT and lesson.student_id == session["user_id"]:
         abort(403)
     if lesson.status == LessonStatus.ACCEPTED_TUTOR and lesson.tutor_id == session["user_id"]:
@@ -196,7 +207,7 @@ def confirm_lesson(payload):
     else:
         message = f"{lesson.actual_duration} minutes transferred to {lesson.tutor.username}"
         Message(room_id=session["room"], message=message).add()
-        
+
         lesson.update_status(LessonStatus.CONFIRMED)
         lesson.tutor.update_minutes(lesson.actual_duration)
         if lesson.actual_duration != lesson.proposed_duration:

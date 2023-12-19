@@ -37,7 +37,7 @@
                             {% for lesson in calendar[i]["lessons"] %}
                                 {% if lesson.day == "%d-%d-%d" % (calendar[i].year, calendar[i].month, j) %}
                                     <div class="relative-container">
-                                    {% if lesson.status == 'pending' %}
+                                    {% if lesson.status == "accepted_student" or lesson.status == "accepted_tutor" %}
                                         <button class="calendar-lesson pending" x-on:click="modal = modal == {{ lesson.id }} ? -1 : {{ lesson.id }}">
                                     {% elif lesson.tutor_id == session["user_id"] %}
                                         <button class="calendar-lesson tutor" x-on:click="modal = modal == {{ lesson.id }} ? -1 : {{ lesson.id }}">

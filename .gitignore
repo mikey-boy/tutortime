@@ -160,5 +160,5 @@ cython_debug/
 #.idea/
 
 # Project specific
-app/static/uploads
-app/static/css
+tutortime/static/uploads
+tutortime/static/css

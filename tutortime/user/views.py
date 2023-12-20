@@ -4,7 +4,8 @@ from datetime import date
 
 from dateutil.relativedelta import relativedelta
 from flask import Blueprint, redirect, render_template, request, session
-from models import Lesson, LessonStatus, ServiceStatus, User
+
+from tutortime.models import Lesson, LessonStatus, ServiceStatus, User
 
 user_bp = Blueprint("user", __name__)
 statuses = [

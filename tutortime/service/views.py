@@ -1,6 +1,7 @@
 from flask import Blueprint, abort, redirect, render_template, request, session
-from models import Image, Service, ServiceStatus, User
-from service.utils import availability_to_int, availability_to_list
+
+from tutortime.models import Image, Service, ServiceStatus, User
+from tutortime.service.utils import availability_to_int, availability_to_list
 
 service_bp = Blueprint("service", __name__)
 

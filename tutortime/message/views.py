@@ -1,13 +1,11 @@
-import json
-import pickle
 from datetime import datetime
 
 from flask import Blueprint, abort, render_template, session
-from flask_socketio import SocketIO, emit, join_room, leave_room, send
-from models import Lesson, LessonStatus, Message, Room, Service, ServiceStatus, User
-from utils import dt_to_str, str_to_dt
+from flask_socketio import emit, join_room, leave_room, send
 
-from app import socketio
+from tutortime.extensions import socketio
+from tutortime.models import Lesson, LessonStatus, Message, Room, Service, ServiceStatus, User
+from tutortime.utils import str_to_dt
 
 message_bp = Blueprint("message", __name__)
 

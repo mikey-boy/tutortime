@@ -6,18 +6,14 @@ from datetime import datetime
 from enum import StrEnum, auto
 from typing import List, Optional, Self
 
-from flask_sqlalchemy import SQLAlchemy
+from flask import current_app
 from sqlalchemy import ForeignKey, desc, select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from werkzeug.datastructures import FileStorage
 
-from app import app
-
-
-class Base(DeclarativeBase):
-    pass
+from tutortime.extensions import db
 
 
 class ServiceStatus(StrEnum):
@@ -44,11 +40,7 @@ class LessonStatus(StrEnum):
     CONFIRMED_TUTOR = auto()
 
 
-db = SQLAlchemy(model_class=Base)
-db.init_app(app)
-
-
-class User(Base):
+class User(db.Model):
     __tablename__ = "user"
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -107,7 +99,7 @@ class User(Base):
         return users
 
 
-class Service(Base):
+class Service(db.Model):
     __tablename__ = "service"
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -166,7 +158,7 @@ class Service(Base):
         return [lesson for lesson in self.lessons if lesson.student_id == student_id and lesson.status in statuses]
 
 
-class Image(Base):
+class Image(db.Model):
     __tablename__ = "image"
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -178,7 +170,7 @@ class Image(Base):
     def __init__(self, service_id: int, image: FileStorage):
         self.service_id = service_id
         self.filename = image.filename
-        self.path = os.path.join(app.config["IMAGE_FOLDER"], str(uuid.uuid4()))
+        self.path = os.path.join(current_app.config["IMAGE_FOLDER"], str(uuid.uuid4()))
 
         image.save(self.path)
 
@@ -196,7 +188,7 @@ class Image(Base):
         db.session.commit()
 
 
-class Lesson(Base):
+class Lesson(db.Model):
     __tablename__ = "lesson"
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -263,7 +255,7 @@ class Lesson(Base):
         db.session.commit()
 
 
-class Room(Base):
+class Room(db.Model):
     __tablename__ = "room"
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -286,7 +278,7 @@ class Room(Base):
         return db.session.scalar(stmt)
 
 
-class Message(Base):
+class Message(db.Model):
     __tablename__ = "message"
 
     id: Mapped[int] = mapped_column(primary_key=True)

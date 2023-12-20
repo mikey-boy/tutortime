@@ -15,13 +15,13 @@
         <div class="post-grid-container">
             {% for service in services %}
                 <div class="post" x-show="'{{ service.category }}' == category || 'all' == category" x-data="{ image: 0 }">
-                    <a href="{{ url_for('service_list', service_id=service.id) }}">
+                    <a href="{{ url_for('service.service_display', service_id=service.id) }}">
                         <div class="image-container">
                             {% if service['images'] == [] %}
                                 <img src="/static/img/terminal.jpg" alt="Default thumbnail">
                             {% else %}
                                 {% for i in range(service.images|length) %}
-                                    <img x-show="image == {{ i }}" src="/static/uploads/{{ service.images[i].filenameOnServer }}" alt="{{ service.images[i].filename }}">
+                                    <img x-show="image == {{ i }}" src="/{{ service.images[i].path }}" alt="{{ service.images[i].filename }}">
                                 {% endfor %}
                                 {% if service.images|length > 1 %}
                                     <button class="image-prev" @click.prevent="image = image == 0 ? {{ service.images|length }} - 1 : (image - 1)"><i class="fa-regular fa-circle-left fa-2x"></i></button>
@@ -30,11 +30,11 @@
                             {% endif %}
                         </div>
                     </a>
-                    <a href="{{ url_for('service_list', service_id=service.id) }}">
+                    <a href="{{ url_for('service.service_display', service_id=service.id) }}">
                         <h3>{{ service.title }}</h3>
                     </a>
                     <p class="truncated-text">{{ service.description }}</p>
-                    <p>{{ service.username }}</p>
+                    <p>{{ service.user.username }}</p>
                 </div>
             {% endfor %}
         </div>

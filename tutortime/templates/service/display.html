@@ -4,14 +4,14 @@
     <div class="post-flex-container">
         <div class="post" x-data="{ image: 0 }">
             <h2>{{ service.title }}</h2>
-            <p>offered by: {{ service.username }}</p>
+            <p>offered by: {{ user.username }}</p>
             <div class="availability-flex-container">
                 <span class="image-container">
                     {% if service['images'] == [] %}
                         <img src="/static/img/terminal.jpg" alt="Default thumbnail">
                     {% else %}
                             {% for i in range(service.images|length) %}
-                                <img x-show="image == {{ i }}" src="/static/uploads/{{ service.images[i].filenameOnServer }}" alt="{{ service.images[i].filename }}">
+                                <img x-show="image == {{ i }}" src="/{{ service.images[i].path }}" alt="{{ service.images[i].filename }}">
                             {% endfor %}
                             {% if service.images|length > 1 %}
                                 <button class="image-prev" @click="image = image == 0 ? {{ service.images|length }} - 1 : (image - 1)"><i class="fa-regular fa-circle-left fa-2x"></i></button>
@@ -38,7 +38,7 @@
                             <tr>
                                 <td>morning</td>
                                 {% for i in range(7) %}
-                                    {% if i|string ~ "-0" in service.available %}
+                                    {% if i|string ~ "-0" in availability %}
                                         <td><i class="fa-regular fa-square-check"></i></td>
                                     {% else  %}
                                         <td><i class="fa-regular fa-square"></i></td>
@@ -48,7 +48,7 @@
                             <tr>
                                 <td>afternoon</td>
                                 {% for i in range(7) %}
-                                    {% if i|string ~ "-1" in service.available %}
+                                    {% if i|string ~ "-1" in availability %}
                                         <td><i class="fa-regular fa-square-check"></i></td>
                                     {% else  %}
                                         <td><i class="fa-regular fa-square"></i></td>
@@ -58,7 +58,7 @@
                             <tr>
                                 <td>evening</td>
                                 {% for i in range(7) %}
-                                    {% if i|string ~ "-2" in service.available %}
+                                    {% if i|string ~ "-2" in availability %}
                                         <td><i class="fa-regular fa-square-check"></i></td>
                                     {% else  %}
                                         <td><i class="fa-regular fa-square"></i></td>
@@ -70,7 +70,7 @@
                 </div>
             </div>
             <p>{{ service.description }}</p>
-            <a href="{{ url_for('user_messages_list', user_id=service.userId) }}"><button class="message-tutor-button"><i class="fa-regular fa-paper-plane"></i> Message tutor</button></a>
+            <a href="{{ url_for('message.message_list', user_id=user.id) }}"><button class="message-tutor-button"><i class="fa-regular fa-paper-plane"></i> Message tutor</button></a>
         </div>
     </div>
 {% endblock %}

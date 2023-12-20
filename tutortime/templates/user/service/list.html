@@ -4,9 +4,9 @@
     <table id="user-service-nav">
         <thead>
             <tr x-data="{ status: '{{ status }}' }">
-                <th><h4><a class="user-service-status" :class="'{{ status }}' == 'active' && 'active-subnav-header'" href="{{ url_for('user_service_list', status='active')}}">Active</a></h4></th>
-                <th><h4><a class="user-service-status" :class="'{{ status }}' == 'paused' && 'active-subnav-header'" href="{{ url_for('user_service_list', status='paused')}}">Paused</a></h4></th>
-                <th><a href="{{ url_for('user_service_create')}}"><button id="create-service">New service</button></a></th>
+                <th><h4><a class="user-service-status" :class="'{{ status }}' == 'active' && 'active-subnav-header'" href="{{ url_for('service.user_service_list', status='active')}}">Active</a></h4></th>
+                <th><h4><a class="user-service-status" :class="'{{ status }}' == 'paused' && 'active-subnav-header'" href="{{ url_for('service.user_service_list', status='paused')}}">Paused</a></h4></th>
+                <th><a href="{{ url_for('service.user_service_create')}}"><button id="create-service">New service</button></a></th>
             </tr>
         </thead>
     </table>

@@ -1,0 +1,5 @@
+{% extends "home.html" %}
+
+{% block content %}
+    <p><a href="{{ url_for('user.user_account_login') }}">Login</a> or <a href="{{ url_for('user.user_account_create') }}">create an account</a> to {{ action }}</p>
+{% endblock %}

@@ -70,7 +70,7 @@ class User(db.Model):
         stmt = select(User).where(User.id == id)
         return db.session.scalar(stmt)
 
-    def get_by_creds(username: str, password: str) -> Self | None:
+    def get_by_creds(username: str, password: str) -> Optional[Self]:
         stmt = select(User).where(User.username == username)
         user = db.session.scalar(stmt)
         if user.password == hashlib.sha256(password.encode()).hexdigest():
@@ -167,7 +167,7 @@ class Image(db.Model):
     filename: Mapped[str] = mapped_column()
     path: Mapped[str] = mapped_column()
 
-    def __init__(self, service_id: int, image: FileStorage):
+    def __init__(self, service_id: int, image: FileStorage) -> None:
         self.service_id = service_id
         self.filename = image.filename
         self.path = os.path.join(current_app.config["IMAGE_FOLDER"], str(uuid.uuid4()))
@@ -244,7 +244,7 @@ class Lesson(db.Model):
             stmt = stmt.order_by(desc(Lesson.timestamp))
         return db.session.scalars(stmt)
 
-    def update(self, timestamp: datetime, proposed_duration: int, actual_duration: int):
+    def update(self, timestamp: datetime, proposed_duration: int, actual_duration: int) -> None:
         self.timestamp = timestamp
         self.proposed_duration = proposed_duration
         self.actual_duration = actual_duration
@@ -263,7 +263,7 @@ class Room(db.Model):
     user2: Mapped[int] = mapped_column()
     messages: Mapped[List["Message"]] = relationship(back_populates="room")
 
-    def __init__(self, user1: int, user2: int):
+    def __init__(self, user1: int, user2: int) -> None:
         self.user1 = min(user1, user2)
         self.user2 = max(user1, user2)
 
@@ -271,7 +271,7 @@ class Room(db.Model):
         db.session.add(self)
         db.session.commit()
 
-    def get(user1: int, user2: int) -> Self | None:
+    def get(user1: int, user2: int) -> Optional[Self]:
         if user1 > user2:
             user1, user2 = user2, user1
         stmt = select(Room).where(Room.user1 == user1).where(Room.user2 == user2)

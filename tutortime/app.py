@@ -10,7 +10,7 @@ def create_app():
     configure_app(app, DevelopmentConfig)
     configure_extensions(app)
     configure_blueprints(app)
-    test(app)
+    create_db(app)
     return app
 
 
@@ -21,7 +21,6 @@ def configure_app(app, config):
 
 def configure_extensions(app):
     db.init_app(app)
-
     socketio.init_app(app, logger=True)
 
 
@@ -35,6 +34,6 @@ def configure_blueprints(app):
     app.register_blueprint(message_bp)
 
 
-def test(app):
+def create_db(app):
     with app.app_context():
         db.create_all()

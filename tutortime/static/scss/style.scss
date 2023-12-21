@@ -1,8 +1,8 @@
 [data-theme="dark"] {
     --base0: #2e3436;
-    --base2: #3e4648;
-    --base3: #808080;
-    --base4: #fef0db;
+    --base1: #3e4648;
+    --base2: #808080;
+    --base3: #fef0db;
     --text0: #E0E0E0;
     --text1: #fff;
     --green0: #a3be8c;
@@ -14,16 +14,16 @@
 }
 [data-theme="light"] {
     --base0:#fdf6e3;
-    --base2: #eee8d5;
-    --base3: #93a1a1;
-    --base4: #fef0db;
+    --base1: #eee8d5;
+    --base2: #93a1a1;
+    --base3: #fef0db;
     --text0: #586e75;
     --text1: #fff;
     --green1: #68be76;
     --green0:#68be76;
     --blue0: #268bd2;
     --blue1: #268bd2;
-    --orange: #b58900;
+    --orange: #fc9b10;
     --red: #b85757;
 }
 
@@ -43,7 +43,7 @@ html {
 	background-color: var(--base0);
 }
 hr {
-	border-top: 1px solid var(--base3);
+	border-top: 1px solid var(--base2);
 }
 head {
     display: flex;
@@ -83,7 +83,7 @@ button {
     color: var(--blue1);
 }
 .fa-circle-pause {
-    color: var(--base3);
+    color: var(--base2);
 }
 .fa-circle-play {
     color: var(--green0);
@@ -92,7 +92,7 @@ button {
     color: var(--red);
 }
 .delimiter {
-    border-left: 3px solid var(--base3);
+    border-left: 3px solid var(--base2);
     padding-right: 8px;
     margin-left: 3px;
 }
@@ -144,7 +144,8 @@ button {
 .post {
     padding: 20px;
     border-radius: 5px;
-    border: 2px dotted var(--green0);
+    border: 2px solid var(--green0);
+    background-color: var(--base1);
 
     h2 {
         margin-top: 0px;
@@ -194,7 +195,7 @@ button {
         text-align: center;
         
         &:hover {
-            background-color: var(--base2);
+            background-color: var(--base1);
         }
         td:first-child {
             text-align: right;
@@ -292,8 +293,8 @@ button {
 }
 .day {
     padding: 10px;
-    border-bottom: 1px solid var(--base3);
-    border-right: 1px solid var(--base3);
+    border-bottom: 1px solid var(--base2);
+    border-right: 1px solid var(--base2);
 
     &:nth-of-type(n + 1):nth-of-type(-n + 7) {
         grid-row: 2;
@@ -312,7 +313,7 @@ button {
     }
     &:nth-of-type(7n + 1) {
         grid-column: 1 / 1;
-        border-left: 1px solid var(--base3);
+        border-left: 1px solid var(--base2);
     }
     &:nth-of-type(7n + 2) {
         grid-column: 2 / 2;
@@ -338,14 +339,14 @@ button {
         text-align: center;
         line-height: 50px;
         font-weight: 500;
-        border-bottom: 1px solid var(--base3);
-        border-top: 1px solid var(--base3);
+        border-bottom: 1px solid var(--base2);
+        border-top: 1px solid var(--base2);
 
         &:nth-of-type(7n + 7) {
-            border-right: 1px solid var(--base3);
+            border-right: 1px solid var(--base2);
         }
         &:nth-of-type(7n + 1) {
-            border-left: 1px solid var(--base3);
+            border-left: 1px solid var(--base2);
         }
     }
     &-today {
@@ -362,10 +363,10 @@ button {
     margin: 5px 0px;
     padding: 2px 10px;
     font-size: 14px;
-    background: var(--base4);
+    background: var(--base3);
     
     &.pending {
-        color: var(--base3);
+        color: var(--base2);
     }
     &.tutor {
         color: var(--orange);
@@ -387,7 +388,7 @@ button {
     > button {
         float: right;
         background-color: var(--base0);
-        color: var(--base3);
+        color: var(--base2);
         margin: 15px 8px;
     }
     &.open-left {
@@ -483,13 +484,13 @@ button {
 #user-transaction-table {
     width: 100%;
     padding: 10px;
-    border: 1px dotted var(--green0);
+    border: 1px dashed var(--green0);
 
     thead {
         font-weight: bold;
     }
     .pending-transaction {
-        color: var(--base3)
+        color: var(--base2)
     }
     .tutor-transaction {
         color: var(--green0)
@@ -525,14 +526,14 @@ button {
 #user-service-table {
     width: 100%;
     padding: 10px;
-    border: 1px dotted var(--green0);
+    border: 1px dashed var(--green0);
     
     td:last-child {
         width: 70px;
     }
 }
 #user-service-creation {
-    border: 1px dotted var(--green0);
+    border: 1px dashed var(--green0);
     padding: 25px;
     margin: 20px;
     box-sizing: border-box;
@@ -592,18 +593,18 @@ button {
         padding: 5px;
         margin-bottom: 5px;
         &:hover {
-            background-color: var(--base2);
+            background-color: var(--base1);
         }
     }
     li.active {
-        background-color: var(--base2);
+        background-color: var(--base1);
     }
 }
 #chat {
     flex: 5;
     border-radius: 5px;
     border: 2px solid var(--green0);
-    background-color: var(--base2);
+    background-color: var(--base1);
     padding: 0px 40px;
     margin: 0px 10px;
 
@@ -655,7 +656,7 @@ button {
             border-radius: 3px;
             margin-bottom: 7px;
             padding: 5px 10px;
-            background: var(--base4);
+            background: var(--base3);
         }
         .message-item-system {
             margin: 5px 0px;
@@ -671,8 +672,8 @@ button {
         }
         > form {
             padding: 8px;
-            background-color: var(--base2);
-            border: 1px dotted var(--green0);
+            background-color: var(--base1);
+            border: 1px dashed var(--green0);
             border-radius: 3px;
             width: 330px;
 
@@ -699,8 +700,8 @@ button {
             padding: 6px 21px;
         }
         #cancel-request-button {
-            background-color: var(--base2);
-            color: var(--base3);
+            background-color: var(--base1);
+            color: var(--base2);
             margin-top: 10px;
             cursor: pointer;
         }
@@ -741,13 +742,13 @@ button {
     .lesson-request-item {
         display: block;
         margin-bottom: 10px;
-        border: 1px dotted var(--green0);
+        border: 1px dashed var(--green0);
         border-radius: 3px;
         padding: 13px;
         cursor: pointer;
     }
     .lesson-confirmed-item {
-        background-color: var(--base2);
+        background-color: var(--base1);
         padding: 10px;
         margin-bottom: 10px;
 

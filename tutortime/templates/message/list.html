@@ -1,8 +1,5 @@
 {% extends "home.html" %}
 {% block content %}
-{% if error_text %}
-    <p>{{ error_text }}</p>
-{% else %}
 <div id="chat-container" x-data="{ request_service: 0 }">
     <div id="contacts">
         <h2>Contacts</h2>
@@ -293,5 +290,4 @@
         focusInput();
     </script>
 </div>
-{% endif %}
 {% endblock %}

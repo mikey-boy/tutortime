@@ -26,22 +26,10 @@
                     {% else %}
                         <a href="{{ url_for('user.user_account_login') }}"><i class="fa-regular fa-user fa-lg"></i></a>
                     {% endif %}
-                    <span class="delimiter"></span>
-                    <button @click="themeToggle()"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></button>
                 </div>
             </th>
         </tr>
     </thead>
 </table>
 <hr>
-
-<script>
-    var theme = "dark"
-
-    function themeToggle() {
-        theme = theme === "dark" ? "light" : "dark";
-        localStorage.setItem("theme", theme);
-        document.querySelector("html").setAttribute("data-theme", theme);
-    }
-</script>
 {% endblock %}

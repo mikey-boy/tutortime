@@ -64,7 +64,7 @@ th {
     font-weight: bolder;
 }
 a {
-    color: var(--green0);
+    color: var(--green1);
 	text-decoration: none;
 }
 h1, h2, h3, h4, h5, h6 {
@@ -86,15 +86,10 @@ button {
     color: var(--base2);
 }
 .fa-circle-play {
-    color: var(--green0);
+    color: var(--green1);
 }
 .fa-trash-can {
     color: var(--red);
-}
-.delimiter {
-    border-left: 3px solid var(--base2);
-    padding-right: 8px;
-    margin-left: 3px;
 }
 .truncated-text {
     display: -webkit-box;
@@ -202,7 +197,7 @@ button {
             width: 85px;
         }
         .fa-square-check {
-            color: var(--green0);
+            color: var(--green1);
         }
     }
 }
@@ -430,6 +425,23 @@ button {
     font-family: Georgia, serif;
     color: var(--blue1);
 }
+#theme-switch-container {
+    position: fixed;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    right: 40px;
+    bottom: 40px;
+    border-radius: 50%;
+    background: var(--text0);
+    width: 30px;
+    height: 30px;
+    
+    button {
+        background: none;
+        color: var(--base0);
+    }
+}
 #home-nav {
     width: 100%;
     margin: 0 auto;
@@ -493,7 +505,7 @@ button {
         color: var(--base2)
     }
     .tutor-transaction {
-        color: var(--green0)
+        color: var(--green1)
     }
     .student-transaction {
         color: var(--red)

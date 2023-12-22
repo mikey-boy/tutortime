@@ -1,17 +1,49 @@
 <!doctype html>
-<html>
+<html data-theme="dark">
   <head>
     <link href="{{ url_for('static', filename='css/style.scss.css') }}" rel="stylesheet" type="text/css">
     <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <title>Tutortime - {% block title%} {% endblock %}</title>
   </head>
   <body>
     <a href="/" id="logo"><h1>Tutortime</h1></a>
     {% block navbar %}{% endblock %}
     {% block content %}{% endblock %}
+    <div id="theme-switch-container">
+      <button @click="themeToggle()"><i class="fa-solid fa-moon fa-xl"></i></button>
+    </div>
   </body>
   <footer>
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script>
+        function calculateSettingAsThemeString(localStorageTheme, systemSettingDark) {
+            if (localStorageTheme !== null) {
+                return localStorageTheme;
+            }
+
+            if (systemSettingDark.matches) {
+                return "dark";
+            }
+
+            return "light";
+        }
+
+        function updateThemeOnHtmlEl(theme) {
+            document.querySelector("html").setAttribute("data-theme", theme);
+        }
+
+        const localStorageTheme = localStorage.getItem("theme");
+        const systemSettingDark = window.matchMedia("(prefers-color-scheme: dark)");
+
+        let currentThemeSetting = calculateSettingAsThemeString(localStorageTheme, systemSettingDark);
+        updateThemeOnHtmlEl(currentThemeSetting);
+
+        function themeToggle() {
+            currentThemeSetting = currentThemeSetting === "dark" ? "light" : "dark";
+            localStorage.setItem("theme", currentThemeSetting);
+            updateThemeOnHtmlEl(currentThemeSetting);
+        }
+    </script>
   </footer>
 </html>

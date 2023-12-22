@@ -1,16 +1,30 @@
-:root {
-    --background: #2e3436;
-    --background-light: #3e4648;
-    --background-lighter: #808080;
-    --background-lesson: #fef0db;
-    --headers: #99C1F1;
-    --login: #5095e9;
-    --tutor: #fc9b10;
-    --links: #A3BE8C;
-    --signup: #85b75c;
-    --text-white: #fff;
-    --text: #E0E0E0;
-    --error-text: #b85757;
+[data-theme="dark"] {
+    --base0: #2e3436;
+    --base1: #3e4648;
+    --base2: #808080;
+    --base3: #fef0db;
+    --text0: #E0E0E0;
+    --text1: #fff;
+    --green0: #a3be8c;
+    --green1: #85b75c;
+    --blue0: #5095e9;
+    --blue1: #99C1F1;
+    --orange: #fc9b10;
+    --red: #b85757;
+}
+[data-theme="light"] {
+    --base0:#fdf6e3;
+    --base1: #eee8d5;
+    --base2: #93a1a1;
+    --base3: #fef0db;
+    --text0: #586e75;
+    --text1: #fff;
+    --green0: #a4d8ad;
+    --green1:#68be76;
+    --blue0: #268bd2;
+    --blue1: #268bd2;
+    --orange: #fc9b10;
+    --red: #b85757;
 }
 
 $fa-font-path: "../fontawesome/webfonts";
@@ -22,20 +36,20 @@ $fa-font-path: "../fontawesome/webfonts";
 @mixin common-button {
     width: 100%;
     padding: 10px;
-    color: var(--text-white)
+    color: var(--text1)
 }
 
 html {
-	background-color: var(--background);
+	background-color: var(--base0);
 }
 hr {
-	border-top: 1px solid var(--background-lighter);
+	border-top: 1px solid var(--base2);
 }
 head {
     display: flex;
 }
 body {
-    color: var(--text);
+    color: var(--text0);
 	width: 80%;
 	min-width: 720px;
 	max-width: 1440px;
@@ -50,11 +64,11 @@ th {
     font-weight: bolder;
 }
 a {
-    color: var(--links);
+    color: var(--green1);
 	text-decoration: none;
 }
 h1, h2, h3, h4, h5, h6 {
-    color: var(--headers);
+    color: var(--blue1);
 }
 button {
     cursor: pointer;
@@ -63,19 +77,19 @@ button {
 }
 
 .error-text {
-    color: var(--error-text);
+    color: var(--red);
 }
 .fa-pen-to-square {
-    color: var(--headers);
+    color: var(--blue1);
 }
 .fa-circle-pause {
-    color: var(--background-lighter);
+    color: var(--base2);
 }
 .fa-circle-play {
-    color: var(--links);
+    color: var(--green1);
 }
 .fa-trash-can {
-    color: var(--error-text);
+    color: var(--red);
 }
 .truncated-text {
     display: -webkit-box;
@@ -125,15 +139,16 @@ button {
 .post {
     padding: 20px;
     border-radius: 5px;
-    border: 1px dashed var(--links);
+    border: 1px solid var(--green0);
+    background-color: var(--base1);
 
     h2 {
         margin-top: 0px;
     }
     .message-tutor-button {
         padding: 6px;
-        color: var(--text-white);
-        background-color: var(--login);
+        color: var(--text1);
+        background-color: var(--blue0);
     }
 }
 .image-container {
@@ -156,8 +171,8 @@ button {
         }
     }
     .image-next > i, .image-prev > i {
-        color: var(--links);
-        background-color: var(--background);
+        color: var(--green0);
+        background-color: var(--base0);
         border-radius: 50%;
         opacity: 65%;
 
@@ -175,14 +190,14 @@ button {
         text-align: center;
         
         &:hover {
-            background-color: var(--background-light);
+            background-color: var(--base1);
         }
         td:first-child {
             text-align: right;
             width: 85px;
         }
         .fa-square-check {
-            color: var(--links);
+            color: var(--green1);
         }
     }
 }
@@ -194,11 +209,11 @@ button {
     
     .login-box {
         width: 300px;
-        background-color: var(--background);
+        background-color: var(--base0);
         padding: 30px;
         padding-top: 0px;
         border-radius: 5px;
-        border: 3px solid var(--headers);
+        border: 3px solid var(--blue1);
         
         input {
             width: 100%;
@@ -213,11 +228,11 @@ button {
             margin-top: 10px;
         }
         .login-button {
-            background-color: var(--login);
+            background-color: var(--blue0);
             margin-bottom: 10px;
         }
         .signup-button {
-            background-color: var(--signup);
+            background-color: var(--green1);
         }
     }
 }
@@ -226,7 +241,7 @@ button {
 
     button {
         background: none;
-        color: var(--links);
+        color: var(--green1);
     }
     p {
         display: inline-block;
@@ -243,7 +258,7 @@ button {
 
     button {
         background: none;
-        color: var(--links);
+        color: var(--green1);
     }
     &-date {
         display: inline-block;
@@ -254,11 +269,11 @@ button {
         float: right;
         
         &-tutor {
-            color: var(--tutor);
+            color: var(--orange);
             margin: 15px; 
         }
         &-student {
-            color: var(--login);
+            color: var(--blue0);
         }
     }
 }
@@ -273,8 +288,8 @@ button {
 }
 .day {
     padding: 10px;
-    border-bottom: 1px solid var(--background-light);
-    border-right: 1px solid var(--background-light);
+    border-bottom: 1px solid var(--base2);
+    border-right: 1px solid var(--base2);
 
     &:nth-of-type(n + 1):nth-of-type(-n + 7) {
         grid-row: 2;
@@ -293,7 +308,7 @@ button {
     }
     &:nth-of-type(7n + 1) {
         grid-column: 1 / 1;
-        border-left: 1px solid var(--background-light);
+        border-left: 1px solid var(--base2);
     }
     &:nth-of-type(7n + 2) {
         grid-column: 2 / 2;
@@ -319,18 +334,18 @@ button {
         text-align: center;
         line-height: 50px;
         font-weight: 500;
-        border-bottom: 1px solid var(--background-light);
-        border-top: 1px solid var(--background-light);
+        border-bottom: 1px solid var(--base2);
+        border-top: 1px solid var(--base2);
 
         &:nth-of-type(7n + 7) {
-            border-right: 1px solid var(--background-light);
+            border-right: 1px solid var(--base2);
         }
         &:nth-of-type(7n + 1) {
-            border-left: 1px solid var(--background-light);
+            border-left: 1px solid var(--base2);
         }
     }
     &-today {
-        background-color: var(--links);
+        background-color: var(--green0);
     }
 }
 .calendar-lesson {
@@ -343,16 +358,16 @@ button {
     margin: 5px 0px;
     padding: 2px 10px;
     font-size: 14px;
-    background: var(--background-lesson);
+    background: var(--base3);
     
     &.pending {
-        color: var(--background-lighter);
+        color: var(--base2);
     }
     &.tutor {
-        color: var(--tutor);
+        color: var(--orange);
     }
     &.student {
-        color: var(--login);
+        color: var(--blue0);
     }
 }
 .lesson-modal {
@@ -361,14 +376,14 @@ button {
     padding-left: 10px;
     top: -10px;
     width: 250px;
-    background-color: var(--background);
-    border: 2px solid var(--links);
+    background-color: var(--base0);
+    border: 2px solid var(--green0);
     border-radius: 3px;
     
     > button {
         float: right;
-        background-color: var(--background);
-        color: var(--background-lighter);
+        background-color: var(--base0);
+        color: var(--base2);
         margin: 15px 8px;
     }
     &.open-left {
@@ -383,10 +398,10 @@ button {
     button {
         margin-top: 10px;
         width: 65px;
-        color: var(--text-white);
+        color: var(--text1);
 
         a {
-            color: var(--text-white);
+            color: var(--text1);
         }
     }
     .title {
@@ -394,13 +409,13 @@ button {
         font-weight: bold;
     }
     .accept-button {
-        background-color: var(--signup);
+        background-color: var(--green1);
     }
     .cancel-button {
-        background-color: var(--error-text);
+        background-color: var(--red);
     }
     .modify-button {
-        background-color: var(--tutor);
+        background-color: var(--orange);
     }
 }
 
@@ -408,17 +423,34 @@ button {
     width: 100%;
     text-align: center;
     font-family: Georgia, serif;
-    color: var(--headers);
+    color: var(--blue1);
+}
+#theme-switch-container {
+    position: fixed;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    right: 40px;
+    bottom: 40px;
+    border-radius: 50%;
+    background: var(--text0);
+    width: 30px;
+    height: 30px;
+    
+    button {
+        background: none;
+        color: var(--base0);
+    }
 }
 #home-nav {
     width: 100%;
     margin: 0 auto;
     
     a {
-        color: var(--text);
+        color: var(--text0);
     }
     button {
-        color: var(--text);
+        color: var(--text0);
         background: none;
         padding: 0;
         margin: 0;
@@ -437,9 +469,6 @@ button {
         padding: 5px;
         min-width: 200px;
     }
-    label {
-        font-weight: bold;
-    }
 }
 #user-modal-popout {
     position: absolute;
@@ -448,8 +477,8 @@ button {
     top: 7px;
     right: 23px;
     text-align: left;
-    background-color: var(--background);
-    border: 1.5px solid var(--links);
+    background-color: var(--base0);
+    border: 1.5px solid var(--green0);
     border-radius: 3px;
 
     ul {
@@ -467,19 +496,19 @@ button {
 #user-transaction-table {
     width: 100%;
     padding: 10px;
-    border: 1px dashed var(--links);
+    border: 1px dashed var(--green0);
 
     thead {
         font-weight: bold;
     }
     .pending-transaction {
-        color: var(--background-lighter)
+        color: var(--base2)
     }
     .tutor-transaction {
-        color: var(--signup)
+        color: var(--green1)
     }
     .student-transaction {
-        color: var(--error-text)
+        color: var(--red)
     }
 }
 #user-service-nav {
@@ -492,15 +521,15 @@ button {
     }
     button {
         @include common-button;
-        background-color: var(--signup);
+        background-color: var(--green1);
         max-width: 130px;
     }
     .active-subnav-header {
-        border: 1.5px solid var(--links);
+        border: 1.5px solid var(--green0);
         border-radius: 3px;
     }
     .user-service-status {
-        color: var(--headers);
+        color: var(--blue1);
         padding: 8px 0px;
         display: block;
         width: 100%;
@@ -509,14 +538,14 @@ button {
 #user-service-table {
     width: 100%;
     padding: 10px;
-    border: 1px dashed var(--links);
+    border: 1px dashed var(--green0);
     
     td:last-child {
         width: 70px;
     }
 }
 #user-service-creation {
-    border: 1px dashed var(--links);
+    border: 1px dashed var(--green0);
     padding: 25px;
     margin: 20px;
     box-sizing: border-box;
@@ -535,7 +564,7 @@ button {
     button {
         @include common-button;
         max-width: 250px;
-        background-color: var(--signup);
+        background-color: var(--green1);
     }
     .button-container {
         display: flex;
@@ -570,24 +599,24 @@ button {
     }
     li {
         cursor: pointer;
-        color: var(--text);
+        color: var(--text0);
         text-align: center;
         border-radius: 3px;
         padding: 5px;
         margin-bottom: 5px;
         &:hover {
-            background-color: var(--background-light);
+            background-color: var(--base1);
         }
     }
     li.active {
-        background-color: var(--background-light);
+        background-color: var(--base1);
     }
 }
 #chat {
     flex: 5;
     border-radius: 5px;
-    border: 2px solid var(--links);
-    background-color: var(--background-light);
+    border: 2px solid var(--green0);
+    background-color: var(--base1);
     padding: 0px 40px;
     margin: 0px 10px;
 
@@ -603,9 +632,9 @@ button {
             margin-right: 10px;
         }
         #send-message-button {
-            color: var(--text-white);
+            color: var(--text1);
             padding: 7px 25px;
-            background-color: var(--signup);
+            background-color: var(--green1);
         }
     }
     #chat-messages {
@@ -620,26 +649,26 @@ button {
         .flex-container-user {
             display: flex;
             justify-content: right;
-            color: var(--login);
+            color: var(--blue0);
         }
         .flex-container-peer {
             display: flex;
             justify-content: left;
-            color: var(--tutor);
+            color: var(--orange);
         }
         .flex-container-system {
             display: flex;
             justify-content: center;
             font-size: 13px;
             margin: 5px 0px;
-            color: var(--text);
+            color: var(--text0);
         }
         .message-item {
             border: 2px solid;
             border-radius: 3px;
             margin-bottom: 7px;
             padding: 5px 10px;
-            background: var(--background-lesson);
+            background: var(--base3);
         }
         .message-item-system {
             margin: 5px 0px;
@@ -655,8 +684,8 @@ button {
         }
         > form {
             padding: 8px;
-            background-color: var(--background-light);
-            border: 1px dashed var(--links);
+            background-color: var(--base1);
+            border: 1px dashed var(--green0);
             border-radius: 3px;
             width: 330px;
 
@@ -673,18 +702,18 @@ button {
             justify-content: space-between;
         }
         #send-request-button {
-            background-color: var(--login);
-            color: var(--text-white);
+            background-color: var(--blue0);
+            color: var(--text1);
             padding: 6px 27px;
         }
         #modify-request-button {
-            background-color: var(--tutor);
-            color: var(--text-white);
+            background-color: var(--orange);
+            color: var(--text1);
             padding: 6px 21px;
         }
         #cancel-request-button {
-            background-color: var(--background-light);
-            color: var(--background-lighter);
+            background-color: var(--base1);
+            color: var(--base2);
             margin-top: 10px;
             cursor: pointer;
         }
@@ -705,12 +734,12 @@ button {
         button {
             flex: 1;
             padding: 5px 10px;
-            background-color: var(--background);
-            color: var(--text);
+            background-color: var(--base0);
+            color: var(--text0);
             width: 100%;
 
             &.active {
-                border: 1.5px solid var(--links);
+                border: 1px solid var(--green0);
             }
         }
     }
@@ -725,13 +754,13 @@ button {
     .lesson-request-item {
         display: block;
         margin-bottom: 10px;
-        border: 1px dashed var(--links);
+        border: 1px dashed var(--green0);
         border-radius: 3px;
         padding: 13px;
         cursor: pointer;
     }
     .lesson-confirmed-item {
-        background-color: var(--background-light);
+        background-color: var(--base1);
         padding: 10px;
         margin-bottom: 10px;
 
@@ -746,23 +775,23 @@ button {
         }
     }
     .warning {
-        border: 1px solid var(--error-text);
+        border: 1px solid var(--red);
     }
     .warning-text {
-        color: var(--tutor);
+        color: var(--orange);
         font-weight: bolder;
     }
     .lesson-view-switch {
         padding: 8px;
         margin-top: 15px;
         width: 100%;
-        color: var(--text-white);
+        color: var(--text1);
 
         &.view-lessons {
-            background-color: var(--tutor);
+            background-color: var(--orange);
         }
         &.request-lessons {
-            background-color: var(--login);
+            background-color: var(--blue0);
         }
     }
 }

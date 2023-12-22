@@ -29,7 +29,7 @@ def user_service_list(status=ServiceStatus.ACTIVE):
         return render_template("error/not_logged_in.html", action="offer lessons on the site")
 
     user = User.get(session["user_id"])
-    services = user.get_services(status)
+    services = user.get_services()
     return render_template("user/service/list.html", services=services, status=status)
 
 

@@ -1,37 +1,46 @@
 {% extends "home.html" %}
 
 {% block content %}
-    <table id="user-service-nav">
-        <thead>
-            <tr x-data="{ status: '{{ status }}' }">
-                <th><h4><a class="user-service-status" :class="'{{ status }}' == 'active' && 'active-subnav-header'" href="{{ url_for('service.user_service_list', status='active')}}">Active</a></h4></th>
-                <th><h4><a class="user-service-status" :class="'{{ status }}' == 'paused' && 'active-subnav-header'" href="{{ url_for('service.user_service_list', status='paused')}}">Paused</a></h4></th>
-                <th><a href="{{ url_for('service.user_service_create')}}"><button id="create-service">New service</button></a></th>
-            </tr>
-        </thead>
-    </table>
-    <table id="user-service-table">
-        <thead>
-            <th>Title</th>
-            <th>Description</th>
-            <th></th>
-        </thead>
-        <tbody>
-            {% for service in services %}
-                <tr>
-                    <td>{{ service.title }}</td>
-                    <td>{{ service.description }}</td>
-                    <td>
-                        <a href="/user/service/update/{{ service.id }}"><i class="fa-regular fa-pen-to-square"></i></a>
-                        {% if status == 'active' %}
-                            <a href="/user/service/pause/{{ service.id }}"><i class="fa-regular fa-circle-pause"></i></a>
-                        {% else %}
-                            <a href="/user/service/activate/{{ service.id }}"><i class="fa-regular fa-circle-play"></i></a>
-                        {% endif %}
-                        <a href="/user/service/delete/{{ service.id }}"><i class="fa-regular fa-trash-can"></i></a>
-                    </td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    {% if services|length > 0 %}
+        <div x-data="{ serviceStatus: '{{ status }}' }">
+            <table id="user-service-nav">
+                <thead>
+                    <tr>
+                        <th><button class="user-service-status" :class="serviceStatus == 'active' && 'active-subnav-header'" @click="serviceStatus = 'active'">Active</button></th>
+                        <th><button class="user-service-status" :class="serviceStatus == 'paused' && 'active-subnav-header'" @click="serviceStatus = 'paused'">Paused</button></th>
+                        <th><a href="{{ url_for('service.user_service_create')}}"><button class="green-button">New service</button></a></th>
+                    </tr>
+                </thead>
+            </table>
+            <table id="user-service-table">
+                <thead>
+                    <th>Title</th>
+                    <th>Description</th>
+                    <th></th>
+                </thead>
+                <tbody>
+                    {% for service in services %}
+                        <tr x-show="serviceStatus == '{{ service.status }}'">
+                            <td>{{ service.title }}</td>
+                            <td>{{ service.description }}</td>
+                            <td>
+                                <a href="/user/service/update/{{ service.id }}"><i class="fa-regular fa-pen-to-square"></i></a>
+                                {% if service.status == 'active' %}
+                                    <a href="/user/service/pause/{{ service.id }}"><i class="fa-regular fa-circle-pause"></i></a>
+                                {% else %}
+                                    <a href="/user/service/activate/{{ service.id }}"><i class="fa-regular fa-circle-play"></i></a>
+                                {% endif %}
+                                <a href="/user/service/delete/{{ service.id }}"><i class="fa-regular fa-trash-can"></i></a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div id="user-service-empty">
+            <div><p>Create a service to begin offering lessons</p></div>
+            <div><a href="{{ url_for('service.user_service_create')}}"><button id="create-service">Create a service</button></a></div>
+        </div>
+    {% endif %}
 {% endblock %}

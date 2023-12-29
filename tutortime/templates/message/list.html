@@ -1,8 +1,5 @@
 {% extends "home.html" %}
 {% block content %}
-{% if error_text %}
-    <p>{{ error_text }}</p>
-{% else %}
 <div id="chat-container" x-data="{ request_service: 0 }">
     <div id="contacts">
         <h2>Contacts</h2>
@@ -55,6 +52,17 @@
             <button :class="completed == 'True' && 'active'" @click="completed = 'True'">Completed</button>
         </div>
         <div class="lesson-container" x-show="request_service == 0 || request_service == 3">
+            {% set ns = namespace() %}
+            {% set ns.completed = false %}
+            {% set ns.scheduled = false %}
+            {% for lesson in lessons %}
+                {% if lesson.completed %}
+                    {% set ns.completed = true %}
+                {% else %}
+                    {% set ns.scheduled = true %}
+                {% endif %}
+            {% endfor %}
+            
             {% for lesson in lessons %}
                 <div class="lesson-item lesson-confirmed-item" :class="'{{ lesson.modified }}' == 'True' && '{{ lesson.status }}' != 'confirmed' ? 'warning' : ''" x-data="{ modify: false }" x-show="'{{ lesson.completed }}' == completed">
                     <a href="{{ url_for('service.service_list', service_id=lesson.service_id) }}"><h4>{{ lesson.title }}</h4></a>
@@ -85,9 +93,29 @@
                     {% endif %}
                 </div>
             {% endfor %}
+
+            {% if ns.completed == false %}
+                <div class="lesson-empty-item" x-show="completed == 'True'">No completed lessons</div>
+            {% endif %}
+            {% if ns.scheduled == false %}
+                <div class="lesson-empty-item" x-show="completed == 'False'">No scheduled lessons</div>
+            {% endif %}
         </div>
         <form class="lesson-container without-subnav" x-show="request_service == 1 || request_service == 2" autocomplete="off">
-            <h4>As a student:</h4>
+            {% set ns = namespace() %}
+            {% set ns.student_lessons = false %}
+            {% set ns.tutor_lessons = false %}
+            {% for service in services %}
+                {% if service.user_id != user.id %}
+                    {% set ns.student_lessons = true %}
+                {% else %}
+                    {% set ns.tutor_lessons = true %}
+                {% endif %}
+            {% endfor %}
+
+            {% if ns.student_lessons %}
+                <h4>As a student:</h4>
+            {% endif %}
             {% for service in services %}
                 {% if service.user_id != user.id %}
                     <label class="lesson-request-item" @click="lessonRequest({{ service.id }}); request_service = 2; scrollToBottom()" for="service-{{ service.id }}">
@@ -95,7 +123,10 @@
                     </label>
                 {% endif %}
             {% endfor %}
-            <h4>As a tutor:</h4>
+            
+            {% if ns.tutor_lessons %}
+                <h4>As a tutor:</h4>
+            {% endif %}
             {% for service in services %}
                 {% if service.user_id == user.id %}
                     <label class="lesson-request-item" @click="lessonRequest({{ service.id }}); request_service = 2; scrollToBottom()" for="service-{{ service.id }}">
@@ -259,5 +290,4 @@
         focusInput();
     </script>
 </div>
-{% endif %}
 {% endblock %}

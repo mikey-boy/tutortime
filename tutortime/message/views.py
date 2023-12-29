@@ -24,7 +24,7 @@ def message_list(user_id=None):
         if contacts:
             user2 = User.get(contacts[0].id)
         else:
-            return render_template("message/list.html", error_text="Browse the service listings to start a chat")
+            return render_template("error/no_contacts.html")
 
     room = Room.get(user1.id, user2.id)
     if room is None:

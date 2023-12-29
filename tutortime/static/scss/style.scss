@@ -19,7 +19,7 @@
     --base3: #fef0db;
     --text0: #586e75;
     --text1: #fff;
-    --green0: #a4d8ad;
+    --green0:#68be76;
     --green1:#68be76;
     --blue0: #268bd2;
     --blue1: #268bd2;
@@ -55,7 +55,7 @@ body {
 	max-width: 1440px;
 	margin: auto;
     
-	font-family: monospace;
+	font-family: Courier, monospace;
     font-size:1rem;
     letter-spacing:-.02em;
 }
@@ -64,7 +64,7 @@ th {
     font-weight: bolder;
 }
 a {
-    color: var(--green1);
+    color: var(--green0);
 	text-decoration: none;
 }
 h1, h2, h3, h4, h5, h6 {
@@ -86,7 +86,7 @@ button {
     color: var(--base2);
 }
 .fa-circle-play {
-    color: var(--green1);
+    color: var(--green0);
 }
 .fa-trash-can {
     color: var(--red);
@@ -97,6 +97,14 @@ button {
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+.green-button {
+    @include common-button;
+    background-color: var(--green1);
+}
+.blue-button {
+    @include common-button;
+    background-color: var(--blue0);
 }
 .relative-container {
     position: relative;
@@ -197,7 +205,7 @@ button {
             width: 85px;
         }
         .fa-square-check {
-            color: var(--green1);
+            color: var(--green0);
         }
     }
 }
@@ -258,7 +266,7 @@ button {
 
     button {
         background: none;
-        color: var(--green1);
+        color: var(--green0);
     }
     &-date {
         display: inline-block;
@@ -511,28 +519,41 @@ button {
         color: var(--red)
     }
 }
+#user-service-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-top: 20px;
+    height: 500px;
+    border: 1px dashed var(--green0);
+    
+    button {
+        @include common-button;
+        background-color: var(--green1);
+    }
+}
 #user-service-nav {
     width: 100%;
-    margin: 0 auto;
     table-layout: fixed;
+    margin: 20px 0px;
     
     th {
         text-align: center;
     }
-    button {
-        @include common-button;
-        background-color: var(--green1);
+    .green-button {
         max-width: 130px;
     }
     .active-subnav-header {
-        border: 1.5px solid var(--green0);
+        border: 1px solid var(--green0);
         border-radius: 3px;
     }
     .user-service-status {
-        color: var(--blue1);
-        padding: 8px 0px;
-        display: block;
-        width: 100%;
+        @include common-button();
+        color: var(--text0);
+        font-size: medium;
+        font-family:  Courier, monospace;
+        background-color: var(--base0);
     }
 }
 #user-service-table {
@@ -776,6 +797,11 @@ button {
     }
     .warning {
         border: 1px solid var(--red);
+    }
+    .lesson-empty-item {
+        border: 1px dashed var(--green0);
+        background-color: var(--base1);
+        padding: 20px;
     }
     .warning-text {
         color: var(--orange);

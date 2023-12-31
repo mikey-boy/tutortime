@@ -1,6 +1,7 @@
 from flask import Flask
 from sassutils.wsgi import SassMiddleware
 
+from tutortime.commands import initdb
 from tutortime.config import DevelopmentConfig
 from tutortime.extensions import db, socketio
 
@@ -11,6 +12,7 @@ def create_app():
     configure_extensions(app)
     configure_blueprints(app)
     create_db(app)
+    configure_cli(app)
     return app
 
 
@@ -37,3 +39,9 @@ def configure_blueprints(app):
 def create_db(app):
     with app.app_context():
         db.create_all()
+
+
+def configure_cli(app):
+    @app.cli.command("initdb")
+    def initdb_cli():
+        initdb()

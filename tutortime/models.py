@@ -147,9 +147,9 @@ class Service(db.Model):
         stmt = select(Service).where(Service.id == id)
         return db.session.scalar(stmt)
 
-    def get_page(search: str = "", category: ServiceCategory = None, page_num: int = 1, per_page: int = 20):
+    def get_page(search: str = "", category: ServiceCategory = "", page_num: int = 1, per_page: int = 20):
         stmt = select(Service)
-        if category is not None and category != "all":
+        if category:
             stmt = stmt.where(Service.category == category)
         if search != "":
             search = f"%{search}%"

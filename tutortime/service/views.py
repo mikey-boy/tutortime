@@ -11,7 +11,7 @@ service_bp = Blueprint("service", __name__)
 def service_list():
     page = request.args.get("page", 1, type=int)
     search = request.args.get("search", "", type=str)
-    category = request.args.get("category", None, type=str)
+    category = request.args.get("category", "", type=str)
     services = Service.get_page(search=search, category=category, page_num=page, per_page=20)
 
     other_pages = services.iter_pages(left_edge=1, left_current=3, right_current=1, right_edge=1)

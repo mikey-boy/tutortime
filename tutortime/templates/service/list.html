@@ -3,7 +3,7 @@
     <div>
         <form id="service-filter-box" action="{{ url_for('service.service_list') }}" method="GET">
             <select name="category">
-                <option value="all">All</option>
+                <option value="">All</option>
                 
                 {% if category == "language" %}
                     <option value="language" selected>Language learning</option>

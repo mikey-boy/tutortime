@@ -9,8 +9,24 @@ service_bp = Blueprint("service", __name__)
 @service_bp.route("/")
 @service_bp.route("/service/list/")
 def service_list():
-    services = Service.get_all_services()
-    return render_template("service/list.html", services=services)
+    page = request.args.get("page", 1, type=int)
+    search = request.args.get("search", "", type=str)
+    category = request.args.get("category", "", type=str)
+    services = Service.get_page(search=search, category=category, page_num=page, per_page=20)
+
+    other_pages = services.iter_pages(left_edge=1, left_current=3, right_current=1, right_edge=1)
+    prev_page = services.prev_num
+    next_page = services.next_num
+    return render_template(
+        "service/list.html",
+        search=search,
+        category=category,
+        services=services.items,
+        other_pages=other_pages,
+        prev_page=prev_page,
+        cur_page=page,
+        next_page=next_page,
+    )
 
 
 @service_bp.route("/service/display/<int:service_id>")

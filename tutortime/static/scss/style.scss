@@ -116,7 +116,7 @@ button {
     display: grid;
     gap: 25px;
     grid-template-columns: repeat(auto-fill, 340px);
-    padding-bottom: 100px;
+    padding-bottom: 40px;
 
     .post {
         width: 300px;
@@ -292,7 +292,6 @@ button {
     grid-template-rows: 50px;
     grid-auto-rows: minmax(120px, auto);
     overflow: auto;
-    padding-bottom: 210px;
 }
 .day {
     padding: 10px;
@@ -433,6 +432,9 @@ button {
     font-family: Georgia, serif;
     color: var(--blue1);
 }
+#footer {
+    margin-top: 200px;
+}
 #theme-switch-container {
     position: fixed;
     display: flex;
@@ -470,12 +472,42 @@ button {
         }
     }
 }
-#service-category-box {
+#service-filter-box {
     margin: 25px 10px;
     
+    input {
+        padding: 6px;
+        border-radius: 3px;
+        width: 200px;
+        border: 1px solid var(--base2);
+    }
     select {
-        padding: 5px;
-        min-width: 200px;
+        padding: 6px;
+        border-radius: 3px;
+        border: 1px solid var(--base2);
+    }
+    button {
+        padding: 7px 10px;
+        background-color: var(--green1);
+        color: var(--text1);
+    }
+}
+#service-page-control {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: larger;
+
+    a {
+        padding: 2px 10px;
+        margin: 2px;
+    }
+    a.active-page {
+        border-radius: 3px;
+        background-color: var(--base1);
+    }
+    .fa-ellipsis {
+        color: var(--base2);
     }
 }
 #user-modal-popout {

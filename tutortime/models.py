@@ -147,12 +147,15 @@ class Service(db.Model):
         stmt = select(Service).where(Service.id == id)
         return db.session.scalar(stmt)
 
-    def get_all_services(category: ServiceCategory = None):
-        if category is None:
-            stmt = select(Service)
-        else:
-            stmt = select(Service).where(Service.category == category)
-        return db.session.scalars(stmt)
+    def get_page(search: str = "", category: ServiceCategory = "", page_num: int = 1, per_page: int = 20):
+        stmt = select(Service)
+        if category:
+            stmt = stmt.where(Service.category == category)
+        if search != "":
+            search = f"%{search}%"
+            stmt = stmt.filter((Service.title.like(search)) | Service.description.like(search))
+
+        return db.paginate(stmt, page=page_num, per_page=per_page, error_out=False)
 
     def get_lessons(self, student_id: int, statuses: list(LessonStatus)):
         return [lesson for lesson in self.lessons if lesson.student_id == student_id and lesson.status in statuses]

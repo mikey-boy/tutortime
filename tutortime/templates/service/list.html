@@ -1,20 +1,46 @@
 {% extends "home.html" %}
 {% block content %}
-    <div x-data="{  category: 'all' }">
-        <div id="service-category-box">
-            <label>Category: </label>
-            <select x-model="category">
-                <option value="all">All</option>
-                <option value="language">Language learning</option>
-                <option value="software">Software development</option>
-                <option value="music">Music lessons</option>
-                <option value="wellness">Wellness (i.e. meditation, yoga)</option>
-                <option value="other">Other</option>
+    <div>
+        <form id="service-filter-box" action="{{ url_for('service.service_list') }}" method="GET">
+            <select name="category">
+                <option value="">All</option>
+                
+                {% if category == "language" %}
+                    <option value="language" selected>Language learning</option>
+                {% else %}
+                    <option value="language">Language learning</option>
+                {% endif %}
+
+                {% if category == "software" %}
+                    <option value="software" selected>Software development</option>
+                {% else %}
+                    <option value="software">Software development</option>
+                {% endif %}
+
+                {% if category == "music" %}
+                    <option value="music" selected>Music lessons</option>
+                {% else %}
+                    <option value="music">Music lessons</option>
+                {% endif %}
+                
+                {% if category == "wellness" %}
+                    <option value="wellness" selected>Wellness</option>
+                {% else %}
+                    <option value="wellness">Wellness</option>
+                {% endif %}
+                
+                {% if category == "other" %}
+                    <option value="other" selected>Other</option>
+                {% else %}
+                    <option value="other">Other</option>
+                {% endif %}
             </select>
-        </div>
+            <input type="text" placeholder="Search..." value="{{ search }}" name="search">
+            <button><i class="fa-solid fa-magnifying-glass fa-lg"></i></button>
+        </form>
         <div class="post-grid-container">
             {% for service in services %}
-                <div class="post" x-show="'{{ service.category }}' == category || 'all' == category" x-data="{ image: 0 }">
+                <div class="post" x-data="{ image: 0 }">
                     <a href="{{ url_for('service.service_display', service_id=service.id) }}">
                         <div class="image-container">
                             {% if service['images'] == [] %}
@@ -37,6 +63,25 @@
                     <p>{{ service.user.username }}</p>
                 </div>
             {% endfor %}
+        </div>
+        <div id="service-page-control">
+            {% if prev_page %}
+                <a href="{{ url_for('service.service_list', page=prev_page) }}"><i class="fa-solid fa-chevron-left"></i></a>
+            {% endif %}
+            {% for page in other_pages %}
+                {% if page %}
+                    {% if page == cur_page %}
+                        <a class="active-page" href="{{ url_for('service.service_list', page=page) }}">{{page}}</a>
+                    {% else %}
+                        <a href="{{ url_for('service.service_list', page=page) }}">{{page}}</a>
+                    {% endif %}
+                {% else %}
+                    <i class="fa-solid fa-ellipsis"></i>
+                {% endif %}
+            {% endfor %}
+            {% if next_page %}
+                <a href="{{ url_for('service.service_list', page=next_page) }}"><i class="fa-solid fa-chevron-right"></i></a>
+            {% endif %}
         </div>
     </div>
 {% endblock %}

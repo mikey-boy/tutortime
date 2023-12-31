@@ -1,4 +1,4 @@
-from flask import Blueprint, abort, redirect, render_template, request, session, url_for
+from flask import Blueprint, abort, redirect, render_template, request, session
 
 from tutortime.models import Image, Service, ServiceStatus, User
 from tutortime.service.utils import availability_to_int, availability_to_list

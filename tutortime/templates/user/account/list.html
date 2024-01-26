@@ -34,9 +34,15 @@
                         <td>{{ lessons[i]['student_name'] }}</td>
 
                         {% if lessons[i]['tutor_id'] == user.id %}
-                            {% if lessons[i]['status'] == 'confirmed'%}
+                            {% if lessons[i]['status'] == 'confirmed' %}
                                 <td>{{ lessons[i]['status'] }}</td>
-                                <td class="tutor-transaction">+{{ lessons[i]['actual_duration'] }}</td>
+                                <td>
+                                    {% if lessons[i]['bonus_duration'] != 0 %}
+                                        <span class="tutor-transaction">+{{ lessons[i]['actual_duration'] }}</span><span class="bonus-transaction"> (+{{ lessons[i]['bonus_duration'] }} bonus)</span> 
+                                    {% else %}
+                                        <p class="tutor-transaction">+{{ lessons[i]['actual_duration'] }}</p>
+                                    {% endif %}
+                                </td>
                             {% else %}
                                 <td>pending confirmation</td>
                                 <td class="pending-transaction">(+{{ lessons[i]['actual_duration'] }})</td>

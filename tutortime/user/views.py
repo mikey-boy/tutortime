@@ -80,6 +80,8 @@ def user_account_list():
         lesson["balance"] = minutes
         if lesson["tutor_id"] == session["user_id"] and lesson["status"] == LessonStatus.CONFIRMED:
             minutes -= lesson["actual_duration"]
+            if lesson["bonus_duration"] != 0:
+                minutes -= lesson["bonus_duration"]
         elif lesson["student_id"] == session["user_id"] and lesson["status"].startswith("accepted_") is False:
             minutes += lesson["proposed_duration"]
     return render_template("user/account/list.html", user=user, services=services, lessons=lessons)

@@ -17,6 +17,7 @@ from tutortime.extensions import db, scheduler
 
 
 class ServiceStatus(StrEnum):
+    CANCELLED = auto()
     ACTIVE = auto()
     PAUSED = auto()
 
@@ -129,8 +130,7 @@ class Service(db.Model):
     def remove(self) -> None:
         for image in self.images:
             image.remove()
-        db.session.delete(self)
-        db.session.commit()
+        self.update(LessonStatus.CANCELLED)
 
     def update(self, title: str, description: str, category: str, availability: int) -> None:
         self.title = title
@@ -141,6 +141,10 @@ class Service(db.Model):
 
     def update_status(self, status: ServiceStatus) -> None:
         self.status = status
+        db.session.commit()
+
+    def update_minutes(self, minutes: int) -> None:
+        self.minutes += minutes
         db.session.commit()
 
     def get(id: int) -> Self:
@@ -205,6 +209,7 @@ class Lesson(db.Model):
     lesson_ts: Mapped[datetime] = mapped_column()
     proposed_duration: Mapped[int] = mapped_column()
     actual_duration: Mapped[int] = mapped_column()
+    bonus_duration: Mapped[int] = mapped_column(default=0)
     status: Mapped[LessonStatus] = mapped_column()
     message: Mapped["Message"] = relationship(back_populates="lesson")
 
@@ -222,6 +227,7 @@ class Lesson(db.Model):
             "time": self.lesson_ts.strftime("%H:%M"),
             "proposed_duration": self.proposed_duration,
             "actual_duration": self.actual_duration,
+            "bonus_duration": self.bonus_duration,
             "modified": self.proposed_duration != self.actual_duration,
             "service_id": self.service.id,
             "completed": self.lesson_ts < datetime.now(),
@@ -256,6 +262,10 @@ class Lesson(db.Model):
 
     def update_status(self, status: LessonStatus) -> None:
         self.status = status
+        db.session.commit()
+
+    def update_bonus_duration(self, bonus_duration: int) -> None:
+        self.bonus_duration += bonus_duration
         db.session.commit()
 
     # DB Maintenance

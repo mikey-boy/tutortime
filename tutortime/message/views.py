@@ -44,10 +44,10 @@ def message_list(user_id=None):
     for service in user2.services:
         lessons += service.get_lessons(user1.id, statuses)
     sorted_lessons = sorted(
-        [lesson for lesson in lessons if lesson.timestamp < datetime.now()], key=lambda d: d.timestamp, reverse=True
+        [lesson for lesson in lessons if lesson.lesson_ts < datetime.now()], key=lambda d: d.lesson_ts, reverse=True
     )
     sorted_lessons += sorted(
-        [lesson for lesson in lessons if lesson.timestamp >= datetime.now()], key=lambda d: d.timestamp, reverse=False
+        [lesson for lesson in lessons if lesson.lesson_ts >= datetime.now()], key=lambda d: d.lesson_ts, reverse=False
     )
 
     services = user1.get_services(ServiceStatus.ACTIVE) + user2.get_services(ServiceStatus.ACTIVE)
@@ -203,11 +203,21 @@ def confirm_lesson(payload):
         else:
             lesson.update_status(LessonStatus.CONFIRMED_STUDENT)
     else:
+        lesson.update_status(LessonStatus.CONFIRMED)
         message = f"{lesson.actual_duration} minutes transferred to {lesson.tutor.username}"
         Message(room_id=session["room"], message=message).add()
 
-        lesson.update_status(LessonStatus.CONFIRMED)
+        minutes_tutored = sum(service.minutes for service in lesson.tutor.services)
         lesson.tutor.update_minutes(lesson.actual_duration)
+        lesson.service.update_minutes(lesson.actual_duration)
+
+        if minutes_tutored < 120 and minutes_tutored + lesson.actual_duration >= 120:
+            lesson.update_bonus_duration(60)
+            lesson.tutor.update_minutes(60)
+        if minutes_tutored < 240 and minutes_tutored + lesson.actual_duration >= 240:
+            lesson.update_bonus_duration(60)
+            lesson.tutor.update_minutes(60)
+
         if lesson.actual_duration != lesson.proposed_duration:
             lesson.student.update_minutes(lesson.proposed_duration - lesson.actual_duration)
 

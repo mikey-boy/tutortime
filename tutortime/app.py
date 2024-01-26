@@ -3,7 +3,7 @@ from sassutils.wsgi import SassMiddleware
 
 from tutortime.commands import initdb
 from tutortime.config import DevelopmentConfig
-from tutortime.extensions import db, socketio
+from tutortime.extensions import db, scheduler, socketio
 
 
 def create_app():
@@ -24,6 +24,9 @@ def configure_app(app, config):
 def configure_extensions(app):
     db.init_app(app)
     socketio.init_app(app, logger=True)
+    scheduler.init_app(app)
+
+    scheduler.start()
 
 
 def configure_blueprints(app):

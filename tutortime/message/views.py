@@ -99,7 +99,7 @@ def create_lesson(payload):
             tutor_id=user_id,
             student_id=peer_id,
             service_id=service.id,
-            timestamp=timestamp,
+            lesson_ts=timestamp,
             proposed_duration=duration,
             actual_duration=duration,
             status=status,
@@ -110,7 +110,7 @@ def create_lesson(payload):
             tutor_id=peer_id,
             student_id=user_id,
             service_id=service.id,
-            timestamp=timestamp,
+            lesson_ts=timestamp,
             proposed_duration=duration,
             actual_duration=duration,
             status=status,
@@ -133,8 +133,8 @@ def _user_lesson_modify(lesson: Lesson, accepted_states: list(LessonStatus)):
 
 def _system_message(lesson: Lesson, status: LessonStatus) -> None:
     user = User.get(session["user_id"])
-    day = lesson.timestamp.strftime("%Y-%m-%d")
-    time = lesson.timestamp.strftime("%H:%M")
+    day = lesson.lesson_ts.strftime("%Y-%m-%d")
+    time = lesson.lesson_ts.strftime("%H:%M")
     if status == LessonStatus.ACCEPTED:
         message = f"{user.username} accepted '{lesson.service.title}' scheduled for {day} @ {time}"
     elif status == LessonStatus.CANCELLED:
@@ -193,7 +193,7 @@ def confirm_lesson(payload):
 
     duration = payload.get("duration", "")
     if duration:
-        lesson.update(lesson.timestamp, lesson.proposed_duration, duration)
+        lesson.update(lesson.lesson_ts, lesson.proposed_duration, duration)
 
     _system_message(lesson, LessonStatus.CONFIRMED)
 

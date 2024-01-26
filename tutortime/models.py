@@ -2,7 +2,7 @@ import hashlib
 import logging
 import os
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from enum import StrEnum, auto
 from typing import List, Optional, Self
 
@@ -13,7 +13,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from werkzeug.datastructures import FileStorage
 
-from tutortime.extensions import db
+from tutortime.extensions import db, scheduler
 
 
 class ServiceStatus(StrEnum):
@@ -195,13 +195,14 @@ class Lesson(db.Model):
     __tablename__ = "lesson"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    creation_ts: Mapped[datetime] = mapped_column(server_default=func.now())
     tutor_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
     tutor: Mapped["User"] = relationship(foreign_keys=tutor_id)
     student_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
     student: Mapped["User"] = relationship(foreign_keys=student_id)
     service_id: Mapped[int] = mapped_column(ForeignKey("service.id"))
     service: Mapped["Service"] = relationship(back_populates="lessons")
-    timestamp: Mapped[datetime] = mapped_column()
+    lesson_ts: Mapped[datetime] = mapped_column()
     proposed_duration: Mapped[int] = mapped_column()
     actual_duration: Mapped[int] = mapped_column()
     status: Mapped[LessonStatus] = mapped_column()
@@ -217,13 +218,13 @@ class Lesson(db.Model):
             "student_id": self.student_id,
             "student_name": self.student.username,
             "status": self.status,
-            "day": self.timestamp.strftime("%Y-%m-%d"),
-            "time": self.timestamp.strftime("%H:%M"),
+            "day": self.lesson_ts.strftime("%Y-%m-%d"),
+            "time": self.lesson_ts.strftime("%H:%M"),
             "proposed_duration": self.proposed_duration,
             "actual_duration": self.actual_duration,
             "modified": self.proposed_duration != self.actual_duration,
             "service_id": self.service.id,
-            "completed": self.timestamp < datetime.now(),
+            "completed": self.lesson_ts < datetime.now(),
         }
         return data
 
@@ -242,13 +243,13 @@ class Lesson(db.Model):
             .where(Lesson.status.in_(statuses))
         )
         if asc:
-            stmt = stmt.order_by(Lesson.timestamp)
+            stmt = stmt.order_by(Lesson.lesson_ts)
         else:
-            stmt = stmt.order_by(desc(Lesson.timestamp))
+            stmt = stmt.order_by(desc(Lesson.lesson_ts))
         return db.session.scalars(stmt)
 
     def update(self, timestamp: datetime, proposed_duration: int, actual_duration: int) -> None:
-        self.timestamp = timestamp
+        self.lesson_ts = timestamp
         self.proposed_duration = proposed_duration
         self.actual_duration = actual_duration
         db.session.commit()
@@ -256,6 +257,31 @@ class Lesson(db.Model):
     def update_status(self, status: LessonStatus) -> None:
         self.status = status
         db.session.commit()
+
+    # DB Maintenance
+    @scheduler.task("interval", id="expire_lessons", seconds=10, misfire_grace_time=900)
+    def expire_lessons():
+        with scheduler.app.app_context():
+            # Lessons that are scheduled at least two days in advance and start within 24 hours
+            stmt = (
+                select(Lesson)
+                .where(func.extract("epoch", Lesson.lesson_ts - Lesson.creation_ts) > timedelta(days=2).total_seconds())
+                .where(func.extract("epoch", Lesson.lesson_ts - datetime.now()) < timedelta(days=1).total_seconds())
+                .where(Lesson.status.in_([LessonStatus.ACCEPTED_STUDENT, LessonStatus.ACCEPTED_TUTOR]))
+            )
+            # Lessons that are scheduled less than two days in advance and are not accepted before their start date
+            stmt2 = (
+                select(Lesson)
+                .where(Lesson.lesson_ts < datetime.now())
+                .where(Lesson.status.in_([LessonStatus.ACCEPTED_STUDENT, LessonStatus.ACCEPTED_TUTOR]))
+            )
+
+            lessons = db.session.scalars(stmt)
+            lessons2 = db.session.scalars(stmt2)
+            for lesson in lessons:
+                lesson.update_status(LessonStatus.EXPIRED)
+            for lesson in lessons2:
+                lesson.update_status(LessonStatus.EXPIRED)
 
 
 class Room(db.Model):

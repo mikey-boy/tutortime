@@ -105,7 +105,7 @@ def user_calendar_list():
         month["month_length"] = monthrange[1]
         month["lessons"] = []
         for lesson in lessons:
-            if cur_month.month == lesson.timestamp.month and cur_month.year == lesson.timestamp.year:
+            if cur_month.month == lesson.lesson_ts.month and cur_month.year == lesson.lesson_ts.year:
                 month["lessons"].append(lesson.to_json())
         cal.append(month)
 

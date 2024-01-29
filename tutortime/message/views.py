@@ -180,6 +180,8 @@ def accept_lesson(payload):
         abort(403)
     if lesson.status == LessonStatus.ACCEPTED_TUTOR and lesson.tutor_id == session["user_id"]:
         abort(403)
+    if lesson.proposed_duration > lesson.student.minutes:
+        abort(403)
 
     lesson.update_status(LessonStatus.ACCEPTED)
     lesson.student.update_minutes(lesson.proposed_duration * -1)
@@ -234,10 +236,11 @@ def cancel_lesson(payload):
     lesson = Lesson.get(payload["lesson_id"])
     _user_lesson_modify(lesson, [LessonStatus.ACCEPTED_STUDENT, LessonStatus.ACCEPTED_TUTOR, LessonStatus.ACCEPTED])
 
-    lesson.update_status(LessonStatus.CANCELLED)
-    _system_message(lesson, LessonStatus.CANCELLED)
     if lesson.status == LessonStatus.ACCEPTED:
         lesson.student.update_minutes(lesson.proposed_duration)
+    lesson.update_status(LessonStatus.CANCELLED)
+
+    _system_message(lesson, LessonStatus.CANCELLED)
     emit("pageReload", to=session["room"])
 
 

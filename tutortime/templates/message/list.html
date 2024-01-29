@@ -141,8 +141,12 @@
     </div>
 
     <script type="text/javascript">
-        var messages = {{ messages|tojson }};
+        const userId = {{ user.id }}
+        const peerId = {{ peer.id }}
         const services = {{ services|tojson }};
+        var userMinutes = {{ user.minutes }}
+        var peerMinutes = {{ peer.minutes }}
+        var messages = {{ messages|tojson }};
         
         function modifyRequest(lesson_id) {
             for (const message of messages) {
@@ -183,7 +187,7 @@
             
             if (message.sender == null){
                 var content = `<div class="flex-container-system"><span class="message-item-system">${message.message}</span></div>`
-            } else if (message.sender === {{ user.id }}) {
+            } else if (message.sender === userId) {
                 var content = `<div class="flex-container-user"><span class="message-item">${message.message}</span></div>`
             } else {
                 var content = `<div class="flex-container-peer"><span class="message-item">${message.message}</span></div>`
@@ -197,12 +201,14 @@
 
             var messageContainer = document.getElementById("chat-messages");
             var div = document.createElement("div")
-            if (message.sender === {{ user.id }}) {
+            if (message.sender === userId) {
                 div.className = 'flex-container-user'
             } else {
                 div.className = 'flex-container-peer'
             }
             
+            var sufficientMins = ((message.lesson.tutor_id == userId && message.lesson.proposed_duration <= peerMinutes) || 
+                                  (message.lesson.tutor_id != userId && message.lesson.proposed_duration <= userMinutes)) 
             var span = document.createElement("span")
             span.className = "message-item lesson-item"
             span.innerHTML = `<div class="title">${message.lesson.title}</div>`
@@ -215,8 +221,13 @@
             var modifyButton = `<button class='modify-button' @click="modifyRequest(${message.lesson.id}); request_service = 3;">Modify</button> `
 
             if (message.lesson.status == 'accepted_student' || message.lesson.status == 'accepted_tutor') {
-                span.innerHTML +='<div>Status: pending</div>';
-                if (message.sender != {{ user.id }}) {
+                if (sufficientMins) {
+                    span.innerHTML +=`<div>Status: pending</div>`;
+                } else {
+                    span.innerHTML +=`<div>Status: <span class="error-text">Student does not have enough minutes to accept this lesson</span></div>`;
+                }
+
+                if (message.sender != userId && sufficientMins) {
                     span.innerHTML += acceptButton;
                 }
                 span.innerHTML += modifyButton;
@@ -241,7 +252,7 @@
             var msgInput = document.getElementById("message");
             if (msgInput.value === "") return;
             var msg = msgInput.value;
-            socketio.emit("message", { message: msg, peer_id: "{{ peer.id }}" });
+            socketio.emit("message", { message: msg, peer_id: peerId });
             msgInput.value = "";
         }
         function sendLessonRequest(request_type) {
@@ -252,16 +263,12 @@
             var duration = document.getElementById("lesson-duration").value;
 
             // Verify that the student has enough minutes to make the request
-            if (tutor_id == {{ user.id }} && duration > {{ peer.minutes }}) {
-                document.getElementById("lesson-request-error").innerHTML = "They do not have enough minutes for this lesson";
-                return request_type;
-            }
-            if (tutor_id == {{ peer.id }} && duration > {{ user.minutes }}) {
-                document.getElementById("lesson-request-error").innerHTML = "You do not have enough minutes for this lesson";
+            if ((tutor_id == userId && duration > peerMinutes) || (tutor_id != userId && duration > userMinutes)) {
+                document.getElementById("lesson-request-error").innerHTML = "Student does not have enough minutes to accept this lesson";
                 return request_type;
             }
 
-            var lesson = { "peer_id": {{ peer.id }}, "date": date, "time": time, "duration": duration };
+            var lesson = { "peer_id": peerId, "date": date, "time": time, "duration": duration };
             if (request_type == 2) {
                 lesson["service_id"] = service_id;
                 socketio.emit("createLesson", lesson);

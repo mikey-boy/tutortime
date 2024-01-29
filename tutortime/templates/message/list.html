@@ -15,13 +15,13 @@
         <h2>{{ peer.username }}</h2>
         <div id="chat-messages" :class="request_service > 1 && 'minimized'"></div>
         <div id="chat-lesson-request" x-show="request_service > 1">
-            <form @submit.prevent="sendLessonRequest(request_service); request_service = 0;">
+            <form @submit.prevent="request_service = sendLessonRequest(request_service)">
                 <div class="flex-container">
                     <h3 id="service-title"></h3>
                     <i id="cancel-request-button" @click="request_service = 0" class="fa-regular fa-circle-xmark fa-lg"></i>
                 </div>
                 <input id="service-or-lesson-id" type="hidden">
-                <input id="lesson-peer-id" type="hidden" value="{{ peer.id }}">
+                <input id="service-tutor-id" type="hidden">
                 <label for="lesson-date">Datetime: </label>
                 {# <input id="lesson-date" name="lesson-date" type="date" min="{{ today }}" required> #}
                 <input id="lesson-date" name="lesson-date" type="date" required>
@@ -38,6 +38,7 @@
                 </select>
                 <button id="send-request-button" x-show="request_service == 2">Send</button>
                 <button id="modify-request-button" x-show="request_service == 3">Modify</button>
+                <p id="lesson-request-error"></p>
             </form>
         </div>
         <div id="chat-input">
@@ -147,6 +148,7 @@
             for (const message of messages) {
                 if ("lesson" in message && message.lesson.id == lesson_id) {
                     document.getElementById("service-or-lesson-id").value = message.lesson.id;
+                    document.getElementById("service-tutor-id").value = message.lesson.tutor_id;
                     document.getElementById("service-title").innerHTML = `${message.lesson.title}`;
                     document.getElementById("lesson-date").value = `${message.lesson.day}`;
                     document.getElementById("lesson-time").value = `${message.lesson.time}`;
@@ -159,10 +161,12 @@
             for (const service of services) {
                 if (service.id == service_id) {
                     document.getElementById("service-or-lesson-id").value = service.id;
+                    document.getElementById("service-tutor-id").value = service.user_id;
                     document.getElementById("service-title").innerHTML = `${service.title}`;
                     document.getElementById("lesson-date").value = "";
                     document.getElementById("lesson-time").value = "";
                     document.getElementById("lesson-duration").value = "15";
+                    document.getElementById("lesson-request-error").innerHTML = "";
                     break;
                 }
             }
@@ -242,12 +246,22 @@
         }
         function sendLessonRequest(request_type) {
             var service_id = document.getElementById("service-or-lesson-id").value;
-            var peer_id = document.getElementById("lesson-peer-id").value;
+            var tutor_id = document.getElementById("service-tutor-id").value;
             var date = document.getElementById("lesson-date").value;
             var time = document.getElementById("lesson-time").value;
             var duration = document.getElementById("lesson-duration").value;
 
-            var lesson = { "peer_id": peer_id, "date": date, "time": time, "duration": duration };
+            // Verify that the student has enough minutes to make the request
+            if (tutor_id == {{ user.id }} && duration > {{ peer.minutes }}) {
+                document.getElementById("lesson-request-error").innerHTML = "They do not have enough minutes for this lesson";
+                return request_type;
+            }
+            if (tutor_id == {{ peer.id }} && duration > {{ user.minutes }}) {
+                document.getElementById("lesson-request-error").innerHTML = "You do not have enough minutes for this lesson";
+                return request_type;
+            }
+
+            var lesson = { "peer_id": {{ peer.id }}, "date": date, "time": time, "duration": duration };
             if (request_type == 2) {
                 lesson["service_id"] = service_id;
                 socketio.emit("createLesson", lesson);
@@ -255,6 +269,7 @@
                 lesson["lesson_id"] = service_id;
                 socketio.emit("modifyLesson", lesson);
             }
+            return 0;
         }
         function sendAcceptRequest(lesson_id) {
             socketio.emit("acceptLesson", { "lesson_id": lesson_id });

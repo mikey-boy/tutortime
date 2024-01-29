@@ -44,10 +44,10 @@ def message_list(user_id=None):
     for service in user2.services:
         lessons += service.get_lessons(user1.id, statuses)
     sorted_lessons = sorted(
-        [lesson for lesson in lessons if lesson.timestamp < datetime.now()], key=lambda d: d.timestamp, reverse=True
+        [lesson for lesson in lessons if lesson.lesson_ts < datetime.now()], key=lambda d: d.lesson_ts, reverse=True
     )
     sorted_lessons += sorted(
-        [lesson for lesson in lessons if lesson.timestamp >= datetime.now()], key=lambda d: d.timestamp, reverse=False
+        [lesson for lesson in lessons if lesson.lesson_ts >= datetime.now()], key=lambda d: d.lesson_ts, reverse=False
     )
 
     services = user1.get_services(ServiceStatus.ACTIVE) + user2.get_services(ServiceStatus.ACTIVE)
@@ -86,38 +86,43 @@ def message(payload):
 
 @socketio.on("createLesson")
 def create_lesson(payload):
-    user_id = session["user_id"]
-    peer_id = payload["peer_id"]
-
+    user = User.get(session["user_id"])
+    peer = User.get(payload["peer_id"])
     timestamp = str_to_dt(f"{payload['date']}T{payload['time']}")
     duration = payload["duration"]
     service = Service.get(payload["service_id"])
 
-    if service.user_id == user_id:
+    if service.user_id == user.id:
+        if int(duration) > peer.minutes:
+            abort(403)
+
         status = LessonStatus.ACCEPTED_TUTOR
         lesson = Lesson(
-            tutor_id=user_id,
-            student_id=peer_id,
+            tutor_id=user.id,
+            student_id=peer.id,
             service_id=service.id,
-            timestamp=timestamp,
+            lesson_ts=timestamp,
             proposed_duration=duration,
             actual_duration=duration,
             status=status,
         )
     else:
+        if int(duration) > user.minutes:
+            abort(403)
+
         status = LessonStatus.ACCEPTED_STUDENT
         lesson = Lesson(
-            tutor_id=peer_id,
-            student_id=user_id,
+            tutor_id=peer.id,
+            student_id=user.id,
             service_id=service.id,
-            timestamp=timestamp,
+            lesson_ts=timestamp,
             proposed_duration=duration,
             actual_duration=duration,
             status=status,
         )
     lesson.add()
 
-    message = Message(room_id=session["room"], sender_id=user_id, receiver_id=peer_id, lesson_id=lesson.id)
+    message = Message(room_id=session["room"], sender_id=user.id, receiver_id=peer.id, lesson_id=lesson.id)
     message.add()
     emit("createLesson", message.to_json(), to=session["room"])
 
@@ -133,8 +138,8 @@ def _user_lesson_modify(lesson: Lesson, accepted_states: list(LessonStatus)):
 
 def _system_message(lesson: Lesson, status: LessonStatus) -> None:
     user = User.get(session["user_id"])
-    day = lesson.timestamp.strftime("%Y-%m-%d")
-    time = lesson.timestamp.strftime("%H:%M")
+    day = lesson.lesson_ts.strftime("%Y-%m-%d")
+    time = lesson.lesson_ts.strftime("%H:%M")
     if status == LessonStatus.ACCEPTED:
         message = f"{user.username} accepted '{lesson.service.title}' scheduled for {day} @ {time}"
     elif status == LessonStatus.CANCELLED:
@@ -193,7 +198,7 @@ def confirm_lesson(payload):
 
     duration = payload.get("duration", "")
     if duration:
-        lesson.update(lesson.timestamp, lesson.proposed_duration, duration)
+        lesson.update(lesson.lesson_ts, lesson.proposed_duration, duration)
 
     _system_message(lesson, LessonStatus.CONFIRMED)
 
@@ -203,11 +208,21 @@ def confirm_lesson(payload):
         else:
             lesson.update_status(LessonStatus.CONFIRMED_STUDENT)
     else:
+        lesson.update_status(LessonStatus.CONFIRMED)
         message = f"{lesson.actual_duration} minutes transferred to {lesson.tutor.username}"
         Message(room_id=session["room"], message=message).add()
 
-        lesson.update_status(LessonStatus.CONFIRMED)
+        minutes_tutored = sum(service.minutes for service in lesson.tutor.services)
         lesson.tutor.update_minutes(lesson.actual_duration)
+        lesson.service.update_minutes(lesson.actual_duration)
+
+        if minutes_tutored < 120 and minutes_tutored + lesson.actual_duration >= 120:
+            lesson.update_bonus_duration(60)
+            lesson.tutor.update_minutes(60)
+        if minutes_tutored < 240 and minutes_tutored + lesson.actual_duration >= 240:
+            lesson.update_bonus_duration(60)
+            lesson.tutor.update_minutes(60)
+
         if lesson.actual_duration != lesson.proposed_duration:
             lesson.student.update_minutes(lesson.proposed_duration - lesson.actual_duration)
 
@@ -220,8 +235,9 @@ def cancel_lesson(payload):
     _user_lesson_modify(lesson, [LessonStatus.ACCEPTED_STUDENT, LessonStatus.ACCEPTED_TUTOR, LessonStatus.ACCEPTED])
 
     lesson.update_status(LessonStatus.CANCELLED)
-    lesson.student.update_minutes(lesson.proposed_duration)
     _system_message(lesson, LessonStatus.CANCELLED)
+    if lesson.status == LessonStatus.ACCEPTED:
+        lesson.student.update_minutes(lesson.proposed_duration)
     emit("pageReload", to=session["room"])
 
 

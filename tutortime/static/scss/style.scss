@@ -547,6 +547,9 @@ button {
     .tutor-transaction {
         color: var(--green1)
     }
+    .bonus-transaction {
+        color: var(--blue0)
+    }
     .student-transaction {
         color: var(--red)
     }
@@ -769,6 +772,11 @@ button {
             color: var(--base2);
             margin-top: 10px;
             cursor: pointer;
+        }
+        #lesson-request-error {
+            margin: 0px;
+            color: var(--red);
+            font-weight: bold;
         }
     }
 }

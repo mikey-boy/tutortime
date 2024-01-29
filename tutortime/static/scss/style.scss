@@ -773,6 +773,11 @@ button {
             margin-top: 10px;
             cursor: pointer;
         }
+        #lesson-request-error {
+            margin: 0px;
+            color: var(--red);
+            font-weight: bold;
+        }
     }
 }
 #lessons {

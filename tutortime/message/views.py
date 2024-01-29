@@ -86,18 +86,20 @@ def message(payload):
 
 @socketio.on("createLesson")
 def create_lesson(payload):
-    user_id = session["user_id"]
-    peer_id = payload["peer_id"]
-
+    user = User.get(session["user_id"])
+    peer = User.get(payload["peer_id"])
     timestamp = str_to_dt(f"{payload['date']}T{payload['time']}")
     duration = payload["duration"]
     service = Service.get(payload["service_id"])
 
-    if service.user_id == user_id:
+    if service.user_id == user.id:
+        if int(duration) > peer.minutes:
+            abort(403)
+
         status = LessonStatus.ACCEPTED_TUTOR
         lesson = Lesson(
-            tutor_id=user_id,
-            student_id=peer_id,
+            tutor_id=user.id,
+            student_id=peer.id,
             service_id=service.id,
             lesson_ts=timestamp,
             proposed_duration=duration,
@@ -105,10 +107,13 @@ def create_lesson(payload):
             status=status,
         )
     else:
+        if int(duration) > user.minutes:
+            abort(403)
+
         status = LessonStatus.ACCEPTED_STUDENT
         lesson = Lesson(
-            tutor_id=peer_id,
-            student_id=user_id,
+            tutor_id=peer.id,
+            student_id=user.id,
             service_id=service.id,
             lesson_ts=timestamp,
             proposed_duration=duration,
@@ -117,7 +122,7 @@ def create_lesson(payload):
         )
     lesson.add()
 
-    message = Message(room_id=session["room"], sender_id=user_id, receiver_id=peer_id, lesson_id=lesson.id)
+    message = Message(room_id=session["room"], sender_id=user.id, receiver_id=peer.id, lesson_id=lesson.id)
     message.add()
     emit("createLesson", message.to_json(), to=session["room"])
 
@@ -230,8 +235,9 @@ def cancel_lesson(payload):
     _user_lesson_modify(lesson, [LessonStatus.ACCEPTED_STUDENT, LessonStatus.ACCEPTED_TUTOR, LessonStatus.ACCEPTED])
 
     lesson.update_status(LessonStatus.CANCELLED)
-    lesson.student.update_minutes(lesson.proposed_duration)
     _system_message(lesson, LessonStatus.CANCELLED)
+    if lesson.status == LessonStatus.ACCEPTED:
+        lesson.student.update_minutes(lesson.proposed_duration)
     emit("pageReload", to=session["room"])
 
 

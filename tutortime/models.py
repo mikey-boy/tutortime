@@ -282,7 +282,7 @@ class Lesson(db.Model):
             # Lessons that are scheduled less than two days in advance and are not accepted before their start date
             stmt2 = (
                 select(Lesson)
-                .where(Lesson.lesson_ts < datetime.now())
+                .where(Lesson.lesson_ts < datetime.now() - timedelta(minutes=10))
                 .where(Lesson.status.in_([LessonStatus.ACCEPTED_STUDENT, LessonStatus.ACCEPTED_TUTOR]))
             )
 

@@ -23,8 +23,7 @@
                 <input id="service-or-lesson-id" type="hidden">
                 <input id="service-tutor-id" type="hidden">
                 <label for="lesson-date">Datetime: </label>
-                {# <input id="lesson-date" name="lesson-date" type="date" min="{{ today }}" required> #}
-                <input id="lesson-date" name="lesson-date" type="date" required>
+                <input id="lesson-date" name="lesson-date" type="date" min="{{ today }}" required>
                 <input id="lesson-time" name="lesson-time" type="time" required>
                 <label for="lesson-duration">Duration: </label>
                 <select id="lesson-duration">
@@ -248,6 +247,11 @@
             });
         }
 
+        var socketio = io();
+        socketio.on("message", function(message) { messages.push(message); createMessageItem(message); scrollToBottom(); } );
+        socketio.on("createLesson", function(message) { messages.push(message); createLessonItem(message); scrollToBottom(); } );
+        socketio.on("pageReload", function(message) { window.location.reload(); } );
+
         function sendMessage() {
             var msgInput = document.getElementById("message");
             if (msgInput.value === "") return;
@@ -265,6 +269,14 @@
             // Verify that the student has enough minutes to make the request
             if ((tutor_id == userId && duration > peerMinutes) || (tutor_id != userId && duration > userMinutes)) {
                 document.getElementById("lesson-request-error").innerHTML = "Student does not have enough minutes to accept this lesson";
+                return request_type;
+            }
+            // Verify that the lesson is not in the past
+            const selectedDatetime = new Date(`${date}T${time}`);
+            const comparedDatetime = new Date();
+            comparedDatetime.setMinutes(comparedDatetime.getMinutes() - 5);
+            if (selectedDatetime < comparedDatetime) {
+                document.getElementById("lesson-request-error").innerHTML = "Lessons cannot be created in the past";
                 return request_type;
             }
 
@@ -291,15 +303,8 @@
         function sendCancelRequest(lesson_id) {
             socketio.emit("cancelLesson", { "lesson_id": lesson_id });
         }
-
-        var socketio = io();
-        socketio.on("message", function(message) { messages.push(message); createMessageItem(message); scrollToBottom(); } );
-        socketio.on("createLesson", function(message) { messages.push(message); createLessonItem(message); scrollToBottom(); } );
-        socketio.on("pageReload", function(message) { window.location.reload(); } );
     </script>
     <script type="text/javascript">
-        createChatItems(messages);
-
         function scrollToBottom() {
             var scrollContainer = document.getElementById("chat-messages");
             scrollContainer.scrollTop = scrollContainer.scrollHeight;
@@ -308,6 +313,8 @@
             const inputElement = document.getElementById("message");
             inputElement.focus()
         }
+
+        createChatItems(messages);
         scrollToBottom();
         focusInput();
     </script>

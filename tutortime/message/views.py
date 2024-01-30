@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from flask import Blueprint, abort, render_template, session
 from flask_socketio import emit, join_room, leave_room, send
@@ -92,9 +92,12 @@ def create_lesson(payload):
     duration = payload["duration"]
     service = Service.get(payload["service_id"])
 
+    if timestamp < datetime.now() - timedelta(minutes=5):
+        return
+
     if service.user_id == user.id:
         if int(duration) > peer.minutes:
-            abort(403)
+            return
 
         status = LessonStatus.ACCEPTED_TUTOR
         lesson = Lesson(
@@ -108,7 +111,7 @@ def create_lesson(payload):
         )
     else:
         if int(duration) > user.minutes:
-            abort(403)
+            return
 
         status = LessonStatus.ACCEPTED_STUDENT
         lesson = Lesson(

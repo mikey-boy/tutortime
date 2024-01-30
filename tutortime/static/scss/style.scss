@@ -382,7 +382,6 @@ button {
     position: absolute;
     z-index: 100;
     padding-left: 10px;
-    top: -10px;
     width: 250px;
     background-color: var(--base0);
     border: 2px solid var(--green0);
@@ -395,11 +394,17 @@ button {
         margin: 15px 8px;
     }
     &.open-left {
-        left: 105%;
-    }
-    &.open-right {
         right: 105%;
     }
+    &.open-right {
+        left: 105%;
+    }
+    &.open-down {
+        top: 10%;
+    }   
+    &.open-up {
+        bottom: 10%;
+    }   
 }
 .lesson-item {
 

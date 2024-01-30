@@ -1,5 +1,5 @@
 {% extends "home.html" %}
-
+{% block title %}Services{% endblock %}
 {% block content %}
     {% if services|length > 0 %}
         <div x-data="{ serviceStatus: '{{ status }}' }">

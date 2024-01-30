@@ -1,4 +1,5 @@
 {% extends "home.html" %}
+{% block title %}Home{% endblock %}
 {% block content %}
     <div>
         <form id="service-filter-box" action="{{ url_for('service.service_list') }}" method="GET">

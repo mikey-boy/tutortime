@@ -152,7 +152,7 @@ class Service(db.Model):
         return db.session.scalar(stmt)
 
     def get_page(search: str = "", category: ServiceCategory = "", page_num: int = 1, per_page: int = 20):
-        stmt = select(Service)
+        stmt = select(Service).where(Service.status == ServiceStatus.ACTIVE)
         if category:
             stmt = stmt.where(Service.category == category)
         if search != "":

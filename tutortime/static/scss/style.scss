@@ -54,6 +54,7 @@ body {
 	min-width: 720px;
 	max-width: 1440px;
 	margin: auto;
+    margin-bottom: 50px;
     
 	font-family: Courier, monospace;
     font-size:1rem;
@@ -431,9 +432,6 @@ button {
     text-align: center;
     font-family: Georgia, serif;
     color: var(--blue1);
-}
-#footer {
-    margin-top: 200px;
 }
 #theme-switch-container {
     position: fixed;

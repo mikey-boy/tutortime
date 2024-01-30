@@ -139,7 +139,9 @@
         <button class="lesson-view-switch request-lessons" @click="clearRadioButtons(); request_service = 1" x-show="request_service == 0 || request_service == 3"><i class="fa-solid fa-handshake fa-lg"></i> Send lesson request</button>
         <button class="lesson-view-switch view-lessons" @click="request_service = 0" x-show="request_service == 1 || request_service == 2"><i class="fa-regular fa-calendar-days fa-lg"></i> View lessons</button>
     </div>
-
+</div>
+{% endblock %}
+{% block script %}
     <script type="text/javascript">
         const userId = {{ user.id }}
         const peerId = {{ peer.id }}
@@ -304,8 +306,7 @@
         function sendCancelRequest(lesson_id) {
             socketio.emit("cancelLesson", { "lesson_id": lesson_id });
         }
-    </script>
-    <script type="text/javascript">
+
         function scrollToBottom() {
             var scrollContainer = document.getElementById("chat-messages");
             scrollContainer.scrollTop = scrollContainer.scrollHeight;
@@ -314,10 +315,8 @@
             const inputElement = document.getElementById("message");
             inputElement.focus()
         }
-
         createChatItems(messages);
         scrollToBottom();
         focusInput();
     </script>
-</div>
 {% endblock %}

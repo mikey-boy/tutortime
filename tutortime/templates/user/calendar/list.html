@@ -1,4 +1,5 @@
 {% extends "home.html" %}
+{% block title %}Calendar{% endblock %}
 {% block content %}
     <div x-data="{ month: 12 }">
         <div class="calendar-control">
@@ -35,7 +36,7 @@
                     {% endif %}
                             {{ j }}
                             {% for lesson in calendar[i]["lessons"] %}
-                                {% if lesson.day == "%d-%d-%d" % (calendar[i].year, calendar[i].month, j) %}
+                                {% if lesson.day == "%d-%02d-%02d" % (calendar[i].year, calendar[i].month, j) %}
                                     <div class="relative-container">
                                     {% if lesson.status == "accepted_student" or lesson.status == "accepted_tutor" %}
                                         <button class="calendar-lesson pending" x-on:click="modal = modal == {{ lesson.id }} ? -1 : {{ lesson.id }}">
@@ -51,13 +52,17 @@
                                                 {{ lesson.title }}
                                             {% endif %}
                                         </button>
-                                        {% if (j + calendar[i]["month_offset"] - 1) % 7 < 5 %}
-                                            <span class="lesson-modal open-left" x-show="modal == {{ lesson.id }}">
+                                        {% if (j + calendar[i]["month_offset"] - 1) % 7 <= 3 and (j + calendar[i]["month_offset"]) <= 21 %}
+                                            <span class="lesson-modal open-right open-down" x-show="modal == {{ lesson.id }}">
+                                        {% elif (j + calendar[i]["month_offset"] - 1) % 7 > 3 and (j + calendar[i]["month_offset"]) <= 21 %}
+                                            <span class="lesson-modal open-left open-down" x-show="modal == {{ lesson.id }}">
+                                        {% elif (j + calendar[i]["month_offset"] - 1) % 7 <= 3 and (j + calendar[i]["month_offset"]) > 21 %}
+                                            <span class="lesson-modal open-right open-up" x-show="modal == {{ lesson.id }}">
                                         {% else %}
-                                            <span class="lesson-modal open-right" x-show="modal == {{ lesson.id }}">
+                                            <span class="lesson-modal open-left open-up" x-show="modal == {{ lesson.id }}">
                                         {% endif %}
                                                 <button x-on:click="modal = -1"><i class="fa-regular fa-circle-xmark fa-xl"></i></button>
-                                                <a href="{{ url_for('service.service_list', service_id=lesson.serviceId) }}"><h3 class="truncated-text">{{ lesson.title }}</h3></a>
+                                                <a href="{{ url_for('service.service_display', service_id=lesson.service_id) }}"><h3 class="truncated-text">{{ lesson.title }}</h3></a>
                                                 <p>Time: {{ lesson.time }}</p>
                                                 <p>Duration: {{ lesson.proposed_duration }} minutes</p>
                                                 <p class="truncated-text">Description: {{ lesson.description }}</p>

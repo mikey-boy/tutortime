@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from flask import Blueprint, abort, render_template, session
 from flask_socketio import emit, join_room, leave_room, send
@@ -92,9 +92,12 @@ def create_lesson(payload):
     duration = payload["duration"]
     service = Service.get(payload["service_id"])
 
+    if timestamp < datetime.now() - timedelta(minutes=5):
+        return
+
     if service.user_id == user.id:
         if int(duration) > peer.minutes:
-            abort(403)
+            return
 
         status = LessonStatus.ACCEPTED_TUTOR
         lesson = Lesson(
@@ -108,7 +111,7 @@ def create_lesson(payload):
         )
     else:
         if int(duration) > user.minutes:
-            abort(403)
+            return
 
         status = LessonStatus.ACCEPTED_STUDENT
         lesson = Lesson(
@@ -180,6 +183,8 @@ def accept_lesson(payload):
         abort(403)
     if lesson.status == LessonStatus.ACCEPTED_TUTOR and lesson.tutor_id == session["user_id"]:
         abort(403)
+    if lesson.proposed_duration > lesson.student.minutes:
+        abort(403)
 
     lesson.update_status(LessonStatus.ACCEPTED)
     lesson.student.update_minutes(lesson.proposed_duration * -1)
@@ -234,10 +239,11 @@ def cancel_lesson(payload):
     lesson = Lesson.get(payload["lesson_id"])
     _user_lesson_modify(lesson, [LessonStatus.ACCEPTED_STUDENT, LessonStatus.ACCEPTED_TUTOR, LessonStatus.ACCEPTED])
 
-    lesson.update_status(LessonStatus.CANCELLED)
-    _system_message(lesson, LessonStatus.CANCELLED)
     if lesson.status == LessonStatus.ACCEPTED:
         lesson.student.update_minutes(lesson.proposed_duration)
+    lesson.update_status(LessonStatus.CANCELLED)
+
+    _system_message(lesson, LessonStatus.CANCELLED)
     emit("pageReload", to=session["room"])
 
 

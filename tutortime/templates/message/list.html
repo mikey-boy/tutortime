@@ -1,4 +1,5 @@
 {% extends "home.html" %}
+{% block title %}Messages{% endblock %}
 {% block content %}
 <div id="chat-container" x-data="{ request_service: 0 }">
     <div id="contacts">
@@ -23,8 +24,7 @@
                 <input id="service-or-lesson-id" type="hidden">
                 <input id="service-tutor-id" type="hidden">
                 <label for="lesson-date">Datetime: </label>
-                {# <input id="lesson-date" name="lesson-date" type="date" min="{{ today }}" required> #}
-                <input id="lesson-date" name="lesson-date" type="date" required>
+                <input id="lesson-date" name="lesson-date" type="date" min="{{ today }}" required>
                 <input id="lesson-time" name="lesson-time" type="time" required>
                 <label for="lesson-duration">Duration: </label>
                 <select id="lesson-duration">
@@ -139,10 +139,16 @@
         <button class="lesson-view-switch request-lessons" @click="clearRadioButtons(); request_service = 1" x-show="request_service == 0 || request_service == 3"><i class="fa-solid fa-handshake fa-lg"></i> Send lesson request</button>
         <button class="lesson-view-switch view-lessons" @click="request_service = 0" x-show="request_service == 1 || request_service == 2"><i class="fa-regular fa-calendar-days fa-lg"></i> View lessons</button>
     </div>
-
+</div>
+{% endblock %}
+{% block script %}
     <script type="text/javascript">
-        var messages = {{ messages|tojson }};
+        const userId = {{ user.id }}
+        const peerId = {{ peer.id }}
         const services = {{ services|tojson }};
+        var userMinutes = {{ user.minutes }}
+        var peerMinutes = {{ peer.minutes }}
+        var messages = {{ messages|tojson }};
         
         function modifyRequest(lesson_id) {
             for (const message of messages) {
@@ -183,7 +189,7 @@
             
             if (message.sender == null){
                 var content = `<div class="flex-container-system"><span class="message-item-system">${message.message}</span></div>`
-            } else if (message.sender === {{ user.id }}) {
+            } else if (message.sender === userId) {
                 var content = `<div class="flex-container-user"><span class="message-item">${message.message}</span></div>`
             } else {
                 var content = `<div class="flex-container-peer"><span class="message-item">${message.message}</span></div>`
@@ -197,12 +203,14 @@
 
             var messageContainer = document.getElementById("chat-messages");
             var div = document.createElement("div")
-            if (message.sender === {{ user.id }}) {
+            if (message.sender === userId) {
                 div.className = 'flex-container-user'
             } else {
                 div.className = 'flex-container-peer'
             }
             
+            var sufficientMins = ((message.lesson.tutor_id == userId && message.lesson.proposed_duration <= peerMinutes) || 
+                                  (message.lesson.tutor_id != userId && message.lesson.proposed_duration <= userMinutes)) 
             var span = document.createElement("span")
             span.className = "message-item lesson-item"
             span.innerHTML = `<div class="title">${message.lesson.title}</div>`
@@ -215,8 +223,13 @@
             var modifyButton = `<button class='modify-button' @click="modifyRequest(${message.lesson.id}); request_service = 3;">Modify</button> `
 
             if (message.lesson.status == 'accepted_student' || message.lesson.status == 'accepted_tutor') {
-                span.innerHTML +='<div>Status: pending</div>';
-                if (message.sender != {{ user.id }}) {
+                if (sufficientMins) {
+                    span.innerHTML +=`<div>Status: pending</div>`;
+                } else {
+                    span.innerHTML +=`<div>Status: <span class="error-text">Student does not have enough minutes to accept this lesson</span></div>`;
+                }
+
+                if (message.sender != userId && sufficientMins) {
                     span.innerHTML += acceptButton;
                 }
                 span.innerHTML += modifyButton;
@@ -237,11 +250,16 @@
             });
         }
 
+        var socketio = io();
+        socketio.on("message", function(message) { messages.push(message); createMessageItem(message); scrollToBottom(); } );
+        socketio.on("createLesson", function(message) { messages.push(message); createLessonItem(message); scrollToBottom(); } );
+        socketio.on("pageReload", function(message) { window.location.reload(); } );
+
         function sendMessage() {
             var msgInput = document.getElementById("message");
             if (msgInput.value === "") return;
             var msg = msgInput.value;
-            socketio.emit("message", { message: msg, peer_id: "{{ peer.id }}" });
+            socketio.emit("message", { message: msg, peer_id: peerId });
             msgInput.value = "";
         }
         function sendLessonRequest(request_type) {
@@ -252,16 +270,20 @@
             var duration = document.getElementById("lesson-duration").value;
 
             // Verify that the student has enough minutes to make the request
-            if (tutor_id == {{ user.id }} && duration > {{ peer.minutes }}) {
-                document.getElementById("lesson-request-error").innerHTML = "They do not have enough minutes for this lesson";
+            if ((tutor_id == userId && duration > peerMinutes) || (tutor_id != userId && duration > userMinutes)) {
+                document.getElementById("lesson-request-error").innerHTML = "Student does not have enough minutes to accept this lesson";
                 return request_type;
             }
-            if (tutor_id == {{ peer.id }} && duration > {{ user.minutes }}) {
-                document.getElementById("lesson-request-error").innerHTML = "You do not have enough minutes for this lesson";
+            // Verify that the lesson is not in the past
+            const selectedDatetime = new Date(`${date}T${time}`);
+            const comparedDatetime = new Date();
+            comparedDatetime.setMinutes(comparedDatetime.getMinutes() - 5);
+            if (selectedDatetime < comparedDatetime) {
+                document.getElementById("lesson-request-error").innerHTML = "Lessons cannot be created in the past";
                 return request_type;
             }
 
-            var lesson = { "peer_id": {{ peer.id }}, "date": date, "time": time, "duration": duration };
+            var lesson = { "peer_id": peerId, "date": date, "time": time, "duration": duration };
             if (request_type == 2) {
                 lesson["service_id"] = service_id;
                 socketio.emit("createLesson", lesson);
@@ -285,14 +307,6 @@
             socketio.emit("cancelLesson", { "lesson_id": lesson_id });
         }
 
-        var socketio = io();
-        socketio.on("message", function(message) { messages.push(message); createMessageItem(message); scrollToBottom(); } );
-        socketio.on("createLesson", function(message) { messages.push(message); createLessonItem(message); scrollToBottom(); } );
-        socketio.on("pageReload", function(message) { window.location.reload(); } );
-    </script>
-    <script type="text/javascript">
-        createChatItems(messages);
-
         function scrollToBottom() {
             var scrollContainer = document.getElementById("chat-messages");
             scrollContainer.scrollTop = scrollContainer.scrollHeight;
@@ -301,8 +315,8 @@
             const inputElement = document.getElementById("message");
             inputElement.focus()
         }
+        createChatItems(messages);
         scrollToBottom();
         focusInput();
     </script>
-</div>
 {% endblock %}

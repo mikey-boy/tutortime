@@ -63,6 +63,33 @@ def user_account_login():
         return redirect("/service/list/")
 
 
+@user_bp.route("/user/account/update", methods=["POST"])
+def user_account_update():
+    if session.get("user_id") is None:
+        return render_template("error/not_logged_in.html", action="edit your profile")
+
+    username = request.form.get("username")
+    if User.username_exists(username):
+        return render_template("/user/account/update.html", username=username, error_msg="Display name already taken")
+
+    user = User.get(session["user_id"])
+    user.update_username(username)
+    return redirect("/service/list/")
+
+
+def add_or_get_user(social_id, username=None):
+    from random import randint
+
+    user = User.get_by_social_id(social_id)
+    if user is None:
+        if username is None:
+            username = f"user{randint(1, 1000000)}"
+        user = User(social_id=social_id, username=username, timezone="America/Toronto")
+        user.add()
+        return user, True
+    return user, False
+
+
 @user_bp.route("/user/callback/facebook")
 def user_callback_facebook():
     def decode_json(payload):
@@ -74,8 +101,14 @@ def user_callback_facebook():
     redirect_url = url_for("user.user_callback_facebook", _external=True)
     data = {"code": request.args["code"], "grant_type": "authorization_code", "redirect_uri": redirect_url}
     oauth_session = facebook.get_auth_session(data=data, decoder=decode_json)
-    me = oauth_session.get("me").json()
-    print(me)
+    response = oauth_session.get("me")
+    if response.status_code == 200:
+        social_id = f"facebook${response.json()['id']}"
+        user, added = add_or_get_user(social_id=social_id)
+        session["user_id"] = user.id
+        if added:
+            return render_template("/user/account/update.html", username=user.username)
+
     return redirect("/service/list/")
 
 
@@ -93,16 +126,16 @@ def user_callback_google():
     redirect_uri = url_for("user.user_callback_google", _external=True)
     data = {"code": request.args["code"], "grant_type": "authorization_code", "redirect_uri": redirect_uri}
     oauth_session = google.get_auth_session(data=data, decoder=json.loads)
-    params = {"personFields": "emailAddresses"}
 
+    params = {"personFields": "emailAddresses"}
     response = oauth_session.get("https://www.googleapis.com/oauth2/v1/userinfo", params=params)
     if response.status_code == 200:
-        # Parse the JSON response to get user email
-        user_info = response.json()
-        print(user_info)
-    else:
-        print("Failed to get email")
-    # r = oauth_session.get("https://www.googleapis.com/auth/androidpublisher")
+        social_id = f"google${response.json()['id']}"
+        user, added = add_or_get_user(social_id=social_id)
+        session["user_id"] = user.id
+        if added:
+            return render_template("/user/account/update.html", username=user.username)
+
     return redirect("/service/list/")
 
 
@@ -131,8 +164,9 @@ def user_account_create():
         if username is None or password is None:
             return render_template("user/account/create.html", error_msg="Please provide a username and password")
 
+        social_id = f"local${username}"
         encoded_password = hashlib.sha256(password.encode()).hexdigest()
-        user = User(username=username, password=encoded_password, timezone="America/Toronto")
+        user = User(social_id=social_id, username=username, password=encoded_password, timezone="America/Toronto")
         if user.add() is False:
             return render_template("user/account/create.html", error_msg="User account already exists")
 

@@ -141,12 +141,12 @@ def initdb():
     clear_db()
 
     password = hashlib.sha256("password".encode()).hexdigest()
-    mike = User(username="mike", password=password, timezone="America/Toronto")
-    dave = User(username="dave", password=password, timezone="America/Toronto")
-    fred = User(username="fred", password=password, timezone="America/Toronto")
-    pete = User(username="pete", password=password, timezone="America/Toronto")
-    alex = User(username="alex", password=password, timezone="America/Toronto")
-    paul = User(username="paul", password=password, timezone="America/Toronto")
+    mike = User(social_id="local$mike", username="mike", password=password, timezone="America/Toronto")
+    dave = User(social_id="local$dave", username="dave", password=password, timezone="America/Toronto")
+    fred = User(social_id="local$fred", username="fred", password=password, timezone="America/Toronto")
+    pete = User(social_id="local$pete", username="pete", password=password, timezone="America/Toronto")
+    alex = User(social_id="local$alex", username="alex", password=password, timezone="America/Toronto")
+    paul = User(social_id="local$paul", username="paul", password=password, timezone="America/Toronto")
 
     mike.add()
     dave.add()

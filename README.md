@@ -3,7 +3,7 @@
 Tutortime is an online time-bank platform focused on learning. Each user plays two roles on the platform:
 
 - **As a teacher** you help other students in a subject you understand. You are awarded credits for your time
-- **As a student** you can use your credits to learn about any subject offered on the site
+- **As a student** you can use your credits to schedule meetups with a teacher. They will help you learn about a subject you are interested in
 
 Tutortime is a platform where users can learn new skills at no monetary cost.
 

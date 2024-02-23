@@ -3,9 +3,8 @@ class Config(object):
 
 
 class DevelopmentConfig(Config):
+    # --------- CHANGE ME --------- #
     SECRET_KEY = "racecar"
-    IMAGE_FOLDER = "static/uploads"
-    SQLALCHEMY_DATABASE_URI = "sqlite:///project.db"
     FACEBOOK_OAUTH = {
         "client_id": "",
         "client_secret": "",
@@ -14,3 +13,7 @@ class DevelopmentConfig(Config):
         "client_id": "",
         "client_secret": "",
     }
+    # ----------------------------- #
+
+    IMAGE_FOLDER = "static/uploads"
+    SQLALCHEMY_DATABASE_URI = "sqlite:///project.db"

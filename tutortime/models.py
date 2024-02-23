@@ -45,8 +45,9 @@ class User(db.Model):
     __tablename__ = "user"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    social_id: Mapped[str] = mapped_column()
     username: Mapped[str] = mapped_column()
-    password: Mapped[str] = mapped_column()
+    password: Mapped[str] = mapped_column(nullable=True)
     timezone: Mapped[int] = mapped_column()
     minutes: Mapped[int] = mapped_column(default=60)
     services: Mapped[List["Service"]] = relationship(back_populates="user")
@@ -67,6 +68,15 @@ class User(db.Model):
         self.minutes += minutes
         db.session.commit()
 
+    def update_username(self, username: str) -> None:
+        self.username = username
+        db.session.commit()
+
+    def username_exists(username: str) -> bool:
+        stmt = select(User).where(User.username == username)
+        user = db.session.scalar(stmt)
+        return user is not None
+
     def get(id: int) -> Self:
         stmt = select(User).where(User.id == id)
         return db.session.scalar(stmt)
@@ -77,6 +87,11 @@ class User(db.Model):
         if user.password == hashlib.sha256(password.encode()).hexdigest():
             return user
         return None
+
+    def get_by_social_id(social_id: str) -> Optional[Self]:
+        stmt = select(User).where(User.social_id == social_id)
+        user = db.session.scalar(stmt)
+        return user
 
     def get_service(self, service_id: int):
         for service in self.services:

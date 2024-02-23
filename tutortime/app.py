@@ -4,6 +4,7 @@ from sassutils.wsgi import SassMiddleware
 from tutortime.commands import initdb
 from tutortime.config import DevelopmentConfig
 from tutortime.extensions import db, scheduler, socketio
+from tutortime.user.views import configure_oauth_providers
 
 
 def create_app():
@@ -23,9 +24,9 @@ def configure_app(app, config):
 
 def configure_extensions(app):
     db.init_app(app)
+    configure_oauth_providers(app)
     socketio.init_app(app, logger=True)
     scheduler.init_app(app)
-
     scheduler.start()
 
 

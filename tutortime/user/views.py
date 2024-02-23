@@ -1,12 +1,16 @@
 import calendar
 import hashlib
+import json
 from datetime import date
 
 from dateutil.relativedelta import relativedelta
-from flask import Blueprint, redirect, render_template, request, session
+from flask import Blueprint, Flask, redirect, render_template, request, session, url_for
+from rauth import OAuth2Service
 
 from tutortime.models import Lesson, LessonStatus, ServiceStatus, User
 
+google = None
+facebook = None
 user_bp = Blueprint("user", __name__)
 statuses = [
     LessonStatus.ACCEPTED,
@@ -16,6 +20,27 @@ statuses = [
     LessonStatus.CONFIRMED_STUDENT,
     LessonStatus.CONFIRMED_TUTOR,
 ]
+
+
+def configure_oauth_providers(app: Flask):
+    global google
+    google = OAuth2Service(
+        name="google",
+        client_id=app.config["GOOGLE_OAUTH"]["client_id"],
+        client_secret=app.config["GOOGLE_OAUTH"]["client_secret"],
+        authorize_url="https://accounts.google.com/o/oauth2/auth",
+        access_token_url="https://oauth2.googleapis.com/token",
+    )
+
+    global facebook
+    facebook = OAuth2Service(
+        name="facebook",
+        client_id=app.config["FACEBOOK_OAUTH"]["client_id"],
+        client_secret=app.config["FACEBOOK_OAUTH"]["client_secret"],
+        authorize_url="https://graph.facebook.com/oauth/authorize",
+        access_token_url="https://graph.facebook.com/oauth/access_token",
+        base_url="https://graph.facebook.com/",
+    )
 
 
 @user_bp.route("/user/account/login", methods=["GET", "POST"])
@@ -38,6 +63,88 @@ def user_account_login():
         return redirect("/service/list/")
 
 
+@user_bp.route("/user/account/update", methods=["POST"])
+def user_account_update():
+    if session.get("user_id") is None:
+        return render_template("error/not_logged_in.html", action="edit your profile")
+
+    username = request.form.get("username")
+    if User.username_exists(username):
+        return render_template("/user/account/update.html", username=username, error_msg="Display name already taken")
+
+    user = User.get(session["user_id"])
+    user.update_username(username)
+    return redirect("/service/list/")
+
+
+def add_or_get_user(social_id, username=None):
+    from random import randint
+
+    user = User.get_by_social_id(social_id)
+    if user is None:
+        if username is None:
+            username = f"user{randint(1, 1000000)}"
+        user = User(social_id=social_id, username=username, timezone="America/Toronto")
+        user.add()
+        return user, True
+    return user, False
+
+
+@user_bp.route("/user/callback/facebook")
+def user_callback_facebook():
+    def decode_json(payload):
+        return json.loads(payload.decode("utf-8"))
+
+    if "code" not in request.args:
+        return None, None, None
+
+    redirect_url = url_for("user.user_callback_facebook", _external=True)
+    data = {"code": request.args["code"], "grant_type": "authorization_code", "redirect_uri": redirect_url}
+    oauth_session = facebook.get_auth_session(data=data, decoder=decode_json)
+    response = oauth_session.get("me")
+    if response.status_code == 200:
+        social_id = f"facebook${response.json()['id']}"
+        user, added = add_or_get_user(social_id=social_id)
+        session["user_id"] = user.id
+        if added:
+            return render_template("/user/account/update.html", username=user.username)
+
+    return redirect("/service/list/")
+
+
+@user_bp.route("/user/authorize/facebook")
+def user_authorize_facebook():
+    redirect_url = url_for("user.user_callback_facebook", _external=True)
+    return redirect(facebook.get_authorize_url(scope="email", response_type="code", redirect_uri=redirect_url))
+
+
+@user_bp.route("/user/callback/google")
+def user_callback_google():
+    if "code" not in request.args:
+        return None, None, None
+
+    redirect_uri = url_for("user.user_callback_google", _external=True)
+    data = {"code": request.args["code"], "grant_type": "authorization_code", "redirect_uri": redirect_uri}
+    oauth_session = google.get_auth_session(data=data, decoder=json.loads)
+
+    params = {"personFields": "emailAddresses"}
+    response = oauth_session.get("https://www.googleapis.com/oauth2/v1/userinfo", params=params)
+    if response.status_code == 200:
+        social_id = f"google${response.json()['id']}"
+        user, added = add_or_get_user(social_id=social_id)
+        session["user_id"] = user.id
+        if added:
+            return render_template("/user/account/update.html", username=user.username)
+
+    return redirect("/service/list/")
+
+
+@user_bp.route("/user/authorize/google")
+def user_authorize_google():
+    redirect_uri = url_for("user.user_callback_google", _external=True)
+    return redirect(google.get_authorize_url(scope="email", response_type="code", redirect_uri=redirect_uri))
+
+
 @user_bp.route("/user/account/logout")
 def user_account_logout():
     if session.get("user_id") is not None:
@@ -57,8 +164,9 @@ def user_account_create():
         if username is None or password is None:
             return render_template("user/account/create.html", error_msg="Please provide a username and password")
 
+        social_id = f"local${username}"
         encoded_password = hashlib.sha256(password.encode()).hexdigest()
-        user = User(username=username, password=encoded_password, timezone="America/Toronto")
+        user = User(social_id=social_id, username=username, password=encoded_password, timezone="America/Toronto")
         if user.add() is False:
             return render_template("user/account/create.html", error_msg="User account already exists")
 

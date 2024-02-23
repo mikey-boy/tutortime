@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}Update account{% endblock %}
+{% block content %}
+<div class="login-container">
+    <div class="login-box">
+        <h2>Select a display name</h2>
+        <form action="{{ url_for('user.user_account_update') }}" method="POST">
+            <input type="text" name="username" value="{{ username }}" required>
+            <button type="submit" class="test-signup-button">Update account</button>
+            <p class="error-text">{{ error_msg }}</p>
+        </form>
+    </div>
+</div>
+{% endblock %}

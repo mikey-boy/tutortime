@@ -162,3 +162,4 @@ cython_debug/
 # Project specific
 tutortime/static/uploads
 tutortime/static/css
+tutortime/config.py

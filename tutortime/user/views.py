@@ -43,21 +43,28 @@ def configure_oauth_providers(app: Flask):
     )
 
 
-@user_bp.route("/user/account/login", methods=["GET", "POST"])
+@user_bp.route("/user/account/login")
 def user_account_login():
+    if session.get("user_id") is not None:
+        return redirect("/service/list/")
+    return render_template("user/account/login.html")
+
+
+@user_bp.route("/user/account/local", methods=["GET", "POST"])
+def user_account_local():
     if request.method == "GET":
         if session.get("user_id") is not None:
             return redirect("/service/list/")
-        return render_template("user/account/login.html")
+        return render_template("user/account/local.html")
     else:
         username = request.form.get("username")
         password = request.form.get("password")
         if username is None or password is None:
-            return render_template("user/account/login.html", error_msg="Please provide a username and password")
+            return render_template("user/account/local.html", error_msg="Please provide a username and password")
 
         user = User.get_by_creds(username, password)
         if user is None:
-            return render_template("user/account/login.html", error_msg="Invalid credentials, try again")
+            return render_template("user/account/local.html", error_msg="Invalid credentials, try again")
 
         session["user_id"] = user.id
         return redirect("/service/list/")

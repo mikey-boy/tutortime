@@ -133,6 +133,8 @@ def create_lesson(payload):
 def _user_lesson_modify(lesson: Lesson, accepted_states: list(LessonStatus)):
     if "user_id" not in session:
         abort(401)
+    if lesson is None:
+        abort(404)
     if session["user_id"] != lesson.tutor_id and session["user_id"] != lesson.student_id:
         abort(403)
     if lesson.status not in accepted_states:
@@ -177,8 +179,8 @@ def modify_lesson(payload):
 @socketio.on("acceptLesson")
 def accept_lesson(payload):
     lesson = Lesson.get(payload["lesson_id"])
-    _user_lesson_modify(lesson, [LessonStatus.ACCEPTED_STUDENT, LessonStatus.ACCEPTED_TUTOR])
 
+    _user_lesson_modify(lesson, [LessonStatus.ACCEPTED_STUDENT, LessonStatus.ACCEPTED_TUTOR])
     if lesson.status == LessonStatus.ACCEPTED_STUDENT and lesson.student_id == session["user_id"]:
         abort(403)
     if lesson.status == LessonStatus.ACCEPTED_TUTOR and lesson.tutor_id == session["user_id"]:
@@ -195,6 +197,7 @@ def accept_lesson(payload):
 @socketio.on("confirmLesson")
 def confirm_lesson(payload):
     lesson = Lesson.get(payload["lesson_id"])
+
     _user_lesson_modify(lesson, [LessonStatus.ACCEPTED, LessonStatus.CONFIRMED_STUDENT, LessonStatus.CONFIRMED_TUTOR])
     if lesson.status == LessonStatus.CONFIRMED_STUDENT and lesson.student_id == session["user_id"]:
         abort(403)
@@ -238,7 +241,6 @@ def confirm_lesson(payload):
 def cancel_lesson(payload):
     lesson = Lesson.get(payload["lesson_id"])
     _user_lesson_modify(lesson, [LessonStatus.ACCEPTED_STUDENT, LessonStatus.ACCEPTED_TUTOR, LessonStatus.ACCEPTED])
-
     if lesson.status == LessonStatus.ACCEPTED:
         lesson.student.update_minutes(lesson.proposed_duration)
     lesson.update_status(LessonStatus.CANCELLED)

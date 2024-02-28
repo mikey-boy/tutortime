@@ -253,7 +253,7 @@ class Lesson(db.Model):
         db.session.add(self)
         db.session.commit()
 
-    def get(id: int) -> Self:
+    def get(id: int) -> Optional[Self]:
         stmt = select(Lesson).where(Lesson.id == id)
         return db.session.scalar(stmt)
 

@@ -43,10 +43,12 @@ def configure_extensions(app):
 
 
 def configure_blueprints(app):
+    from tutortime.docs.views import docs_bp
     from tutortime.message.views import message_bp
     from tutortime.service.views import service_bp
     from tutortime.user.views import user_bp
 
+    app.register_blueprint(docs_bp)
     app.register_blueprint(service_bp)
     app.register_blueprint(user_bp)
     app.register_blueprint(message_bp)

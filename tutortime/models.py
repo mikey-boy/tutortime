@@ -84,7 +84,7 @@ class User(db.Model):
     def get_by_creds(username: str, password: str) -> Optional[Self]:
         stmt = select(User).where(User.username == username)
         user = db.session.scalar(stmt)
-        if user.password == hashlib.sha256(password.encode()).hexdigest():
+        if user is not None and user.password == hashlib.sha256(password.encode()).hexdigest():
             return user
         return None
 
@@ -253,7 +253,7 @@ class Lesson(db.Model):
         db.session.add(self)
         db.session.commit()
 
-    def get(id: int) -> Self:
+    def get(id: int) -> Optional[Self]:
         stmt = select(Lesson).where(Lesson.id == id)
         return db.session.scalar(stmt)
 

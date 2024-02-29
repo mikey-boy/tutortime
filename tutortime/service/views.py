@@ -52,7 +52,7 @@ def user_service_list(status=ServiceStatus.ACTIVE):
 @service_bp.route("/user/service/create", methods=["GET", "POST"])
 def user_service_create():
     if session.get("user_id") is None:
-        abort(401)
+        return render_template("error/not_logged_in.html", action="create a new lesson on the site")
     if request.method == "GET":
         return render_template("user/service/create.html", service={})
     else:
@@ -81,10 +81,39 @@ def user_service_create():
         return redirect("/user/service/list/active")
 
 
+@service_bp.route("/user/service/update/<int:service_id>", methods=["GET", "POST"])
+def user_service_update(service_id):
+    if session.get("user_id") is None:
+        return render_template("error/not_logged_in.html", action="update a service on the site")
+
+    user = User.get(session["user_id"])
+    service = user.get_service(service_id)
+    if service:
+        if request.method == "GET":
+            availability = availability_to_list(service.availability)
+            return render_template("user/service/create.html", service=service, availability=availability)
+        else:
+            for image in service.images:
+                image.remove()
+
+            title = request.form.get("title")
+            description = request.form.get("description")
+            category = request.form.get("category")
+            availability = availability_to_int(request.form.keys())
+            images = request.files.getlist("images")
+            service.update(title, description, category, availability)
+
+            for image in images:
+                if image.filename:
+                    Image(service_id=service.id, image=image).add()
+            return redirect(f"/user/service/list/{service.status}")
+    abort(404)
+
+
 @service_bp.route("/user/service/delete/<int:service_id>")
 def user_service_delete(service_id):
     if session.get("user_id") is None:
-        abort(401)
+        return render_template("error/not_logged_in.html", action="delete your lesson on the site")
 
     user = User.get(session["user_id"])
     service = user.get_service(service_id)
@@ -95,33 +124,9 @@ def user_service_delete(service_id):
     abort(404)
 
 
-@service_bp.route("/user/service/update/<int:service_id>", methods=["GET", "POST"])
-def user_service_update(service_id):
-    user = User.get(session["user_id"])
-    service = user.get_service(service_id)
-    if request.method == "GET":
-        availability = availability_to_list(service.availability)
-        return render_template("user/service/create.html", service=service, availability=availability)
-    else:
-        for image in service.images:
-            image.remove()
-
-        title = request.form.get("title")
-        description = request.form.get("description")
-        category = request.form.get("category")
-        availability = availability_to_int(request.form.keys())
-        images = request.files.getlist("images")
-        service.update(title, description, category, availability)
-
-        for image in images:
-            if image.filename:
-                Image(service_id=service.id, image=image).add()
-        return redirect(f"/user/service/list/{service.status}")
-
-
 def _user_service_status_update(service_id: int, status: ServiceStatus):
     if session.get("user_id") is None:
-        abort(401)
+        return render_template("error/not_logged_in.html", action="update a service on the site")
 
     user = User.get(session["user_id"])
     service = user.get_service(service_id)

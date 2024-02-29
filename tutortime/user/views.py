@@ -43,47 +43,58 @@ def configure_oauth_providers(app: Flask):
     )
 
 
-@user_bp.route("/user/account/login", methods=["GET", "POST"])
+@user_bp.route("/user/account/login")
 def user_account_login():
+    if session.get("user_id") is not None:
+        return redirect("/service/list/")
+    return render_template("user/account/login.html")
+
+
+@user_bp.route("/user/account/local", methods=["GET", "POST"])
+def user_account_local():
     if request.method == "GET":
         if session.get("user_id") is not None:
             return redirect("/service/list/")
-        return render_template("user/account/login.html")
+        return render_template("user/account/local.html")
     else:
         username = request.form.get("username")
         password = request.form.get("password")
         if username is None or password is None:
-            return render_template("user/account/login.html", error_msg="Please provide a username and password")
+            return render_template("user/account/local.html", error_msg="Please provide a username and password")
 
         user = User.get_by_creds(username, password)
         if user is None:
-            return render_template("user/account/login.html", error_msg="Invalid credentials, try again")
+            return render_template("user/account/local.html", error_msg="Invalid credentials, try again")
 
         session["user_id"] = user.id
         return redirect("/service/list/")
 
 
-@user_bp.route("/user/account/update", methods=["POST"])
+@user_bp.route("/user/account/update", methods=["GET", "POST"])
 def user_account_update():
     if session.get("user_id") is None:
         return render_template("error/not_logged_in.html", action="edit your profile")
 
-    username = request.form.get("username")
-    if User.username_exists(username):
-        return render_template("/user/account/update.html", username=username, error_msg="Display name already taken")
-
     user = User.get(session["user_id"])
-    user.update_username(username)
-    return redirect("/service/list/")
+    if request.method == "GET":
+        return render_template("/user/account/update.html", username=user.username)
+    else:
+        username = request.form.get("username")
+        if User.username_exists(username) and username != user.username:
+            return render_template(
+                "/user/account/update.html", username=username, error_msg="Display name already taken"
+            )
+
+        user.update_username(username)
+        return redirect("/service/list/")
 
 
-def add_or_get_user(social_id, username=None):
+def add_or_get_user(social_id):
     from random import randint
 
     user = User.get_by_social_id(social_id)
     if user is None:
-        if username is None:
-            username = f"user{randint(1, 1000000)}"
+        username = f"user{randint(1, 1000000)}"
         user = User(social_id=social_id, username=username, timezone="America/Toronto")
         user.add()
         return user, True
@@ -107,7 +118,7 @@ def user_callback_facebook():
         user, added = add_or_get_user(social_id=social_id)
         session["user_id"] = user.id
         if added:
-            return render_template("/user/account/update.html", username=user.username)
+            return redirect("/user/account/update")
 
     return redirect("/service/list/")
 
@@ -134,7 +145,7 @@ def user_callback_google():
         user, added = add_or_get_user(social_id=social_id)
         session["user_id"] = user.id
         if added:
-            return render_template("/user/account/update.html", username=user.username)
+            return redirect("/user/account/update")
 
     return redirect("/service/list/")
 

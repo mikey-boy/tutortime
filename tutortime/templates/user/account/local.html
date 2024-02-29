@@ -1,0 +1,20 @@
+
+{% extends "base.html" %}
+
+{% block title %}Local Login{% endblock %}
+{% block content %}
+<div class="login-container">
+    <div class="login-box">
+        <h2>Local Login</h2>
+        <form action="{{ url_for('user.user_account_local') }}" method="POST">
+            <label for="username">Username:</label>
+            <input type="text" name="username" required>
+            <label for="password">Password:</label>
+            <input type="password" name="password" required>
+            <button type="submit" class="test-login-button">Login</button>
+            <p class="error-text">{{ error_msg }}</p>
+        </form>
+        <a href="{{ url_for('user.user_account_create') }}"><button type="submit" class="test-signup-button">Create account</button></a>
+    </div>
+</div>
+{% endblock %}

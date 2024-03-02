@@ -73,7 +73,7 @@ def configure_templating_functions(app):
         if session.get("user_id") is None:
             return dict(new_messages=False)
 
-        for room in Room.get_rooms(session["user_id"]):
+        for room in Room.get_by_user(session["user_id"]):
             if room.user1_new_messages and room.user1 == session["user_id"]:
                 return dict(new_messages=True)
             if room.user2_new_messages and room.user2 == session["user_id"]:

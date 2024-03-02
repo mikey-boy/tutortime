@@ -7,7 +7,9 @@
         <ul>
             {% for contact in contacts %}
                 <a href="{{ url_for('message.message_list', user_id=contact.id) }}">
-                    <li :class="{{ peer.id }} == {{ contact.id }} && 'active'">{{ contact.username }}</li>
+                    <li :class="{{ peer.id }} == {{ contact.id }} && 'active'">
+                        <span :class="'{{ new_msgs[contact.id] }}' == 'True' && 'new-messages'">{{ contact.username }}</span>
+                    </li>
                 </a>
             {% endfor %}
         </ul>

@@ -690,6 +690,9 @@ button {
     li.active {
         background-color: var(--base1);
     }
+    li span.new-messages {
+        color: var(--green0);
+    }
 }
 #chat {
     flex: 5;

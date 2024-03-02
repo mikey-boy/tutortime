@@ -15,23 +15,39 @@ message_bp = Blueprint("message", __name__)
 def message_list(user_id=None):
     if session.get("user_id") is None:
         return render_template("error/not_logged_in.html", action="talk to other users on the platform")
-
     user1 = User.get(session["user_id"])
+
+    contacts = []
+    new_msgs = {}
+    rooms = Room.get_by_user(user1.id)
+    for room in rooms:
+        if len(room.messages) == 0:
+            continue
+        if room.user1 == user1.id:
+            contacts.append(User.get(room.user2))
+            new_msgs[room.user2] = room.user1_new_messages
+        else:
+            contacts.append(User.get(room.user1))
+            new_msgs[room.user1] = room.user2_new_messages
+
+    if len(contacts) == 0 and user_id is None:
+        return render_template("error/no_contacts.html")
+
     if user_id:
         user2 = User.get(user_id)
+        if user2 is None:
+            return render_template("error/nonexistant_user.html")
+        if user2 not in contacts:
+            contacts.insert(0, user2)
     else:
-        contacts = user1.get_contacts()
-        if contacts:
-            user2 = User.get(contacts[0].id)
-        else:
-            return render_template("error/no_contacts.html")
+        user2 = User.get(contacts[0].id)
 
-    room = Room.get_by_users(user1.id, user2.id)
+    room = Room.get_between_users(user1.id, user2.id)
     if room is None:
         room = Room(user1.id, user2.id)
         room.add()
-    room.read_messages(user1.id)
     session["room"] = room.id
+    room.read_messages(user1.id)
 
     lessons = []
     statuses = [
@@ -61,7 +77,8 @@ def message_list(user_id=None):
         "message/list.html",
         user=user1,
         peer=user2,
-        contacts=user1.get_contacts(),
+        contacts=contacts,
+        new_msgs=new_msgs,
         messages=messages_json,
         services=services_json,
         lessons=lessons_json,

@@ -315,6 +315,8 @@ class Room(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     user1: Mapped[int] = mapped_column()
     user2: Mapped[int] = mapped_column()
+    user1_new_messages: Mapped[bool] = mapped_column(default=False)
+    user2_new_messages: Mapped[bool] = mapped_column(default=False)
     messages: Mapped[List["Message"]] = relationship(back_populates="room")
 
     def __init__(self, user1: int, user2: int) -> None:
@@ -325,11 +327,26 @@ class Room(db.Model):
         db.session.add(self)
         db.session.commit()
 
-    def get(user1: int, user2: int) -> Optional[Self]:
+    def read_messages(self, user_id: int) -> None:
+        if user_id == self.user1:
+            self.user1_new_messages = False
+        else:
+            self.user2_new_messages = False
+        db.session.commit()
+
+    def get(id: int) -> Optional[Self]:
+        stmt = select(Room).where(Room.id == id)
+        return db.session.scalar(stmt)
+
+    def get_by_users(user1: int, user2: int) -> Optional[Self]:
         if user1 > user2:
             user1, user2 = user2, user1
         stmt = select(Room).where(Room.user1 == user1).where(Room.user2 == user2)
         return db.session.scalar(stmt)
+
+    def get_rooms(user_id: int):
+        stmt = select(Room).where((Room.user1 == user_id) | (Room.user2 == user_id))
+        return db.session.scalars(stmt)
 
 
 class Message(db.Model):
@@ -353,6 +370,13 @@ class Message(db.Model):
 
     def add(self) -> None:
         db.session.add(self)
+
+        room = Room.get(self.room_id)
+        if room.user1 == self.sender_id:
+            room.user2_new_messages = True
+        else:
+            room.user1_new_messages = True
+
         db.session.commit()
 
     def swap_sender(self) -> None:

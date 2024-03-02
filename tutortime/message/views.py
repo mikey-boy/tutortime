@@ -26,10 +26,11 @@ def message_list(user_id=None):
         else:
             return render_template("error/no_contacts.html")
 
-    room = Room.get(user1.id, user2.id)
+    room = Room.get_by_users(user1.id, user2.id)
     if room is None:
         room = Room(user1.id, user2.id)
         room.add()
+    room.read_messages(user1.id)
     session["room"] = room.id
 
     lessons = []

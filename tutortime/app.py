@@ -1,15 +1,27 @@
+import os
+
 from flask import Flask
 from sassutils.wsgi import SassMiddleware
 
 from tutortime.commands import initdb
-from tutortime.config import DevelopmentConfig
+from tutortime.config import CloudDevelopmentConfig, CloudProductionConfig, LocalDevelopmentConfig
 from tutortime.extensions import db, scheduler, socketio
 from tutortime.user.views import configure_oauth_providers
 
 
-def create_app():
+def create_app(config=None):
     app = Flask(__name__)
-    configure_app(app, DevelopmentConfig)
+
+    if config == "CloudDevelopmentConfig":
+        configure_app(app, CloudDevelopmentConfig)
+    elif config == "CloudProductionConfig":
+        configure_app(app, CloudProductionConfig)
+    else:
+        configure_app(app, LocalDevelopmentConfig)
+
+    if os.path.exists(app.config["IMAGE_FOLDER"]) is False:
+        os.makedirs(app.config["IMAGE_FOLDER"])
+
     configure_extensions(app)
     configure_blueprints(app)
     create_db(app)
@@ -31,10 +43,12 @@ def configure_extensions(app):
 
 
 def configure_blueprints(app):
+    from tutortime.docs.views import docs_bp
     from tutortime.message.views import message_bp
     from tutortime.service.views import service_bp
     from tutortime.user.views import user_bp
 
+    app.register_blueprint(docs_bp)
     app.register_blueprint(service_bp)
     app.register_blueprint(user_bp)
     app.register_blueprint(message_bp)

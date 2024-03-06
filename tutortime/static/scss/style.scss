@@ -491,6 +491,9 @@ button {
             width: 125px;
         }
     }
+    .new-messages {
+        color: var(--green0);
+    }
 }
 #service-filter-box {
     margin: 25px 10px;
@@ -686,6 +689,9 @@ button {
     }
     li.active {
         background-color: var(--base1);
+    }
+    li span.new-messages {
+        color: var(--green0);
     }
 }
 #chat {

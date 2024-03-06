@@ -1,11 +1,12 @@
 import os
 
-from flask import Flask
+from flask import Flask, session
 from sassutils.wsgi import SassMiddleware
 
 from tutortime.commands import initdb
 from tutortime.config import CloudDevelopmentConfig, CloudProductionConfig, LocalDevelopmentConfig
 from tutortime.extensions import db, scheduler, socketio
+from tutortime.models import Room
 from tutortime.user.views import configure_oauth_providers
 
 
@@ -26,6 +27,7 @@ def create_app(config=None):
     configure_blueprints(app)
     create_db(app)
     configure_cli(app)
+    configure_templating_functions(app)
     return app
 
 
@@ -63,3 +65,17 @@ def configure_cli(app):
     @app.cli.command("initdb")
     def initdb_cli():
         initdb()
+
+
+def configure_templating_functions(app):
+    @app.context_processor
+    def new_messages():
+        if session.get("user_id") is None:
+            return dict(new_messages=False)
+
+        for room in Room.get_by_user(session["user_id"]):
+            if room.user1_new_messages and room.user1 == session["user_id"]:
+                return dict(new_messages=True)
+            if room.user2_new_messages and room.user2 == session["user_id"]:
+                return dict(new_messages=True)
+        return dict(new_messages=False)

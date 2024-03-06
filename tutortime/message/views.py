@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from flask import Blueprint, abort, render_template, session
+from flask import Blueprint, abort, render_template, request, session, url_for
 from flask_socketio import emit, join_room, leave_room, send
 
 from tutortime.extensions import socketio
@@ -17,18 +17,17 @@ def message_list(user_id=None):
         return render_template("error/not_logged_in.html", action="talk to other users on the platform")
     user1 = User.get(session["user_id"])
 
-    contacts = []
-    new_msgs = {}
+    contacts, new_msgs = [], []
     rooms = Room.get_by_user(user1.id)
     for room in rooms:
         if len(room.messages) == 0:
             continue
         if room.user1 == user1.id:
             contacts.append(User.get(room.user2))
-            new_msgs[room.user2] = room.user1_new_messages
+            new_msgs.append(room.user1_new_messages)
         else:
             contacts.append(User.get(room.user1))
-            new_msgs[room.user1] = room.user2_new_messages
+            new_msgs.append(room.user2_new_messages)
 
     if len(contacts) == 0 and user_id is None:
         return render_template("error/no_contacts.html")
@@ -269,4 +268,7 @@ def cancel_lesson(payload):
 
 @socketio.on("disconnect")
 def handle_disconnect():
+    if session.get("user_id") and session.get("room") and url_for("message.message_list") in request.referrer:
+        Room.get(session["room"]).read_messages(session["user_id"])
+
     leave_room(session["room"])

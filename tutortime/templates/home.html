@@ -23,8 +23,8 @@
                     <li><span @click="open = !open"><i class="fa-regular fa-user fa-lg"></i></span></li>
                     <div class="relative-container" x-show="open">
                         <div id="user-modal-popout">
-                            <div class="options"><a href="{{ url_for('user.user_account_list') }}">Profile</a></div>
-                            <div class="options"><a href="{{ url_for('user.user_account_logout') }}">Logout</a></div>
+                            <div><a href="{{ url_for('user.user_account_list') }}"><div class="options">Profile</div></a></div>
+                            <div><a href="{{ url_for('user.user_account_logout') }}"><div class="options">Logout</div></a></div>
                         </div>
                     </div>
             {% else %}

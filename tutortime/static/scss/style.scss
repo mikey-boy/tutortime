@@ -512,6 +512,7 @@ button {
             justify-content: flex-end;
             margin-left: auto;
             padding: 10px;
+            cursor: pointer;
         }
     }
     .new-messages {
@@ -559,15 +560,16 @@ button {
 #user-modal-popout {
     position: absolute;
     z-index: 100;
-    top: 7px;
-    right: 23px;
+    top: 15px;
+    right: 3px;
     text-align: left;
     background-color: var(--base0);
-    border: 1.5px solid var(--green0);
+    border: 2px solid var(--green0);
     border-radius: 3px;
+    font-weight: 600;
 
     .options {
-        padding: 5px 10px;
+        padding: 5px 15px;
     }
     .options:hover {
         background-color: var(--base1);

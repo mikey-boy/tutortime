@@ -1,34 +1,31 @@
 {% extends "base.html" %}
 
 {% block navbar %}
-<table id=home-nav>
-    <thead>
-        <tr>
-            <th><a href="{{ url_for('service.service_list') }}"><h3>Take<br>lessons</h3></a></th>
-            <th><a href="{{ url_for('service.user_service_list', status='active') }}"><h3>Give<br>lessons</h3></a></th>
-            <th><a href=""><h3>About</h3></a></th>
-            
-            <th>
-                <div x-data="{ open: false }">
-                    {% if session.get("user_id", 0) %}
-                            <a href="{{ url_for('user.user_calendar_list') }}"><i class="fa-regular fa-calendar-days fa-lg"></i></a>
-                            <a href="{{ url_for('message.message_list') }}"><i class="fa-regular fa-paper-plane fa-lg"></i></a>
-                            <button @click="open = !open"><i class="fa-regular fa-user fa-lg"></i></button>
-                            <div class="relative-container" x-show="open">
-                                <div id="user-modal-popout">
-                                    <ul>
-                                        <li><a href="{{ url_for('user.user_account_list') }}">Profile</a></li>
-                                        <li><a href="{{ url_for('user.user_account_logout') }}">Logout</a></li>
-                                    </ul>
-                                </div>
-                            </div>
-                    {% else %}
-                        <a href="{{ url_for('user.user_account_login') }}"><i class="fa-regular fa-user fa-lg"></i></a>
-                    {% endif %}
-                </div>
-            </th>
-        </tr>
-    </thead>
-</table>
+<div id="home-nav-container">
+    <div id=home-nav>
+        <a href="{{ url_for('service.service_list') }}"><h1>Tutortime</h1></a>
+        <ul>
+            <li><a href="{{ url_for('service.service_list') }}"><h3>Take lessons</h3></a></li>
+            <li><a href="{{ url_for('service.user_service_list', status='active') }}"><h3>Give lessons</h3></a></li>
+            <li><a href=""><h3>About</h3></a></li>
+        </ul>
+                
+        <ul class="user-buttons" x-data="{ open: false }">
+            {% if session.get("user_id", 0) %}
+                    <li><a href="{{ url_for('user.user_calendar_list') }}"><i class="fa-regular fa-calendar-days fa-lg"></i></a></li>
+                    <li><a href="{{ url_for('message.message_list') }}"><i class="fa-regular fa-paper-plane fa-lg"></i></a></li>
+                    <li><span @click="open = !open"><i class="fa-regular fa-user fa-lg"></i></span></li>
+                    <div class="relative-container" x-show="open">
+                        <div id="user-modal-popout">
+                            <div class="options"><a href="{{ url_for('user.user_account_list') }}">Profile</a></div>
+                            <div class="options"><a href="{{ url_for('user.user_account_logout') }}">Logout</a></div>
+                        </div>
+                    </div>
+            {% else %}
+                <a href="{{ url_for('user.user_account_login') }}"><i class="fa-regular fa-user fa-lg"></i></a>
+            {% endif %}
+        </ul>
+    </div>
+</div>
 <hr>
 {% endblock %}

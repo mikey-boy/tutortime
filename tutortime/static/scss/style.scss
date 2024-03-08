@@ -38,27 +38,38 @@ $fa-font-path: "../fontawesome/webfonts";
     padding: 10px;
     color: var(--text1)
 }
+@mixin font-family {
+    font-family: "Nunito", sans-serif;
+}
 
 html {
 	background-color: var(--base0);
 }
 hr {
 	border-top: 1px solid var(--base2);
-}
-head {
-    display: flex;
+    margin-top: 0px;
 }
 body {
     color: var(--text0);
-	width: 80%;
-	min-width: 720px;
-	max-width: 1440px;
-	margin: auto;
     margin-bottom: 50px;
-    
-	font-family: Courier, monospace;
-    font-size:1rem;
     letter-spacing:-.02em;
+    margin: 0px;
+    
+    @include font-family;
+    font-optical-sizing: auto;
+    font-weight: 500;
+    font-size: 17px;
+    font-style: normal;
+
+    .body-content {
+        width: 80%;
+        min-width: 720px;
+        max-width: 1440px;
+        margin: auto;
+    }
+}
+input {
+    @include font-family;
 }
 th {
     text-align: left;
@@ -449,12 +460,6 @@ button {
     }
 }
 
-#logo {
-    width: 100%;
-    text-align: center;
-    font-family: Georgia, serif;
-    color: var(--blue1);
-}
 #theme-switch-container {
     position: fixed;
     display: flex;
@@ -472,23 +477,41 @@ button {
         color: var(--base0);
     }
 }
-#home-nav {
-    width: 100%;
-    margin: 0 auto;
+#home-nav-container {
+    display: flex;
+    justify-content: center;
+    background-color: var(--base1);
+    height: 70px;
     
-    a {
-        color: var(--text0);
-    }
-    button {
-        color: var(--text0);
-        background: none;
-        padding: 0;
-        margin: 0;
-    }
-    th {
+    #home-nav {
+        display: flex;
+        flex-direction: row;
         text-align: center;
-        &:last-child {
-            width: 125px;
+        align-items: center;
+        max-width: 1440px;
+        width: 100%;
+    
+        h1, h3 {
+            padding: 25px;
+            margin: 0px;
+        }
+        i {
+            padding: 4px;
+        }
+        ul {
+            margin: 0px;
+            padding: 0px;
+            display: flex;
+            list-style: none;
+            align-items: center;
+        }
+        a {
+            color: var(--text0);
+        }
+        .user-buttons{
+            justify-content: flex-end;
+            margin-left: auto;
+            padding: 10px;
         }
     }
 }
@@ -533,7 +556,6 @@ button {
 #user-modal-popout {
     position: absolute;
     z-index: 100;
-    padding: 5px;
     top: 7px;
     right: 23px;
     text-align: left;
@@ -541,16 +563,11 @@ button {
     border: 1.5px solid var(--green0);
     border-radius: 3px;
 
-    ul {
-        list-style-type: none;
-        padding-left: 10px;
-        padding-right: 10px;
-        margin: 0px;
-        
-        li {
-            padding-top: 10px;
-            padding-bottom: 10px;
-        }
+    .options {
+        padding: 5px 10px;
+    }
+    .options:hover {
+        background-color: var(--base1);
     }
 }
 #user-transaction-table {
@@ -605,9 +622,8 @@ button {
     }
     .user-service-status {
         @include common-button();
-        color: var(--text0);
         font-size: medium;
-        font-family:  Courier, monospace;
+        color: var(--text0);
         background-color: var(--base0);
     }
 }

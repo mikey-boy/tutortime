@@ -2,7 +2,8 @@
 {% block title %}Account{% endblock %}
 {% block content %}
     <h2>Account details</h2>
-    <h2>Transactions</h2>
+    <p>Username: <a href="{{ url_for('user.user_account_update') }}">{{ user.username }}</a></p>
+    <h2>Lesson history</h2>
     <div x-data="{ page: 0 }">
         <div class="page-control">
             <p>Current Balance: {{ user.minutes }} minutes</p>
@@ -14,56 +15,62 @@
                 </div>
             {% endif %}
         </div>
-        <table id="user-transaction-table">
-            <thead>
-                <tr>
-                    <td>Date</td>
-                    <td>Lesson title</td>
-                    <td>Tutor</td>
-                    <td>Student</td>
-                    <td>Status</td>
-                    <td>Minutes</td>
-                    <td>Balance</td>
-                </tr>
-            </thead>
-            <tbody>
-                {% for i in range(lessons|length) %}
-                    <tr x-show="page == {{i//10}}" >
-                        <td>{{ lessons[i]['day'] }}</td>
-                        <td>{{ lessons[i]['title'] }}</td>
-                        <td>{{ lessons[i]['tutor_name'] }}</td>
-                        <td>{{ lessons[i]['student_name'] }}</td>
-
-                        {% if lessons[i]['tutor_id'] == user.id %}
-                            {% if lessons[i]['status'] == 'confirmed' %}
-                                <td>{{ lessons[i]['status'] }}</td>
-                                <td>
-                                    {% if lessons[i]['bonus_duration'] != 0 %}
-                                        <span class="tutor-transaction">+{{ lessons[i]['actual_duration'] }}</span><span class="bonus-transaction"> (+{{ lessons[i]['bonus_duration'] }} bonus)</span> 
-                                    {% else %}
-                                        <p class="tutor-transaction">+{{ lessons[i]['actual_duration'] }}</p>
-                                    {% endif %}
-                                </td>
-                            {% else %}
-                                <td>pending confirmation</td>
-                                <td class="pending-transaction">(+{{ lessons[i]['actual_duration'] }})</td>
-                            {% endif %}
-                        {% else %}
-                            {% if lessons[i]['status'] == 'accepted_student' or lessons[i]['status'] == 'accepted_tutor' %}
-                                <td>pending acceptance</td>
-                                <td class="pending-transaction">(-{{ lessons[i]['actual_duration'] }})</td>
-                            {% elif lessons[i]['status'] == 'confirmed_student' or lessons[i]['status'] == 'confirmed_tutor' %}
-                                <td>pending confirmation</td>
-                                <td class="student-transaction">-{{ lessons[i]['actual_duration'] }}</td>
-                            {% else %}
-                                <td>{{ lessons[i]['status'] }}</td>
-                                <td class="student-transaction">-{{ lessons[i]['actual_duration'] }}</td>
-                            {% endif %}
-                        {% endif %}
-                        <td>{{ lessons[i]['balance'] }}</td>
+        {% if lessons|length > 0 %}
+            <table id="user-transaction-table">
+                <thead>
+                    <tr>
+                        <td>Date</td>
+                        <td>Lesson title</td>
+                        <td>Tutor</td>
+                        <td>Student</td>
+                        <td>Status</td>
+                        <td>Minutes</td>
+                        <td>Balance</td>
                     </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    {% for i in range(lessons|length) %}
+                        <tr x-show="page == {{i//10}}" >
+                            <td>{{ lessons[i]['day'] }}</td>
+                            <td>{{ lessons[i]['title'] }}</td>
+                            <td>{{ lessons[i]['tutor_name'] }}</td>
+                            <td>{{ lessons[i]['student_name'] }}</td>
+
+                            {% if lessons[i]['tutor_id'] == user.id %}
+                                {% if lessons[i]['status'] == 'confirmed' %}
+                                    <td>{{ lessons[i]['status'] }}</td>
+                                    <td>
+                                        {% if lessons[i]['bonus_duration'] != 0 %}
+                                            <span class="tutor-transaction">+{{ lessons[i]['actual_duration'] }}</span><span class="bonus-transaction"> (+{{ lessons[i]['bonus_duration'] }} bonus)</span> 
+                                        {% else %}
+                                            <p class="tutor-transaction">+{{ lessons[i]['actual_duration'] }}</p>
+                                        {% endif %}
+                                    </td>
+                                {% else %}
+                                    <td>pending confirmation</td>
+                                    <td class="pending-transaction">(+{{ lessons[i]['actual_duration'] }})</td>
+                                {% endif %}
+                            {% else %}
+                                {% if lessons[i]['status'] == 'accepted_student' or lessons[i]['status'] == 'accepted_tutor' %}
+                                    <td>pending acceptance</td>
+                                    <td class="pending-transaction">(-{{ lessons[i]['actual_duration'] }})</td>
+                                {% elif lessons[i]['status'] == 'confirmed_student' or lessons[i]['status'] == 'confirmed_tutor' %}
+                                    <td>pending confirmation</td>
+                                    <td class="student-transaction">-{{ lessons[i]['actual_duration'] }}</td>
+                                {% else %}
+                                    <td>{{ lessons[i]['status'] }}</td>
+                                    <td class="student-transaction">-{{ lessons[i]['actual_duration'] }}</td>
+                                {% endif %}
+                            {% endif %}
+                            <td>{{ lessons[i]['balance'] }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="empty-container">
+                <div><p>You have not booked or completed any lessons yet!</p></div>
+            </div>
+        {% endif %}
     </div>
 {% endblock %}

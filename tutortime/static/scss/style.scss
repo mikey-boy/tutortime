@@ -201,6 +201,22 @@ button {
         }
     }
 }
+.empty-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 500px;
+    border: 1px dashed var(--green0);
+    
+    button {
+        @include common-button;
+        background-color: var(--green1);
+    }
+    &.empty-service {
+        margin-top: 25px;
+    }
+}
 .availability-table {
     border-collapse: collapse;
     width: 100%;
@@ -595,20 +611,6 @@ button {
     }
     .student-transaction {
         color: var(--red)
-    }
-}
-#user-service-empty {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    margin-top: 20px;
-    height: 500px;
-    border: 1px dashed var(--green0);
-    
-    button {
-        @include common-button;
-        background-color: var(--green1);
     }
 }
 #user-service-nav {

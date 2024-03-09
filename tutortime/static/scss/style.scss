@@ -62,7 +62,7 @@ body {
     font-style: normal;
 
     .body-content {
-        width: 80%;
+        width: 90%;
         min-width: 720px;
         max-width: 1440px;
         margin: auto;
@@ -283,6 +283,7 @@ button {
     p {
         display: inline-block;
         text-align: center;
+        margin-top: 0px;
     }
     div {
         float: right

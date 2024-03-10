@@ -38,27 +38,38 @@ $fa-font-path: "../fontawesome/webfonts";
     padding: 10px;
     color: var(--text1)
 }
+@mixin font-family {
+    font-family: "Nunito", sans-serif;
+}
 
 html {
 	background-color: var(--base0);
 }
 hr {
 	border-top: 1px solid var(--base2);
-}
-head {
-    display: flex;
+    margin-top: 0px;
 }
 body {
     color: var(--text0);
-	width: 80%;
-	min-width: 720px;
-	max-width: 1440px;
-	margin: auto;
     margin-bottom: 50px;
-    
-	font-family: Courier, monospace;
-    font-size:1rem;
     letter-spacing:-.02em;
+    margin: 0px;
+    
+    @include font-family;
+    font-optical-sizing: auto;
+    font-weight: 500;
+    font-size: 17px;
+    font-style: normal;
+
+    .body-content {
+        width: 90%;
+        min-width: 720px;
+        max-width: 1440px;
+        margin: auto;
+    }
+}
+input {
+    @include font-family;
 }
 th {
     text-align: left;
@@ -190,6 +201,22 @@ button {
         }
     }
 }
+.empty-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 500px;
+    border: 1px dashed var(--green0);
+    
+    button {
+        @include common-button;
+        background-color: var(--green1);
+    }
+    &.empty-service {
+        margin-top: 25px;
+    }
+}
 .availability-table {
     border-collapse: collapse;
     width: 100%;
@@ -272,6 +299,7 @@ button {
     p {
         display: inline-block;
         text-align: center;
+        margin-top: 0px;
     }
     div {
         float: right
@@ -449,12 +477,6 @@ button {
     }
 }
 
-#logo {
-    width: 100%;
-    text-align: center;
-    font-family: Georgia, serif;
-    color: var(--blue1);
-}
 #theme-switch-container {
     position: fixed;
     display: flex;
@@ -472,23 +494,42 @@ button {
         color: var(--base0);
     }
 }
-#home-nav {
-    width: 100%;
-    margin: 0 auto;
+#home-nav-container {
+    display: flex;
+    justify-content: center;
+    background-color: var(--base1);
+    height: 70px;
     
-    a {
-        color: var(--text0);
-    }
-    button {
-        color: var(--text0);
-        background: none;
-        padding: 0;
-        margin: 0;
-    }
-    th {
+    #home-nav {
+        display: flex;
+        flex-direction: row;
         text-align: center;
-        &:last-child {
-            width: 125px;
+        align-items: center;
+        max-width: 1440px;
+        width: 100%;
+    
+        h1, h3 {
+            padding: 25px;
+            margin: 0px;
+        }
+        i {
+            padding: 4px;
+        }
+        ul {
+            margin: 0px;
+            padding: 0px;
+            display: flex;
+            list-style: none;
+            align-items: center;
+        }
+        a {
+            color: var(--text0);
+        }
+        .user-buttons{
+            justify-content: flex-end;
+            margin-left: auto;
+            padding: 10px;
+            cursor: pointer;
         }
     }
     .new-messages {
@@ -536,24 +577,19 @@ button {
 #user-modal-popout {
     position: absolute;
     z-index: 100;
-    padding: 5px;
-    top: 7px;
-    right: 23px;
+    top: 15px;
+    right: 3px;
     text-align: left;
     background-color: var(--base0);
-    border: 1.5px solid var(--green0);
+    border: 2px solid var(--green0);
     border-radius: 3px;
+    font-weight: 600;
 
-    ul {
-        list-style-type: none;
-        padding-left: 10px;
-        padding-right: 10px;
-        margin: 0px;
-        
-        li {
-            padding-top: 10px;
-            padding-bottom: 10px;
-        }
+    .options {
+        padding: 5px 15px;
+    }
+    .options:hover {
+        background-color: var(--base1);
     }
 }
 #user-transaction-table {
@@ -577,20 +613,6 @@ button {
         color: var(--red)
     }
 }
-#user-service-empty {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    margin-top: 20px;
-    height: 500px;
-    border: 1px dashed var(--green0);
-    
-    button {
-        @include common-button;
-        background-color: var(--green1);
-    }
-}
 #user-service-nav {
     width: 100%;
     table-layout: fixed;
@@ -608,9 +630,8 @@ button {
     }
     .user-service-status {
         @include common-button();
-        color: var(--text0);
         font-size: medium;
-        font-family:  Courier, monospace;
+        color: var(--text0);
         background-color: var(--base0);
     }
 }

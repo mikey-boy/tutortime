@@ -70,7 +70,9 @@
                 </div>
             </div>
             <p>{{ service.description }}</p>
-            <a href="{{ url_for('message.message_list', user_id=user.id) }}"><button class="message-tutor-button"><i class="fa-regular fa-paper-plane"></i> Message tutor</button></a>
+            {% if session.get("user_id") != service.user_id %}
+                <a href="{{ url_for('message.message_list', user_id=user.id) }}"><button class="message-tutor-button"><i class="fa-regular fa-paper-plane"></i> Message tutor</button></a>
+            {% endif %}
         </div>
     </div>
 {% endblock %}

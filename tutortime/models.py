@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from enum import StrEnum, auto
 from typing import List, Optional, Self
 
-from flask import current_app, session
+from flask import current_app
 from sqlalchemy import ForeignKey, desc, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -162,8 +162,6 @@ class Service(db.Model):
         if search != "":
             search = f"%{search}%"
             stmt = stmt.filter((Service.title.like(search)) | Service.description.like(search))
-        if session.get("user_id"):
-            stmt = stmt.where(Service.user_id != session["user_id"])
 
         stmt = stmt.order_by(Service.id.desc())
         return db.paginate(stmt, page=page_num, per_page=per_page, error_out=False)

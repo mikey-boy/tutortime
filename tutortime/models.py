@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from enum import StrEnum, auto
 from typing import List, Optional, Self
 
-from flask import current_app, url_for
+from flask import current_app
 from sqlalchemy import ForeignKey, desc, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Mapped, mapped_column, relationship

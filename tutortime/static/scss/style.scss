@@ -50,17 +50,17 @@ hr {
     margin-top: 0px;
 }
 body {
-    color: var(--text0);
-    margin-bottom: 50px;
-    letter-spacing:-.02em;
-    margin: 0px;
-    
     @include font-family;
     font-optical-sizing: auto;
     font-weight: 500;
     font-size: 17px;
     font-style: normal;
 
+    color: var(--text0);
+    margin-bottom: 50px;
+    letter-spacing:-.02em;
+    margin: 0px;
+    
     .body-content {
         width: 90%;
         min-width: 720px;
@@ -68,7 +68,7 @@ body {
         margin: auto;
     }
 }
-input {
+* {
     @include font-family;
 }
 th {
@@ -124,6 +124,17 @@ button {
 .flex-container {
     display: flex;
 }
+.post {
+    padding: 15px;
+    border-radius: 5px;
+    border: 1px solid var(--green0);
+    background-color: var(--base1);
+
+    h2 {
+        margin-top: 0px;
+        margin-bottom: 15px;
+    }
+}
 .post-grid-container {
     display: grid;
     gap: 25px;
@@ -136,39 +147,52 @@ button {
 }
 .post-flex-container {
     display: flex;
-    align-items: center;
-    justify-content: center;
+    margin: 30px auto;
+    max-width: 1000px;
+    min-width: 800px;
     
-    .availability-flex-container {
-        display: flex;
-        flex-wrap: wrap;
-        
-        > div:first-child {
+    .post {
+        flex: 4;
+        margin-right: 10px;
+    }
+    .availability {
+        align-self: flex-start;
+        flex: 3;
+    }
+    .flex-container {
+        a {
+            margin: 15px 10px 0px 10px;
             flex: 1;
         }
-        > div:nth-child(2) {
-            flex: 2;
-            min-width: 400px;
+        button {
+            padding: 8px;
         }
     }
-    .post {
-        max-width: 850px;
-        margin-top: 25px;
-    }
 }
-.post {
-    padding: 20px;
-    border-radius: 5px;
-    border: 1px solid var(--green0);
-    background-color: var(--base1);
+.profile {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
 
-    h2 {
-        margin-top: 0px;
+    img {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        border-right: 20px;
     }
-    .message-tutor-button {
-        padding: 6px;
-        color: var(--text1);
-        background-color: var(--blue0);
+    .profile-info {
+        display: flex;
+        align-items: center;
+
+        a, p {
+            font-size: larger;
+            font-weight: bold;
+            padding: 0px 13px;
+        }
+        span {
+            padding-left: 10px;
+            border-left: 1px solid var(--base2) ;
+        }
     }
 }
 .image-container {
@@ -218,9 +242,10 @@ button {
     }
 }
 .availability-table {
+    table-layout: fixed;
     border-collapse: collapse;
     width: 100%;
-    margin: 10px;
+    margin-bottom: 10px;
 
     tr {
         text-align: center;
@@ -229,8 +254,8 @@ button {
             background-color: var(--base1);
         }
         td:first-child {
-            text-align: right;
-            width: 85px;
+            text-align: left;
+            width: 70px;
         }
         .fa-square-check {
             color: var(--green0);
@@ -454,6 +479,7 @@ button {
 .lesson-item {
 
     button {
+        font-size: medium;
         margin-top: 10px;
         width: 65px;
         color: var(--text1);
@@ -474,6 +500,41 @@ button {
     }
     .modify-button {
         background-color: var(--orange);
+    }
+}
+.user-service-table {
+    table-layout: fixed;
+    width: 100%;
+    border: 1px dashed var(--green0);
+    border-spacing: 0;
+    padding: 10px;
+
+    td, th {
+        padding: 3px;
+    }
+    tbody tr:hover {
+        background-color: var(--base1);
+    }
+    th {
+        width: 65px;
+    }
+    th.description {
+        width: 450px;
+    }
+    th.title {
+        width: 150px;
+    }
+    .truncated {
+        white-space: nowrap; /* Prevent text from wrapping */
+        overflow: hidden; /* Hide overflowing text */
+        text-overflow: ellipsis;
+    }
+    .actions {
+        text-align: right;
+
+        a {
+            margin-left: 2px;
+        }
     }
 }
 
@@ -627,21 +688,13 @@ button {
     .active-subnav-header {
         border: 1px solid var(--green0);
         border-radius: 3px;
+        font-weight: bold;
     }
     .user-service-status {
         @include common-button();
-        font-size: medium;
+        font-size: inherit;
         color: var(--text0);
         background-color: var(--base0);
-    }
-}
-#user-service-table {
-    width: 100%;
-    padding: 10px;
-    border: 1px dashed var(--green0);
-    
-    td:last-child {
-        width: 70px;
     }
 }
 #user-service-creation {
@@ -674,6 +727,9 @@ button {
     #service-creation-table > tbody > tr > td {
         padding-bottom: 30px;
         
+        textarea {
+            font-size: large;
+        }
         &:first-child {
             vertical-align: top;
             padding-right: 10px;
@@ -691,7 +747,7 @@ button {
     flex: 1;
     
     h2 {
-        margin: 10px 0px;
+        margin-bottom: 10px;
     }
     ul {
         list-style: none;
@@ -762,7 +818,7 @@ button {
         .flex-container-system {
             display: flex;
             justify-content: center;
-            font-size: 13px;
+            font-size: medium;
             margin: 5px 0px;
             color: var(--text0);
         }
@@ -833,14 +889,14 @@ button {
     height: 670px;
 
     h2 {
-        margin: 0px;
+        margin-bottom: 0px;
     }
     .subnav {
-        margin-top: 10px;
-        margin-bottom: 15px;
+        margin: 10px 0px;
 
         button {
             flex: 1;
+            font-size: medium;
             padding: 5px 10px;
             background-color: var(--base0);
             color: var(--text0);
@@ -853,11 +909,11 @@ button {
     }
     .lesson-container {
         min-width: 180px;
-        height: 540px;
+        height: 521px;
         overflow-y: scroll;
     }
     .lesson-container.without-subnav {
-        height: 594px;
+        height: 575px;
     }
     .lesson-request-item {
         display: block;
@@ -872,7 +928,7 @@ button {
         padding: 10px;
         margin-bottom: 10px;
 
-        h4 {
+        h3 {
             margin: 0px;
         }
         p {

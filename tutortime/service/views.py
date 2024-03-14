@@ -1,6 +1,6 @@
 from flask import Blueprint, abort, redirect, render_template, request, session
 
-from tutortime.models import Image, Service, ServiceStatus, User
+from tutortime.models import Image, Service, ServiceCategory, ServiceStatus, User
 from tutortime.service.utils import availability_to_int, availability_to_list
 
 service_bp = Blueprint("service", __name__)
@@ -74,9 +74,11 @@ def user_service_create():
         service.add()
 
         images = request.files.getlist("images")
-        for image in images:
-            if image.filename:
+        if images[0].filename:
+            for image in images:
                 Image(service_id=service.id, image=image).add()
+        else:
+            Image(service_id=service.id, category=category).add()
 
         return redirect("/user/service/list/active")
 
@@ -103,9 +105,11 @@ def user_service_update(service_id):
             images = request.files.getlist("images")
             service.update(title, description, category, availability)
 
-            for image in images:
-                if image.filename:
+            if images[0].filename:
+                for image in images:
                     Image(service_id=service.id, image=image).add()
+            else:
+                Image(service_id=service.id, category=category).add()
             return redirect(f"/user/service/list/{service.status}")
     abort(404)
 

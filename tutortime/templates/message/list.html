@@ -68,7 +68,7 @@
             
             {% for lesson in lessons %}
                 <div class="lesson-item lesson-confirmed-item" :class="'{{ lesson.modified }}' == 'True' && '{{ lesson.status }}' != 'confirmed' ? 'warning' : ''" x-data="{ modify: false }" x-show="'{{ lesson.completed }}' == completed">
-                    <a href="{{ url_for('service.service_list', service_id=lesson.service_id) }}"><h4>{{ lesson.title }}</h4></a>
+                    <a href="{{ url_for('service.service_list', service_id=lesson.service_id) }}"><h3>{{ lesson.title }}</h3></a>
                     <p>Day: {{ lesson.day }}</p>
                     <p>Time: {{ lesson.time }}</p>
                     {% if lesson.modified and lesson.status != 'confirmed' %}
@@ -117,7 +117,7 @@
             {% endfor %}
 
             {% if ns.student_lessons %}
-                <h4>As a student:</h4>
+                <h3>As a student:</h3>
             {% endif %}
             {% for service in services %}
                 {% if service.user_id != user.id %}
@@ -128,7 +128,7 @@
             {% endfor %}
             
             {% if ns.tutor_lessons %}
-                <h4>As a tutor:</h4>
+                <h3>As a tutor:</h3>
             {% endif %}
             {% for service in services %}
                 {% if service.user_id == user.id %}

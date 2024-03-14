@@ -1,0 +1,48 @@
+{% extends "home.html" %}
+{% block title %}{{ user.username }}{% endblock %}
+{% block content %}
+    <div class="profile">
+        <img src="/static/img/tux.png">
+        <div class="profile-info">
+            <p>{{ user.username }}</p>
+        </div>
+    </div>
+    <h2>Service history</h2>
+    <div x-data="{ page: 0 }">
+        <div class="page-control">
+            {% if services|length > 10 %}
+                <div>
+                    <button @click="page = page == 0 ? page : page - 1"><i class="fa-solid fa-chevron-left fa-xl"></i></button>
+                    Page <p x-text="page"></p>
+                    <button @click="page = page == {{lessons|length//10}} ? page : page + 1"><i class="fa-solid fa-chevron-right fa-xl"></i></button>
+                </div>
+            {% endif %}
+        </div>
+        {% if services|length > 0 %}
+            <table class="user-service-table">
+                <thead>
+                    <tr>
+                        <th class="title">Service title</th>
+                        <th class="description">Description</th>
+                        <th>Lessons</th>
+                        <th>Minutes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for i in range(services|length) %}
+                        <tr x-show="page == {{i//10}}" >
+                            <td class="truncated"><a href="{{ url_for('service.service_display', service_id=services[i]['id']) }}">{{ services[i]['title'] }}</a></td>
+                            <td class="truncated">{{ services[i]['description'] }}</td>
+                            <td>{{ lessons[i] | length }}</td>
+                            <td>{{ services[i]['minutes'] }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="empty-container">
+                <div><p>{{ user.username }} has not created any services yet!</p></div>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

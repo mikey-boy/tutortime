@@ -12,25 +12,27 @@
                     </tr>
                 </thead>
             </table>
-            <table id="user-service-table">
+            <table class="user-service-table">
                 <thead>
-                    <th>Title</th>
-                    <th>Description</th>
-                    <th></th>
+                    <tr>
+                        <th class="title">Title</th>
+                        <th class="description">Description</th>
+                        <th></th>
+                    </tr>
                 </thead>
                 <tbody>
                     {% for service in services %}
                         <tr x-show="serviceStatus == '{{ service.status }}'">
-                            <td>{{ service.title }}</td>
-                            <td>{{ service.description }}</td>
-                            <td>
-                                <a href="/user/service/update/{{ service.id }}"><i class="fa-regular fa-pen-to-square"></i></a>
+                            <td class="truncated">{{ service.title }}</td>
+                            <td class="truncated">{{ service.description }}</td>
+                            <td class="actions">
+                                <a href="/user/service/update/{{ service.id }}"><i class="fa-regular fa-pen-to-square fa-lg"></i></a>
                                 {% if service.status == 'active' %}
-                                    <a href="/user/service/pause/{{ service.id }}"><i class="fa-regular fa-circle-pause"></i></a>
+                                    <a href="/user/service/pause/{{ service.id }}"><i class="fa-regular fa-circle-pause fa-lg"></i></a>
                                 {% else %}
-                                    <a href="/user/service/activate/{{ service.id }}"><i class="fa-regular fa-circle-play"></i></a>
+                                    <a href="/user/service/activate/{{ service.id }}"><i class="fa-regular fa-circle-play fa-lg"></i></a>
                                 {% endif %}
-                                <a href="/user/service/delete/{{ service.id }}"><i class="fa-regular fa-trash-can"></i></a>
+                                <a href="/user/service/delete/{{ service.id }}"><i class="fa-regular fa-trash-can fa-lg"></i></a>
                             </td>
                         </tr>
                     {% endfor %}

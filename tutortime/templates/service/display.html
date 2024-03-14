@@ -7,7 +7,7 @@
         <div class="profile">
             <img src="/static/img/tux.png">
             <div class="profile-info">
-                <a href="#">{{ user.username }}</a>
+                <a href="{{ url_for('user.user_account_display', user_id=user.id) }}">{{ user.username }}</a>
                 <span>has taught this lesson: {{ service.lessons|length }} times<br>for a total of: {{ service.minutes }} minutes</span>
             </div>
         </div>
@@ -74,7 +74,7 @@
                 
             <div class="flex-container">
             <a href="{{ url_for('message.message_list', user_id=user.id) }}"><button class="blue-button"><i class="fa-regular fa-paper-plane"></i> Message {{ user.username }}</button></a>
-            <a href="{{ url_for('message.message_list', user_id=user.id) }}"><button class="green-button"><i class="fa-regular fa-user"></i> View {{ user.username }}'s profile</button></a>
+            <a href="{{ url_for('user.user_account_display', user_id=user.id) }}"><button class="green-button"><i class="fa-regular fa-user"></i> View {{ user.username }}'s profile</button></a>
             </div>
         {% endif %}
     </div>

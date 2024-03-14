@@ -206,6 +206,20 @@ def user_account_list():
     return render_template("user/account/list.html", user=user, services=services, lessons=lessons)
 
 
+@user_bp.route("/user/account/display/<int:user_id>")
+def user_account_display(user_id: str):
+    user = User.get(user_id)
+    if user is None:
+        return render_template("error/nonexistant_user.html")
+
+    services = user.get_services(ServiceStatus.ACTIVE)
+    lessons = []
+    for service in services:
+        lessons.append([lesson for lesson in service.lessons if lesson.status == LessonStatus.CONFIRMED])
+
+    return render_template("user/account/display.html", user=user, services=services, lessons=lessons)
+
+
 @user_bp.route("/user/calendar/list")
 def user_calendar_list():
     if session.get("user_id") is None:

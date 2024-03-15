@@ -1,15 +1,88 @@
-{% extends "base.html" %}
+{% extends "home.html" %}
 
 {% block title %}Update account{% endblock %}
 {% block content %}
-<div class="login-container">
-    <div class="login-box">
-        <h2>Select a display name</h2>
-        <form action="{{ url_for('user.user_account_update') }}" method="POST">
-            <input type="text" name="username" value="{{ username }}" required>
-            <button type="submit" class="test-signup-button">Update account</button>
-            <p class="error-text">{{ error_msg }}</p>
-        </form>
-    </div>
+<div id="user-account-creation">
+    <form action="{{ url_for('user.user_account_update') }}" method="POST">
+        <div class="label">
+            Profile Picture
+            <label for="profile-pic-input" id="profile-pic-label"><i class="fa-regular fa-pen-to-square fa-lg"></i></label>
+            <input accept="image/*" style="visibility:hidden;" type='file' id="profile-pic-input"/>
+        </div>
+        <div>
+            <img id="profile-pic"  src="/static/img/tux.png">
+        </div>
+
+        <div class="label">Display Name</div>
+        <div><input type="text" name="username" value="{{ username }}" required></div>
+
+        <div class="label">Availability</div>
+        <table name="availability-table" class="availability-table">
+            <thead>
+                <tr>
+                    <td>   </td>
+                    <td>Mon</td>
+                    <td>Tue</td>
+                    <td>Wed</td>
+                    <td>Thu</td>
+                    <td>Fri</td>
+                    <td>Sat</td>
+                    <td>Sun</td>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>morning</td>
+                    {% for i in range(7) %}
+                        {% if i|string ~ '-0' in availability %}   
+                            <td><input type="checkbox" name="{{ i }}-0" checked></td>
+                        {% else %}
+                            <td><input type="checkbox" name="{{ i }}-0"></td>
+                        {% endif %}
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>afternoon</td>
+                    {% for i in range(7) %}
+                        {% if i|string ~ '-1' in availability %}
+                            <td><input type="checkbox" name="{{ i }}-1" checked></td>
+                        {% else %}
+                            <td><input type="checkbox" name="{{ i }}-1"></td>
+                        {% endif %}
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>evening</td>
+                    {% for i in range(7) %}
+                        {% if i|string ~ '-2' in availability %}   
+                            <td><input type="checkbox" name="{{ i }}-2" checked></td>
+                        {% else %}
+                            <td><input type="checkbox" name="{{ i }}-2"></td>
+                        {% endif %}
+                    {% endfor %}
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="label">About Me</div>
+        <div><textarea type="text" name="about-me" value="{{ description }}" rows="7"></textarea></div>
+        
+        <p class="error-text">{{ error_msg }}</p>
+        <div class="flex-container" style="justify-content: center;">
+            <button type="submit">Update account</button>
+        </div>
+    </form>
 </div>
+{% endblock %}
+
+{% block script %}
+<script>
+    var input = document.getElementById("profile-pic-input")
+    input.onchange = evt => {
+        const [file] = input.files
+        if (file) {
+            document.getElementById("profile-pic").src = URL.createObjectURL(file)
+        }
+    }
+</script>
 {% endblock %}

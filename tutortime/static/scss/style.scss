@@ -250,9 +250,6 @@ button {
     tr {
         text-align: center;
         
-        &:hover {
-            background-color: var(--base1);
-        }
         td:first-child {
             text-align: left;
             width: 70px;
@@ -260,6 +257,9 @@ button {
         .fa-square-check {
             color: var(--green0);
         }
+    }
+    tbody tr:hover {
+        background-color: var(--base1);
     }
 }
 .login-container{
@@ -695,6 +695,42 @@ button {
         font-size: inherit;
         color: var(--text0);
         background-color: var(--base0);
+    }
+}
+#user-account-creation {
+    border: 1px dashed var(--green0);
+    padding: 0px 25px 25px 25px;
+    margin: 20px;
+    box-sizing: border-box;
+
+    img {
+        width: 75px;
+        height: 75px;
+        border-radius: 50%;
+    }
+    input {
+        padding: 5px;
+    }
+    textarea {
+        width: calc(100% - 8px);
+    }
+    button {
+        width: 250px;
+        padding: 10px;
+        margin-top: 10px;
+        color: var(--text1);
+        background-color: var(--green1);
+    }
+    .label {
+        font-weight: bold;
+        margin: 30px 0px 10px 0px;
+    }
+    .label:first-child {
+        margin-top: 10px;
+    }
+    #profile-pic-label {
+        cursor: pointer;
+        margin-left: 10px;
     }
 }
 #user-service-creation {

@@ -77,27 +77,30 @@ def user_account_update():
         return render_template("error/not_logged_in.html", action="edit your profile")
 
     user = User.get(session["user_id"])
-    availability = availability_to_list(user.availability)
     if request.method == "GET":
+        availability = availability_to_list(user.availability)
         return render_template("/user/account/update.html", user=user, availability=availability)
     else:
-        images = request.files.getlist("images")
         username = request.form.get("username")
         description = request.form.get("description")
         availability = availability_to_int(request.form.keys())
+        images = request.files.getlist("images")
 
-        def render_error_page(msg: str):
-            return render_template("/user/account/update.html", user=user, availability=availability, error_msg=msg)
-
-        if username is None or username == "":
-            return render_error_page(error_msg="Display name is a required field")
-        if User.username_exists(username) and username != user.username:
-            return render_error_page(error_msg="Display name already taken")
-
-        if images != [] and images[0].filename:
-            user.update(username=username, description=description, availability=availability, image=images[0])
-        else:
-            user.update(username=username, description=description, availability=availability)
+        status = user.update(username=username, description=description, availability=availability, images=images)
+        if status == -1:
+            return render_template(
+                "/user/account/update.html",
+                user=user,
+                availability=availability_to_list(availability),
+                error_msg="Display name is a required field",
+            )
+        elif status == -2:
+            return render_template(
+                "/user/account/update.html",
+                user=user,
+                availability=availability_to_list(availability),
+                error_msg="Display name already taken",
+            )
 
         return redirect("/service/list/")
 

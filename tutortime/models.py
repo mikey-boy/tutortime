@@ -77,12 +77,19 @@ class User(db.Model):
         db.session.delete(self)
         db.session.commit()
 
-    def update(self, username: str, description: str, availability: str, image: FileStorage = None) -> None:
-        self.username = username
+    def update(self, username: str, description: str, availability: str, images: list) -> int:
+        status = 0
         self.description = description
         self.availability = availability
 
-        if image:
+        if username is None or username == "":
+            status = -1
+        elif User.username_exists(username) and username != self.username:
+            status = -2
+        else:
+            self.username = username
+
+        if images != [] and images[0].filename:
             if self.image_path and self.image_path != DEFAULT_PROFILE_IMG:
                 try:
                     os.remove(self.image_path)
@@ -90,9 +97,10 @@ class User(db.Model):
                     logging.warning(f"Image not found on server: '{self.image_path}'")
 
             self.image_path = os.path.join(current_app.config["IMAGE_FOLDER"], str(uuid.uuid4()))
-            image.save(self.image_path[1:])
+            images[0].save(self.image_path[1:])
 
         db.session.commit()
+        return status
 
     def update_minutes(self, minutes: int) -> None:
         self.minutes += minutes

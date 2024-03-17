@@ -45,7 +45,7 @@
                     <a href="{{ url_for('service.service_display', service_id=service.id) }}">
                         <div class="image-container">
                             {% for i in range(service.images|length) %}
-                                <img x-show="image == {{ i }}" src="/{{ service.images[i].path }}" alt="{{ service.images[i].filename }}">
+                                <img x-show="image == {{ i }}" src="{{ service.images[i].path }}" alt="{{ service.images[i].filename }}">
                             {% endfor %}
                             {% if service.images|length > 1 %}
                                 <button class="image-prev" @click.prevent="image = image == 0 ? {{ service.images|length }} - 1 : (image - 1)"><i class="fa-regular fa-circle-left fa-2x"></i></button>

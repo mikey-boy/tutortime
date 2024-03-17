@@ -8,6 +8,7 @@ from flask import Blueprint, Flask, redirect, render_template, request, session,
 from rauth import OAuth2Service
 
 from tutortime.models import Lesson, LessonStatus, ServiceStatus, User
+from tutortime.user.utils import availability_to_int, availability_to_list
 
 google = None
 facebook = None
@@ -76,16 +77,28 @@ def user_account_update():
         return render_template("error/not_logged_in.html", action="edit your profile")
 
     user = User.get(session["user_id"])
+    availability = availability_to_list(user.availability)
     if request.method == "GET":
-        return render_template("/user/account/update.html", username=user.username)
+        return render_template("/user/account/update.html", user=user, availability=availability)
     else:
+        images = request.files.getlist("images")
         username = request.form.get("username")
-        if User.username_exists(username) and username != user.username:
-            return render_template(
-                "/user/account/update.html", username=username, error_msg="Display name already taken"
-            )
+        description = request.form.get("description")
+        availability = availability_to_int(request.form.keys())
 
-        user.update_username(username)
+        def render_error_page(msg: str):
+            return render_template("/user/account/update.html", user=user, availability=availability, error_msg=msg)
+
+        if username is None or username == "":
+            return render_error_page(error_msg="Display name is a required field")
+        if User.username_exists(username) and username != user.username:
+            return render_error_page(error_msg="Display name already taken")
+
+        if images != [] and images[0].filename:
+            user.update(username=username, description=description, availability=availability, image=images[0])
+        else:
+            user.update(username=username, description=description, availability=availability)
+
         return redirect("/service/list/")
 
 

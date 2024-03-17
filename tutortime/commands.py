@@ -181,8 +181,6 @@ def initdb():
     paul.add()
 
     for service in services:
-        service = Service(
-            user_id=service[0], title=service[1], description=service[2], category=service[3], availability=0
-        )
+        service = Service(user_id=service[0], title=service[1], description=service[2], category=service[3])
         service.add()
         Image(service_id=service.id, category=service.category).add()

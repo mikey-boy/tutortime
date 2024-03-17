@@ -1,7 +1,7 @@
 from flask import Blueprint, abort, redirect, render_template, request, session
 
-from tutortime.models import Image, Service, ServiceCategory, ServiceStatus, User
-from tutortime.service.utils import availability_to_int, availability_to_list
+from tutortime.models import Image, Service, ServiceStatus, User
+from tutortime.user.utils import availability_to_list
 
 service_bp = Blueprint("service", __name__)
 
@@ -34,7 +34,7 @@ def service_display(service_id):
     service = Service.get(service_id)
     user = User.get(service.user.id)
     if service:
-        availability = availability_to_list(service.availability)
+        availability = availability_to_list(user.availability)
         return render_template("service/display.html", service=service, user=user, availability=availability)
     abort(404)
 
@@ -59,7 +59,6 @@ def user_service_create():
         title = request.form.get("title")
         description = request.form.get("description")
         category = request.form.get("category")
-        availability = availability_to_int(request.form.keys())
         if title is None or description is None or category is None:
             error_msg = "Please provide all the required fields"
             return ("user/service/create.html", error_msg)
@@ -69,7 +68,6 @@ def user_service_create():
             title=title,
             description=description,
             category=category,
-            availability=availability,
         )
         service.add()
 
@@ -92,8 +90,7 @@ def user_service_update(service_id):
     service = user.get_service(service_id)
     if service:
         if request.method == "GET":
-            availability = availability_to_list(service.availability)
-            return render_template("user/service/create.html", service=service, availability=availability)
+            return render_template("user/service/create.html", service=service)
         else:
             for image in service.images:
                 image.remove()
@@ -101,9 +98,8 @@ def user_service_update(service_id):
             title = request.form.get("title")
             description = request.form.get("description")
             category = request.form.get("category")
-            availability = availability_to_int(request.form.keys())
             images = request.files.getlist("images")
-            service.update(title, description, category, availability)
+            service.update(title, description, category)
 
             if images[0].filename:
                 for image in images:

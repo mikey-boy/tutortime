@@ -2,7 +2,7 @@
 {% block title %}{{ user.username }}{% endblock %}
 {% block content %}
     <div class="profile">
-        <img src="/static/img/tux.png">
+        <img src="{{ user.image_path }}">
         <div class="profile-info">
             <p>{{ user.username }}</p>
         </div>

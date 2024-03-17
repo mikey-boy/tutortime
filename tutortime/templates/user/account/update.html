@@ -3,18 +3,18 @@
 {% block title %}Update account{% endblock %}
 {% block content %}
 <div id="user-account-creation">
-    <form action="{{ url_for('user.user_account_update') }}" method="POST">
+    <form action="{{ url_for('user.user_account_update') }}" method="POST" enctype="multipart/form-data">
         <div class="label">
             Profile Picture
             <label for="profile-pic-input" id="profile-pic-label"><i class="fa-regular fa-pen-to-square fa-lg"></i></label>
-            <input accept="image/*" style="visibility:hidden;" type='file' id="profile-pic-input"/>
+            <input name="images" accept="image/*" style="visibility:hidden;" type='file' id="profile-pic-input"/>
         </div>
         <div>
-            <img id="profile-pic"  src="/static/img/tux.png">
+            <img id="profile-pic" src="{{ user.image_path }}">
         </div>
 
         <div class="label">Display Name</div>
-        <div><input type="text" name="username" value="{{ username }}" required></div>
+        <div><input type="text" name="username" value="{{ user.username }}" required></div>
 
         <div class="label">Availability</div>
         <table name="availability-table" class="availability-table">
@@ -65,7 +65,7 @@
         </table>
         
         <div class="label">About Me</div>
-        <div><textarea type="text" name="about-me" value="{{ description }}" rows="7"></textarea></div>
+        <div><textarea type="text" name="description" value="{{ user.description }}" rows="7"></textarea></div>
         
         <p class="error-text">{{ error_msg }}</p>
         <div class="flex-container" style="justify-content: center;">

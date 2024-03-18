@@ -1,76 +1,218 @@
 {% extends "home.html" %}
 {% block title %}Account{% endblock %}
 {% block content %}
+<div x-data="{ editing: false }">
     <h2>Account details</h2>
-    <p>Username: <a href="{{ url_for('user.user_account_update') }}">{{ user.username }}</a></p>
-    <h2>Lesson history</h2>
-    <div x-data="{ page: 0 }">
-        <div class="page-control">
-            <p>Current Balance: {{ user.minutes }} minutes</p>
-            {% if lessons|length > 10 %}
-                <div>
-                    <button @click="page = page == 0 ? page : page - 1"><i class="fa-solid fa-chevron-left fa-xl"></i></button>
-                    Page <p x-text="page"></p>
-                    <button @click="page = page == {{lessons|length//10}} ? page : page + 1"><i class="fa-solid fa-chevron-right fa-xl"></i></button>
-                </div>
+    <form id="user-account-list" :class="editing && 'editing'" action="{{ url_for('user.user_account_update') }}" method="POST" enctype="multipart/form-data">
+        <div class="label flex-container">
+            Profile Picture
+            <label x-show="editing" for="profile-pic-input" id="profile-pic-label"><i class="fa-solid fa-pen-to-square fa-lg"></i></label>
+            <input name="images" accept="image/*" style="visibility:hidden;" type='file' id="profile-pic-input"/>
+            <button class="cancel-button" x-show="editing" @click.prevent="editing = false"><i class="fa-solid fa-circle-xmark fa-2xl"></i></button>
+            <button class="edit-button" x-show="!editing" @click.prevent="editing = true">
+                <i class="fa-solid fa-pen-to-square fa-lg"></i>
+                Edit profile
+            </button>
+        </div>
+        <div>
+            <img id="profile-pic" src="{{ user.image_path }}">
+        </div>
+
+        <div class="label">Display Name</div>
+        <div x-show="editing"><input type="text" name="username" value="{{ user.username }}" required></div>
+        <div x-show="!editing"><p>{{ user.username }}</p></div>
+
+        <div class="label">Availability</div>
+        <table x-show="editing" name="availability-table" class="availability-table">
+            <thead>
+                <tr>
+                    <td>   </td>
+                    <td>Mon</td>
+                    <td>Tue</td>
+                    <td>Wed</td>
+                    <td>Thu</td>
+                    <td>Fri</td>
+                    <td>Sat</td>
+                    <td>Sun</td>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>morning</td>
+                    {% for i in range(7) %}
+                        {% if i|string ~ '-0' in availability %}   
+                            <td><input type="checkbox" name="{{ i }}-0" checked></td>
+                        {% else %}
+                            <td><input type="checkbox" name="{{ i }}-0"></td>
+                        {% endif %}
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>afternoon</td>
+                    {% for i in range(7) %}
+                        {% if i|string ~ '-1' in availability %}
+                            <td><input type="checkbox" name="{{ i }}-1" checked></td>
+                        {% else %}
+                            <td><input type="checkbox" name="{{ i }}-1"></td>
+                        {% endif %}
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>evening</td>
+                    {% for i in range(7) %}
+                        {% if i|string ~ '-2' in availability %}   
+                            <td><input type="checkbox" name="{{ i }}-2" checked></td>
+                        {% else %}
+                            <td><input type="checkbox" name="{{ i }}-2"></td>
+                        {% endif %}
+                    {% endfor %}
+                </tr>
+            </tbody>
+        </table>
+        <table x-show="!editing" class="availability-table">
+            <thead>
+                <tr>
+                <td></td>
+                <td>Mon</td>
+                <td>Tue</td>
+                <td>Wed</td>
+                <td>Thu</td>
+                <td>Fri</td>
+                <td>Sat</td>
+                <td>Sun</td>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>morning</td>
+                    {% for i in range(7) %}
+                        {% if i|string ~ "-0" in availability %}
+                            <td><i class="fa-regular fa-square-check"></i></td>
+                        {% else  %}
+                            <td><i class="fa-regular fa-square"></i></td>
+                        {% endif %}
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>afternoon</td>
+                    {% for i in range(7) %}
+                        {% if i|string ~ "-1" in availability %}
+                            <td><i class="fa-regular fa-square-check"></i></td>
+                        {% else  %}
+                            <td><i class="fa-regular fa-square"></i></td>
+                        {% endif %}
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>evening</td>
+                    {% for i in range(7) %}
+                        {% if i|string ~ "-2" in availability %}
+                            <td><i class="fa-regular fa-square-check"></i></td>
+                        {% else  %}
+                            <td><i class="fa-regular fa-square"></i></td>
+                        {% endif %}
+                    {% endfor %}
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="label">About Me</div>
+        <div x-show="editing"><textarea type="text" name="description" rows="5">{{ user.description }}</textarea></div>
+        <div x-show="!editing">
+            {% if user.description %}
+                <p>{{ user.description }}</p>
+            {% else %}
+                <p><i>No description provided</i></p>
             {% endif %}
         </div>
-        {% if lessons|length > 0 %}
-            <table id="user-transaction-table">
-                <thead>
-                    <tr>
-                        <td>Date</td>
-                        <td>Lesson title</td>
-                        <td>Tutor</td>
-                        <td>Student</td>
-                        <td>Status</td>
-                        <td>Minutes</td>
-                        <td>Balance</td>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for i in range(lessons|length) %}
-                        <tr x-show="page == {{i//10}}" >
-                            <td>{{ lessons[i]['day'] }}</td>
-                            <td>{{ lessons[i]['title'] }}</td>
-                            <td>{{ lessons[i]['tutor_name'] }}</td>
-                            <td>{{ lessons[i]['student_name'] }}</td>
 
-                            {% if lessons[i]['tutor_id'] == user.id %}
-                                {% if lessons[i]['status'] == 'confirmed' %}
-                                    <td>{{ lessons[i]['status'] }}</td>
-                                    <td>
-                                        {% if lessons[i]['bonus_duration'] != 0 %}
-                                            <span class="tutor-transaction">+{{ lessons[i]['actual_duration'] }}</span><span class="bonus-transaction"> (+{{ lessons[i]['bonus_duration'] }} bonus)</span> 
-                                        {% else %}
-                                            <p class="tutor-transaction">+{{ lessons[i]['actual_duration'] }}</p>
-                                        {% endif %}
-                                    </td>
-                                {% else %}
-                                    <td>pending confirmation</td>
-                                    <td class="pending-transaction">(+{{ lessons[i]['actual_duration'] }})</td>
-                                {% endif %}
-                            {% else %}
-                                {% if lessons[i]['status'] == 'accepted_student' or lessons[i]['status'] == 'accepted_tutor' %}
-                                    <td>pending acceptance</td>
-                                    <td class="pending-transaction">(-{{ lessons[i]['actual_duration'] }})</td>
-                                {% elif lessons[i]['status'] == 'confirmed_student' or lessons[i]['status'] == 'confirmed_tutor' %}
-                                    <td>pending confirmation</td>
-                                    <td class="student-transaction">-{{ lessons[i]['actual_duration'] }}</td>
-                                {% else %}
-                                    <td>{{ lessons[i]['status'] }}</td>
-                                    <td class="student-transaction">-{{ lessons[i]['actual_duration'] }}</td>
-                                {% endif %}
-                            {% endif %}
-                            <td>{{ lessons[i]['balance'] }}</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% else %}
-            <div class="empty-container">
-                <div><p>You have not booked or completed any lessons yet!</p></div>
+        <p class="error-text">{{ error_msg }}</p>
+        <div x-show="editing" class="flex-container" style="justify-content: center;">
+            <button class="submit-button" type="submit">Update account</button>
+        </div>
+    </form>
+</div>
+
+<h2>Lesson history</h2>
+<div x-data="{ page: 0 }">
+    <div class="page-control">
+        <p>Current Balance: {{ user.minutes }} minutes</p>
+        {% if lessons|length > 10 %}
+            <div>
+                <button @click="page = page == 0 ? page : page - 1"><i class="fa-solid fa-chevron-left fa-xl"></i></button>
+                Page <p x-text="page"></p>
+                <button @click="page = page == {{lessons|length//10}} ? page : page + 1"><i class="fa-solid fa-chevron-right fa-xl"></i></button>
             </div>
         {% endif %}
     </div>
+    {% if lessons|length > 0 %}
+        <table id="user-transaction-table">
+            <thead>
+                <tr>
+                    <td>Date</td>
+                    <td>Lesson title</td>
+                    <td>Tutor</td>
+                    <td>Student</td>
+                    <td>Status</td>
+                    <td>Minutes</td>
+                    <td>Balance</td>
+                </tr>
+            </thead>
+            <tbody>
+                {% for i in range(lessons|length) %}
+                    <tr x-show="page == {{i//10}}" >
+                        <td>{{ lessons[i]['day'] }}</td>
+                        <td>{{ lessons[i]['title'] }}</td>
+                        <td>{{ lessons[i]['tutor_name'] }}</td>
+                        <td>{{ lessons[i]['student_name'] }}</td>
+
+                        {% if lessons[i]['tutor_id'] == user.id %}
+                            {% if lessons[i]['status'] == 'confirmed' %}
+                                <td>{{ lessons[i]['status'] }}</td>
+                                <td>
+                                    {% if lessons[i]['bonus_duration'] != 0 %}
+                                        <span class="tutor-transaction">+{{ lessons[i]['actual_duration'] }}</span><span class="bonus-transaction"> (+{{ lessons[i]['bonus_duration'] }} bonus)</span> 
+                                    {% else %}
+                                        <p class="tutor-transaction">+{{ lessons[i]['actual_duration'] }}</p>
+                                    {% endif %}
+                                </td>
+                            {% else %}
+                                <td>pending confirmation</td>
+                                <td class="pending-transaction">(+{{ lessons[i]['actual_duration'] }})</td>
+                            {% endif %}
+                        {% else %}
+                            {% if lessons[i]['status'] == 'accepted_student' or lessons[i]['status'] == 'accepted_tutor' %}
+                                <td>pending acceptance</td>
+                                <td class="pending-transaction">(-{{ lessons[i]['actual_duration'] }})</td>
+                            {% elif lessons[i]['status'] == 'confirmed_student' or lessons[i]['status'] == 'confirmed_tutor' %}
+                                <td>pending confirmation</td>
+                                <td class="student-transaction">-{{ lessons[i]['actual_duration'] }}</td>
+                            {% else %}
+                                <td>{{ lessons[i]['status'] }}</td>
+                                <td class="student-transaction">-{{ lessons[i]['actual_duration'] }}</td>
+                            {% endif %}
+                        {% endif %}
+                        <td>{{ lessons[i]['balance'] }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="empty-container">
+            <div><p>You have not booked or completed any lessons yet!</p></div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+    var input = document.getElementById("profile-pic-input")
+    input.onchange = evt => {
+        const [file] = input.files
+        if (file) {
+            document.getElementById("profile-pic").src = URL.createObjectURL(file)
+        }
+    }
+</script>
 {% endblock %}

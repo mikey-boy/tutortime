@@ -697,13 +697,10 @@ button {
         background-color: var(--base0);
     }
 }
-#user-account-creation {
-    border: 1px dashed var(--green0);
-    padding: 0px 25px 25px 25px;
-    box-sizing: border-box;
-    margin: auto;
-    margin-top: 30px;
+#user-account-list {
     max-width: 800px;
+    border: 1px dashed var(--green0);
+    padding: 20px;
 
     img {
         width: 75px;
@@ -711,24 +708,44 @@ button {
         border-radius: 50%;
     }
     input {
-        padding: 5px;
+        padding: 4px;
     }
     textarea {
         width: calc(100% - 8px);
     }
-    button {
+    button.cancel-button {
+        background-color: var(--base0);
+        color: var(--base2);
+        margin-left: auto;
+    }
+    button.edit-button {
+        color: var(--text1);
+        background-color: var(--blue0);
+        margin-left: auto;
+        padding: 6px 8px;
+        font-weight: bold;
+
+        .fa-pen-to-square {
+            color: inherit;
+            margin-right: 2px;
+        }
+    }
+    button.submit-button {
         width: 250px;
         padding: 10px;
         margin-top: 10px;
         color: var(--text1);
         background-color: var(--green1);
     }
+    &.editing {
+        border: 1px dashed var(--orange);
+    }
     .label {
         font-weight: bold;
         margin: 30px 0px 10px 0px;
     }
     .label:first-child {
-        margin-top: 10px;
+        margin-top: 0px;
     }
     #profile-pic-label {
         cursor: pointer;

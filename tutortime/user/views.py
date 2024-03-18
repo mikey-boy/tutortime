@@ -71,38 +71,28 @@ def user_account_local():
         return redirect("/service/list/")
 
 
-@user_bp.route("/user/account/update", methods=["GET", "POST"])
+@user_bp.route("/user/account/update", methods=["POST"])
 def user_account_update():
     if session.get("user_id") is None:
         return render_template("error/not_logged_in.html", action="edit your profile")
 
     user = User.get(session["user_id"])
-    if request.method == "GET":
-        availability = availability_to_list(user.availability)
-        return render_template("/user/account/update.html", user=user, availability=availability)
-    else:
-        username = request.form.get("username")
-        description = request.form.get("description")
-        availability = availability_to_int(request.form.keys())
-        images = request.files.getlist("images")
 
-        status = user.update(username=username, description=description, availability=availability, images=images)
-        if status == -1:
-            return render_template(
-                "/user/account/update.html",
-                user=user,
-                availability=availability_to_list(availability),
-                error_msg="Display name is a required field",
-            )
-        elif status == -2:
-            return render_template(
-                "/user/account/update.html",
-                user=user,
-                availability=availability_to_list(availability),
-                error_msg="Display name already taken",
-            )
+    username = request.form.get("username")
+    description = request.form.get("description")
+    availability = availability_to_int(request.form.keys())
+    images = request.files.getlist("images")
 
-        return redirect("/service/list/")
+    error_msg = ""
+    status = user.update(username=username, description=description, availability=availability, images=images)
+    if status == -1:
+        error_msg = "Display name is a required field"
+    elif status == -2:
+        error_msg = "Display name already taken"
+
+    return render_template(
+        "/user/account/list.html", user=user, availability=availability_to_list(availability), error_msg=error_msg
+    )
 
 
 def add_or_get_user(social_id):

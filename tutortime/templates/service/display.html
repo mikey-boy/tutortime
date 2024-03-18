@@ -24,17 +24,17 @@
     </div>
     <div class="post availability">
         <h2>{{ user.username }}'s availability</h2>
-            <table class="availability-table">
-                <thead>
-                    <tr>
-                    <td></td>
-                    <td>Mon</td>
-                    <td>Tue</td>
-                    <td>Wed</td>
-                    <td>Thu</td>
-                    <td>Fri</td>
-                    <td>Sat</td>
-                    <td>Sun</td>
+        <table class="availability-table">
+            <thead>
+                <tr>
+                <td></td>
+                <td>Mon</td>
+                <td>Tue</td>
+                <td>Wed</td>
+                <td>Thu</td>
+                <td>Fri</td>
+                <td>Sat</td>
+                <td>Sun</td>
                 </tr>
             </thead>
             <tbody>
@@ -71,7 +71,6 @@
             </tbody>
         </table>
         {% if session.get("user_id") != service.user_id %}
-                
             <div class="flex-container">
             <a href="{{ url_for('message.message_list', user_id=user.id) }}"><button class="blue-button"><i class="fa-regular fa-paper-plane"></i> Message {{ user.username }}</button></a>
             <a href="{{ url_for('user.user_account_display', user_id=user.id) }}"><button class="green-button"><i class="fa-regular fa-user"></i> View {{ user.username }}'s profile</button></a>

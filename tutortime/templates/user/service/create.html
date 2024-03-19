@@ -71,57 +71,6 @@
                     </td>
                 </tr>
                 <tr>
-                    <td>Availability:</td>
-                    <td>
-                        <table class="availability-table">
-                            <thead>
-                                <tr>
-                                    <td>   </td>
-                                    <td>Mon</td>
-                                    <td>Tue</td>
-                                    <td>Wed</td>
-                                    <td>Thu</td>
-                                    <td>Fri</td>
-                                    <td>Sat</td>
-                                    <td>Sun</td>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>morning</td>
-                                    {% for i in range(7) %}
-                                        {% if i|string ~ '-0' in availability %}   
-                                            <td><input type="checkbox" name="{{ i }}-0" checked></td>
-                                        {% else %}
-                                            <td><input type="checkbox" name="{{ i }}-0"></td>
-                                        {% endif %}
-                                    {% endfor %}
-                                </tr>
-                                <tr>
-                                    <td>afternoon</td>
-                                    {% for i in range(7) %}
-                                        {% if i|string ~ '-1' in availability %}
-                                            <td><input type="checkbox" name="{{ i }}-1" checked></td>
-                                        {% else %}
-                                            <td><input type="checkbox" name="{{ i }}-1"></td>
-                                        {% endif %}
-                                    {% endfor %}
-                                </tr>
-                                <tr>
-                                    <td>evening</td>
-                                    {% for i in range(7) %}
-                                        {% if i|string ~ '-2' in availability %}   
-                                            <td><input type="checkbox" name="{{ i }}-2" checked></td>
-                                        {% else %}
-                                            <td><input type="checkbox" name="{{ i }}-2"></td>
-                                        {% endif %}
-                                    {% endfor %}
-                                </tr>
-                            </tbody>
-                        </table>
-                    </td>
-                </tr>
-                <tr>
                     <td>Upload images:</td>
                     <td><input type="file" name="images" accept="image/png, image/jpeg" multiple/></td>
                 </tr>

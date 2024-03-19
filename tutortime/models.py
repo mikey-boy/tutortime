@@ -41,12 +41,13 @@ class LessonStatus(StrEnum):
     CONFIRMED_TUTOR = auto()
 
 
-GENERIC = {
-    ServiceCategory.LANGUAGE: "static/img/generic/language.jpg",
-    ServiceCategory.SOFTWARE: "static/img/generic/software.jpg",
-    ServiceCategory.WELLNESS: "static/img/generic/wellness.jpg",
-    ServiceCategory.MUSIC: "static/img/generic/music.jpg",
-    ServiceCategory.OTHER: "static/img/generic/other.jpg",
+DEFAULT_PROFILE_IMG = "/static/img/default/tux.png"
+DEFAULT_SERVICE_IMG = {
+    ServiceCategory.LANGUAGE: "/static/img/default/language.jpg",
+    ServiceCategory.SOFTWARE: "/static/img/default/software.jpg",
+    ServiceCategory.WELLNESS: "/static/img/default/wellness.jpg",
+    ServiceCategory.MUSIC: "/static/img/default/music.jpg",
+    ServiceCategory.OTHER: "/static/img/default/other.jpg",
 }
 
 
@@ -57,6 +58,9 @@ class User(db.Model):
     social_id: Mapped[str] = mapped_column()
     username: Mapped[str] = mapped_column()
     password: Mapped[str] = mapped_column(nullable=True)
+    description: Mapped[str] = mapped_column(default="")
+    availability: Mapped[int] = mapped_column(default=0)
+    image_path: Mapped[str] = mapped_column(default=DEFAULT_PROFILE_IMG)
     timezone: Mapped[int] = mapped_column()
     minutes: Mapped[int] = mapped_column(default=60)
     services: Mapped[List["Service"]] = relationship(back_populates="user")
@@ -73,12 +77,33 @@ class User(db.Model):
         db.session.delete(self)
         db.session.commit()
 
+    def update(self, username: str, description: str, availability: str, images: list) -> int:
+        status = 0
+        self.description = description
+        self.availability = availability
+
+        if username is None or username == "":
+            status = -1
+        elif User.username_exists(username) and username != self.username:
+            status = -2
+        else:
+            self.username = username
+
+        if images != [] and images[0].filename:
+            if self.image_path and self.image_path != DEFAULT_PROFILE_IMG:
+                try:
+                    os.remove(self.image_path)
+                except FileNotFoundError:
+                    logging.warning(f"Image not found on server: '{self.image_path}'")
+
+            self.image_path = os.path.join(current_app.config["IMAGE_FOLDER"], str(uuid.uuid4()))
+            images[0].save(self.image_path[1:])
+
+        db.session.commit()
+        return status
+
     def update_minutes(self, minutes: int) -> None:
         self.minutes += minutes
-        db.session.commit()
-
-    def update_username(self, username: str) -> None:
-        self.username = username
         db.session.commit()
 
     def username_exists(username: str) -> bool:
@@ -123,7 +148,6 @@ class Service(db.Model):
     description: Mapped[str] = mapped_column()
     category: Mapped[ServiceCategory] = mapped_column()
     status: Mapped[ServiceStatus] = mapped_column(default=ServiceStatus.ACTIVE)
-    availability: Mapped[int] = mapped_column()
     minutes: Mapped[int] = mapped_column(default=0)
     images: Mapped[List["Image"]] = relationship(back_populates="service")
     lessons: Mapped[List["Lesson"]] = relationship(back_populates="service")
@@ -145,11 +169,10 @@ class Service(db.Model):
             image.remove()
         self.update(LessonStatus.CANCELLED)
 
-    def update(self, title: str, description: str, category: str, availability: int) -> None:
+    def update(self, title: str, description: str, category: str) -> None:
         self.title = title
         self.description = description
         self.category = category
-        self.availability = availability
         db.session.commit()
 
     def update_status(self, status: ServiceStatus) -> None:
@@ -194,10 +217,10 @@ class Image(db.Model):
         if image:
             self.filename = image.filename
             self.path = os.path.join(current_app.config["IMAGE_FOLDER"], str(uuid.uuid4()))
-            image.save(self.path)
+            image.save(self.path[1:])
         else:
-            self.filename = GENERIC[category]
-            self.path = GENERIC[category]
+            self.filename = DEFAULT_SERVICE_IMG[category]
+            self.path = DEFAULT_SERVICE_IMG[category]
 
     def add(self) -> None:
         db.session.add(self)

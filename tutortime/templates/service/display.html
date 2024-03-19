@@ -5,7 +5,7 @@
     <div class="post">
         <h2>{{ service.title }}</h2>
         <div class="profile">
-            <img src="/static/img/tux.png">
+            <img src="{{ user.image_path }}">
             <div class="profile-info">
                 <a href="{{ url_for('user.user_account_display', user_id=user.id) }}">{{ user.username }}</a>
                 <span>has taught this lesson: {{ service.lessons|length }} times<br>for a total of: {{ service.minutes }} minutes</span>
@@ -13,7 +13,7 @@
         </div>
         <div class="image-container">
             {% for i in range(service.images|length) %}
-                <img x-show="image == {{ i }}" src="/{{ service.images[i].path }}" alt="{{ service.images[i].filename }}">
+                <img x-show="image == {{ i }}" src="{{ service.images[i].path }}" alt="{{ service.images[i].filename }}">
             {% endfor %}
             {% if service.images|length > 1 %}
                 <button class="image-prev" @click="image = image == 0 ? {{ service.images|length }} - 1 : (image - 1)"><i class="fa-regular fa-circle-left fa-2x"></i></button>
@@ -24,17 +24,17 @@
     </div>
     <div class="post availability">
         <h2>{{ user.username }}'s availability</h2>
-            <table class="availability-table">
-                <thead>
-                    <tr>
-                    <td></td>
-                    <td>Mon</td>
-                    <td>Tue</td>
-                    <td>Wed</td>
-                    <td>Thu</td>
-                    <td>Fri</td>
-                    <td>Sat</td>
-                    <td>Sun</td>
+        <table class="availability-table">
+            <thead>
+                <tr>
+                <td></td>
+                <td>Mon</td>
+                <td>Tue</td>
+                <td>Wed</td>
+                <td>Thu</td>
+                <td>Fri</td>
+                <td>Sat</td>
+                <td>Sun</td>
                 </tr>
             </thead>
             <tbody>
@@ -71,7 +71,6 @@
             </tbody>
         </table>
         {% if session.get("user_id") != service.user_id %}
-                
             <div class="flex-container">
             <a href="{{ url_for('message.message_list', user_id=user.id) }}"><button class="blue-button"><i class="fa-regular fa-paper-plane"></i> Message {{ user.username }}</button></a>
             <a href="{{ url_for('user.user_account_display', user_id=user.id) }}"><button class="green-button"><i class="fa-regular fa-user"></i> View {{ user.username }}'s profile</button></a>

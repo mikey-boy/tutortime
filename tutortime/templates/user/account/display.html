@@ -7,7 +7,12 @@
             <p>{{ user.username }}</p>
         </div>
     </div>
-    <h2>Service history</h2>
+
+    {% if user.description %}
+        <pre>{{ user.description }}</pre>
+    {% endif %}
+
+    <h2>Active services</h2>
     <div x-data="{ page: 0 }">
         <div class="page-control">
             {% if services|length > 10 %}
@@ -41,7 +46,7 @@
             </table>
         {% else %}
             <div class="empty-container">
-                <div><p>{{ user.username }} has not created any services yet!</p></div>
+                <div><p>{{ user.username }} has no active services!</p></div>
             </div>
         {% endif %}
     </div>

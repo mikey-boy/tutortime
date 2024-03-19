@@ -71,30 +71,6 @@ def user_account_local():
         return redirect("/service/list/")
 
 
-@user_bp.route("/user/account/update", methods=["POST"])
-def user_account_update():
-    if session.get("user_id") is None:
-        return render_template("error/not_logged_in.html", action="edit your profile")
-
-    user = User.get(session["user_id"])
-
-    username = request.form.get("username")
-    description = request.form.get("description")
-    availability = availability_to_int(request.form.keys())
-    images = request.files.getlist("images")
-
-    error_msg = ""
-    status = user.update(username=username, description=description, availability=availability, images=images)
-    if status == -1:
-        error_msg = "Display name is a required field"
-    elif status == -2:
-        error_msg = "Display name already taken"
-
-    return render_template(
-        "/user/account/list.html", user=user, availability=availability_to_list(availability), error_msg=error_msg
-    )
-
-
 def add_or_get_user(social_id):
     from random import randint
 
@@ -124,7 +100,7 @@ def user_callback_facebook():
         user, added = add_or_get_user(social_id=social_id)
         session["user_id"] = user.id
         if added:
-            return redirect("/user/account/update")
+            return redirect("/user/account/list")
 
     return redirect("/service/list/")
 
@@ -151,7 +127,7 @@ def user_callback_google():
         user, added = add_or_get_user(social_id=social_id)
         session["user_id"] = user.id
         if added:
-            return redirect("/user/account/update")
+            return redirect("/user/account/list")
 
     return redirect("/service/list/")
 
@@ -188,32 +164,54 @@ def user_account_create():
             return render_template("user/account/create.html", error_msg="User account already exists")
 
         session["user_id"] = user.id
-        return redirect("/service/list/")
+        return redirect("/user/account/list")
 
 
-@user_bp.route("/user/account/list")
+@user_bp.route("/user/account/list/", methods=["GET", "POST"])
 def user_account_list():
     if session.get("user_id") is None:
         return render_template("error/not_logged_in.html", action="view your profile")
 
     user = User.get(session["user_id"])
-    services = user.get_services(ServiceStatus.ACTIVE)
-    lessons = [lesson.to_json() for lesson in Lesson.get_lessons_for_user(user.id, statuses, False)]
+    if request.method == "POST":
+        username = request.form.get("username")
+        description = request.form.get("description")
+        availability = availability_to_int(request.form.keys())
+        images = request.files.getlist("images")
 
-    minutes = user.minutes
-    for lesson in lessons:
-        lesson["balance"] = minutes
-        if lesson["tutor_id"] == session["user_id"] and lesson["status"] == LessonStatus.CONFIRMED:
-            minutes -= lesson["actual_duration"]
-            if lesson["bonus_duration"] != 0:
-                minutes -= lesson["bonus_duration"]
-        elif lesson["student_id"] == session["user_id"] and lesson["status"].startswith("accepted_") is False:
-            minutes += lesson["proposed_duration"]
-    return render_template("user/account/list.html", user=user, services=services, lessons=lessons)
+        status = user.update(username=username, description=description, availability=availability, images=images)
+        if status == -1:
+            return redirect(url_for("user.user_account_list", error_msg="Username is a required field"))
+        if status == -2:
+            return redirect(url_for("user.user_account_list", error_msg=f"Username '{username}' already taken"))
+
+        return redirect("/user/account/list")
+    else:
+        availability = availability_to_list(user.availability)
+        services = user.get_services(ServiceStatus.ACTIVE)
+        lessons = [lesson.to_json() for lesson in Lesson.get_lessons_for_user(user.id, statuses, False)]
+        minutes = user.minutes
+        for lesson in lessons:
+            lesson["balance"] = minutes
+            if lesson["tutor_id"] == session["user_id"] and lesson["status"] == LessonStatus.CONFIRMED:
+                minutes -= lesson["actual_duration"]
+                if lesson["bonus_duration"] != 0:
+                    minutes -= lesson["bonus_duration"]
+            elif lesson["student_id"] == session["user_id"] and lesson["status"].startswith("accepted_") is False:
+                minutes += lesson["proposed_duration"]
+
+        return render_template(
+            "user/account/list.html",
+            user=user,
+            availability=availability,
+            services=services,
+            lessons=lessons,
+            error_msg=request.args.get("error_msg", ""),
+        )
 
 
 @user_bp.route("/user/account/display/<int:user_id>")
-def user_account_display(user_id: str):
+def user_account_display(user_id: int):
     user = User.get(user_id)
     if user is None:
         return render_template("error/nonexistant_user.html")

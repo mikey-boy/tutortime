@@ -3,7 +3,7 @@
 {% block content %}
 <div x-data="{ editing: false }">
     <h2>Account details</h2>
-    <form id="user-account-list" :class="editing && 'editing'" action="{{ url_for('user.user_account_update') }}" method="POST" enctype="multipart/form-data">
+    <form id="user-account-list" :class="editing && 'editing'" action="{{ url_for('user.user_account_list') }}" method="POST" enctype="multipart/form-data">
         <div class="label flex-container">
             Profile Picture
             <label x-show="editing" for="profile-pic-input" id="profile-pic-label"><i class="fa-solid fa-pen-to-square fa-lg"></i></label>
@@ -18,9 +18,10 @@
             <img id="profile-pic" src="{{ user.image_path }}">
         </div>
 
-        <div class="label">Display Name</div>
-        <div x-show="editing"><input type="text" name="username" value="{{ user.username }}" required></div>
+        <div class="label">Display Name<span class="error-text"> * {{ error_msg }}</span></div>
+        <div x-show="editing"><input type="text" @keydown.enter="document.getElementById('user-account-list').submit()" name="username" value="{{ user.username }}" required></div>
         <div x-show="!editing"><p>{{ user.username }}</p></div>
+
 
         <div class="label">Availability</div>
         <table x-show="editing" name="availability-table" class="availability-table">
@@ -120,17 +121,66 @@
         <div x-show="editing"><textarea type="text" name="description" rows="5">{{ user.description }}</textarea></div>
         <div x-show="!editing">
             {% if user.description %}
-                <p>{{ user.description }}</p>
+                <pre>{{ user.description }}</pre>
             {% else %}
                 <p><i>No description provided</i></p>
             {% endif %}
         </div>
 
-        <p class="error-text">{{ error_msg }}</p>
         <div x-show="editing" class="flex-container" style="justify-content: center;">
             <button class="submit-button" type="submit">Update account</button>
         </div>
     </form>
+</div>
+
+<h2>Active services</h2>
+<div x-data="{ page: 0 }">
+    <div class="page-control">
+        {% if services|length > 10 %}
+            <div>
+                <button @click="page = page == 0 ? page : page - 1"><i class="fa-solid fa-chevron-left fa-xl"></i></button>
+                Page <p x-text="page"></p>
+                <button @click="page = page == {{lessons|length//10}} ? page : page + 1"><i class="fa-solid fa-chevron-right fa-xl"></i></button>
+            </div>
+        {% endif %}
+    </div>
+    {% if services|length > 0 %}
+        <table class="user-service-table">
+            <thead>
+                <tr>
+                    <th class="title">Service title</th>
+                    <th class="description">Description</th>
+                    <th>Lessons</th>
+                    <th>Minutes</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for i in range(services|length) %}
+                    <tr x-show="page == {{i//10}}" >
+                        <td class="truncated"><a href="{{ url_for('service.service_display', service_id=services[i]['id']) }}">{{ services[i]['title'] }}</a></td>
+                        <td class="truncated">{{ services[i]['description'] }}</td>
+                        <td>{{ lessons[i] | length }}</td>
+                        <td>{{ services[i]['minutes'] }}</td>
+                        <td>
+                            <a href="/user/service/update/{{ services[i].id }}"><i class="fa-regular fa-pen-to-square fa-lg"></i></a>
+                            {% if services[i].status == 'active' %}
+                                <a href="/user/service/pause/{{ services[i].id }}"><i class="fa-regular fa-circle-pause fa-lg"></i></a>
+                            {% else %}
+                                <a href="/user/service/activate/{{ services[i].id }}"><i class="fa-regular fa-circle-play fa-lg"></i></a>
+                            {% endif %}
+                            <a href="/user/service/delete/{{ services[i].id }}"><i class="fa-regular fa-trash-can fa-lg"></i></a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="empty-container empty-service">
+            <div><p>You have no active services!</p></div>
+            <div><a href="{{ url_for('service.user_service_create')}}"><button id="create-service">Create a service</button></a></div>
+        </div>
+    {% endif %}
 </div>
 
 <h2>Lesson history</h2>

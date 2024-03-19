@@ -58,7 +58,7 @@ class User(db.Model):
     social_id: Mapped[str] = mapped_column()
     username: Mapped[str] = mapped_column()
     password: Mapped[str] = mapped_column(nullable=True)
-    description: Mapped[str] = mapped_column(nullable=True)
+    description: Mapped[str] = mapped_column(default="")
     availability: Mapped[int] = mapped_column(default=0)
     image_path: Mapped[str] = mapped_column(default=DEFAULT_PROFILE_IMG)
     timezone: Mapped[int] = mapped_column()
@@ -169,7 +169,7 @@ class Service(db.Model):
             image.remove()
         self.update(LessonStatus.CANCELLED)
 
-    def update(self, title: str, description: str, category: str, availability: int) -> None:
+    def update(self, title: str, description: str, category: str) -> None:
         self.title = title
         self.description = description
         self.category = category

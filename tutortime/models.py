@@ -8,7 +8,6 @@ from typing import List, Optional, Self
 
 from flask import current_app
 from sqlalchemy import ForeignKey, desc, select
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from werkzeug.datastructures import FileStorage
@@ -66,12 +65,12 @@ class User(db.Model):
     services: Mapped[List["Service"]] = relationship(back_populates="user")
 
     def add(self) -> bool:
-        try:
-            db.session.add(self)
-            db.session.commit()
-            return True
-        except IntegrityError:
+        if User.username_exists(self.username):
             return False
+
+        db.session.add(self)
+        db.session.commit()
+        return True
 
     def remove(self) -> None:
         db.session.delete(self)
@@ -92,7 +91,7 @@ class User(db.Model):
         if images != [] and images[0].filename:
             if self.image_path and self.image_path != DEFAULT_PROFILE_IMG:
                 try:
-                    os.remove(self.image_path)
+                    os.remove(self.image_path[1:])
                 except FileNotFoundError:
                     logging.warning(f"Image not found on server: '{self.image_path}'")
 
@@ -228,7 +227,7 @@ class Image(db.Model):
 
     def remove(self) -> None:
         try:
-            os.remove(self.path)
+            os.remove(self.path[1:])
         except FileNotFoundError:
             logging.warning(f"Image not found on server: '{self.path}'")
 

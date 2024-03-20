@@ -161,7 +161,7 @@ def user_account_create():
         encoded_password = hashlib.sha256(password.encode()).hexdigest()
         user = User(social_id=social_id, username=username, password=encoded_password, timezone="America/Toronto")
         if user.add() is False:
-            return render_template("user/account/create.html", error_msg="User account already exists")
+            return render_template("user/account/create.html", error_msg=f"Username '{username}' already taken")
 
         session["user_id"] = user.id
         return redirect("/user/account/list")

@@ -7,7 +7,7 @@ from dateutil.relativedelta import relativedelta
 from flask import Blueprint, Flask, redirect, render_template, request, session, url_for
 from rauth import OAuth2Service
 
-from tutortime.models import Lesson, LessonStatus, ServiceStatus, User
+from tutortime.models import Image, Lesson, LessonStatus, ServiceStatus, User
 from tutortime.user.utils import availability_to_int, availability_to_list
 
 google = None
@@ -164,6 +164,8 @@ def user_account_create():
             return render_template("user/account/create.html", error_msg=f"Username '{username}' already taken")
 
         session["user_id"] = user.id
+        user.image = Image(user_id=user.id)
+        user.image.add()
         return redirect("/user/account/list")
 
 
@@ -179,7 +181,14 @@ def user_account_list():
         availability = availability_to_int(request.form.keys())
         images = request.files.getlist("images")
 
-        status = user.update(username=username, description=description, availability=availability, images=images)
+        user.image.remove()
+        if images[0].filename:
+            user.image = Image(user_id=user.id, image=images[0])
+        else:
+            user.image = Image(user_id=user.id)
+        user.image.add()
+
+        status = user.update(username=username, description=description, availability=availability)
         if status == -1:
             return redirect(url_for("user.user_account_list", error_msg="Username is a required field"))
         if status == -2:

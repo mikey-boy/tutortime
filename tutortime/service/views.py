@@ -1,4 +1,4 @@
-from flask import Blueprint, abort, redirect, render_template, request, session
+from flask import Blueprint, abort, redirect, render_template, request, session, url_for
 
 from tutortime.models import Image, Service, ServiceStatus, User
 from tutortime.user.utils import availability_to_list
@@ -92,15 +92,14 @@ def user_service_update(service_id):
         if request.method == "GET":
             return render_template("user/service/create.html", service=service)
         else:
-            for image in service.images:
-                image.remove()
-
             title = request.form.get("title")
             description = request.form.get("description")
             category = request.form.get("category")
             images = request.files.getlist("images")
             service.update(title, description, category)
 
+            for image in service.images:
+                image.remove()
             if images[0].filename:
                 for image in images:
                     Image(service_id=service.id, image=image).add()

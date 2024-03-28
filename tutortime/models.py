@@ -59,7 +59,7 @@ class User(db.Model):
     password: Mapped[str] = mapped_column(nullable=True)
     description: Mapped[str] = mapped_column(default="")
     availability: Mapped[int] = mapped_column(default=0)
-    image_path: Mapped[str] = mapped_column(default=DEFAULT_PROFILE_IMG)
+    image: Mapped["Image"] = relationship()
     timezone: Mapped[int] = mapped_column()
     minutes: Mapped[int] = mapped_column(default=60)
     services: Mapped[List["Service"]] = relationship(back_populates="user")
@@ -76,7 +76,7 @@ class User(db.Model):
         db.session.delete(self)
         db.session.commit()
 
-    def update(self, username: str, description: str, availability: str, images: list) -> int:
+    def update(self, username: str, description: str, availability: str) -> int:
         status = 0
         self.description = description
         self.availability = availability
@@ -87,16 +87,6 @@ class User(db.Model):
             status = -2
         else:
             self.username = username
-
-        if images != [] and images[0].filename:
-            if self.image_path and self.image_path != DEFAULT_PROFILE_IMG:
-                try:
-                    os.remove(self.image_path[1:])
-                except FileNotFoundError:
-                    logging.warning(f"Image not found on server: '{self.image_path}'")
-
-            self.image_path = os.path.join(current_app.config["IMAGE_FOLDER"], str(uuid.uuid4()))
-            images[0].save(self.image_path[1:])
 
         db.session.commit()
         return status
@@ -148,7 +138,7 @@ class Service(db.Model):
     category: Mapped[ServiceCategory] = mapped_column()
     status: Mapped[ServiceStatus] = mapped_column(default=ServiceStatus.ACTIVE)
     minutes: Mapped[int] = mapped_column(default=0)
-    images: Mapped[List["Image"]] = relationship(back_populates="service")
+    images: Mapped[List["Image"]] = relationship()
     lessons: Mapped[List["Lesson"]] = relationship(back_populates="service")
 
     def to_json(self) -> dict:
@@ -205,12 +195,15 @@ class Image(db.Model):
     __tablename__ = "image"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    service_id: Mapped[int] = mapped_column(ForeignKey("service.id"))
-    service: Mapped["Service"] = relationship(back_populates="images")
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=True)
+    service_id: Mapped[int] = mapped_column(ForeignKey("service.id"), nullable=True)
     filename: Mapped[str] = mapped_column()
     path: Mapped[str] = mapped_column()
 
-    def __init__(self, service_id: int, image: FileStorage = None, category: ServiceCategory = None) -> None:
+    def __init__(
+        self, user_id: int = None, service_id: int = None, image: FileStorage = None, category: ServiceCategory = None
+    ) -> None:
+        self.user_id = user_id
         self.service_id = service_id
 
         if image:
@@ -218,8 +211,12 @@ class Image(db.Model):
             self.path = os.path.join(current_app.config["IMAGE_FOLDER"], str(uuid.uuid4()))
             image.save(self.path[1:])
         else:
-            self.filename = DEFAULT_SERVICE_IMG[category]
-            self.path = DEFAULT_SERVICE_IMG[category]
+            if user_id:
+                self.filename = DEFAULT_PROFILE_IMG
+                self.path = DEFAULT_PROFILE_IMG
+            else:
+                self.filename = DEFAULT_SERVICE_IMG[category]
+                self.path = DEFAULT_SERVICE_IMG[category]
 
     def add(self) -> None:
         db.session.add(self)

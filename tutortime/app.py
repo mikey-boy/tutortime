@@ -20,8 +20,8 @@ def create_app(config=None):
     else:
         configure_app(app, LocalDevelopmentConfig)
 
-    if os.path.exists(app.config["IMAGE_FOLDER"][1:]) is False:
-        os.makedirs(app.config["IMAGE_FOLDER"][1:])
+    if os.path.exists(os.path.join(app.instance_path, app.config["IMAGE_FOLDER"])) is False:
+        os.makedirs(os.path.join(app.instance_path, app.config["IMAGE_FOLDER"]))
 
     configure_extensions(app)
     configure_blueprints(app)

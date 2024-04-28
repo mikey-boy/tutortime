@@ -96,7 +96,7 @@ class User(db.Model):
                 except FileNotFoundError:
                     logging.warning(f"Image not found on server: '{self.image_path}'")
 
-            self.image_path = os.path.join(current_app.config["IMAGE_FOLDER"], str(uuid.uuid4()))
+            self.image_path = os.path.join("/", current_app.config["IMAGE_FOLDER"], str(uuid.uuid4()))
             images[0].save(self.image_path[1:])
 
         db.session.commit()
@@ -210,17 +210,21 @@ class Image(db.Model):
     service: Mapped["Service"] = relationship(back_populates="images")
     filename: Mapped[str] = mapped_column()
     path: Mapped[str] = mapped_column()
+    os_path: Mapped[str] = mapped_column()
 
     def __init__(self, service_id: int, image: FileStorage = None, category: ServiceCategory = None) -> None:
         self.service_id = service_id
 
         if image:
             self.filename = image.filename
-            self.path = os.path.join(current_app.config["IMAGE_FOLDER"], str(uuid.uuid4()))
-            image.save(self.path[1:])
+            uuid_filename = str(uuid.uuid4())
+            self.path = os.path.join("/", current_app.config["IMAGE_FOLDER"], uuid_filename)
+            self.os_path = os.path.join(current_app.instance_path, current_app.config["IMAGE_FOLDER"], uuid_filename)
+            image.save(self.os_path)
         else:
             self.filename = DEFAULT_SERVICE_IMG[category]
             self.path = DEFAULT_SERVICE_IMG[category]
+            self.os_path = DEFAULT_SERVICE_IMG[category]
 
     def add(self) -> None:
         db.session.add(self)
@@ -228,7 +232,7 @@ class Image(db.Model):
 
     def remove(self) -> None:
         try:
-            os.remove(self.path)
+            os.remove(self.os_path)
         except FileNotFoundError:
             logging.warning(f"Image not found on server: '{self.path}'")
 

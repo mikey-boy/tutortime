@@ -23,20 +23,17 @@ You will need the following installed:
 git clone https://github.com/mikey-boy/tutortime.git
 cd tutortime
 
-# (Optional) Configure a virtual environment
-# python -m venv .venv
-# source .venv/bin/activate
-
-# Install the Python dependencies
+# Configure a virtual environment and install the Python dependencies
+python -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 
 # Create a config file
-cd tutortime
-cp config-sample.py config.py
+cp tutortime/config-sample.py tutortime/config.py
 
 # Initialiaze the database with test data, run the app
-flask initdb
-flask run --debug
+flask --app tutortime/app.py initdb
+flask --app tutortime/app.py --debug run
 ```
 
 After the following steps the app should be available on [localhost](http://localhost:5000). OAuth2 integrations (Google, Facebook) will not work, but you should be able to create local user accounts.

@@ -1,4 +1,6 @@
-from flask import Blueprint, abort, redirect, render_template, request, session
+import os
+
+from flask import Blueprint, abort, current_app, redirect, render_template, request, send_from_directory, session
 
 from tutortime.models import Image, Service, ServiceStatus, User
 from tutortime.user.utils import availability_to_list
@@ -144,3 +146,11 @@ def user_service_pause(service_id: int):
 @service_bp.route("/user/service/activate/<int:service_id>")
 def user_service_activate(service_id: int):
     return _user_service_status_update(service_id, ServiceStatus.ACTIVE)
+
+
+@service_bp.route("/uploads/<path:path>")
+def fetch_upload(path):
+    try:
+        return send_from_directory(os.path.join(current_app.instance_path, current_app.config["IMAGE_FOLDER"]), path)
+    except FileNotFoundError:
+        abort(404)

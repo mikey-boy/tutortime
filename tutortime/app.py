@@ -12,11 +12,12 @@ from tutortime.user.views import configure_oauth_providers
 
 def create_app(config=None):
     app = Flask(__name__)
-
     if config == "CloudDevelopmentConfig":
         configure_app(app, CloudDevelopmentConfig)
+        app.instance_path = CloudDevelopmentConfig.INSTANCE_PATH
     elif config == "CloudProductionConfig":
         configure_app(app, CloudProductionConfig)
+        # app.instance_path=CloudProductionConfig.INSTANCE_PATH
     else:
         configure_app(app, LocalDevelopmentConfig)
 

@@ -1,3 +1,7 @@
+import eventlet
+
+eventlet.patcher.monkey_patch()
+
 import os
 
 from flask import Flask, session

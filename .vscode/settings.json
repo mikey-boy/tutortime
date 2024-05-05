@@ -4,7 +4,7 @@
     ],
     "flake8.args": [
         "--max-line-length=120",
-        "--per-file-ignores=tutortime/app.py:E402",
+        "--per-file-ignores=tutortime/wsgi.py:E402",
     ],
     "[python]": {
         "editor.defaultFormatter": "ms-python.black-formatter",

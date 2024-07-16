@@ -1,0 +1,145 @@
+[data-theme="dark"] {
+  --base0: #2e3436;
+  --base1: #3e4648;
+  --base2: #808080;
+  --base3: #fef0db;
+  --text0: #E0E0E0;
+  --text1: #fff;
+  --green0: #a3be8c;
+  --green1: #85b75c;
+  --blue0: #5095e9;
+  --blue1: #99C1F1;
+  --orange: #fc9b10;
+  --red: #b85757;
+}
+
+[data-theme="light"] {
+  --base0: #fdf6e3;
+  --base1: #eee8d5;
+  --base2: #93a1a1;
+  --base3: #fef0db;
+  --text0: #586e75;
+  --text1: #fff;
+  --green0: #68be76;
+  --green1: #68be76;
+  --blue0: #268bd2;
+  --blue1: #268bd2;
+  --orange: #fc9b10;
+  --red: #b85757;
+}
+
+* {
+  font-family: "Nunito", sans-serif;
+}
+
+html {
+  background-color: var(--base0);
+}
+
+hr {
+  border-top: 1px solid var(--base2);
+  margin-top: 0px;
+}
+
+body {
+  margin: 0;
+  font-weight: 500;
+  font-size: 17px;
+  font-style: normal;
+  color: var(--text0);
+}
+
+th {
+  text-align: left;
+  font-weight: bolder;
+}
+
+a {
+  color: var(--green0);
+  text-decoration: none;
+}
+
+h1,h2,h3,h4,h5,h6 {
+  color: var(--blue1);
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: 3px;
+}
+
+pre {
+  white-space: pre-wrap;
+}
+
+.error-text {
+    color: var(--red);
+}
+
+.relative-container {
+    position: relative;
+}
+
+.flex-container {
+    display: flex;
+}
+
+.fa-pen-to-square {
+    color: var(--blue1);
+}
+
+.fa-circle-pause {
+    color: var(--base2);
+}
+
+.fa-circle-play {
+    color: var(--green0);
+}
+
+.fa-trash-can {
+    color: var(--red);
+}
+
+.truncated-text {
+    display: -webkit-box;
+    line-clamp: 3;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user-service-table {
+    table-layout: fixed;
+    width: 100%;
+    border: 1px dashed var(--green0);
+    border-spacing: 0;
+    padding: 10px;
+
+    td, th {
+        padding: 3px;
+    }
+    tbody tr:hover {
+        background-color: var(--base1);
+    }
+    th {
+        width: 70px;
+    }
+    th.description {
+        width: 450px;
+    }
+    th.title {
+        width: 150px;
+    }
+    .truncated {
+        white-space: nowrap; /* Prevent text from wrapping */
+        overflow: hidden; /* Hide overflowing text */
+        text-overflow: ellipsis;
+    }
+    .actions {
+        a {
+            margin-left: 2px;
+        }
+    }
+}

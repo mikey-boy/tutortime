@@ -64,6 +64,7 @@ func main() {
 
 	mux.HandleFunc("GET /api/services", api.GetServices)
 	mux.HandleFunc("POST /api/services", api.AddService)
+	mux.HandleFunc("PUT /api/services/{id}", api.UpdateService)
 
 	addr := fmt.Sprintf("%s:%d", config.Webserver.Host, config.Webserver.Port)
 	fmt.Printf("Serving the application on http://%s\n", addr)

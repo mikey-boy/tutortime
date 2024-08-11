@@ -10,13 +10,13 @@ import (
 
 var db *gorm.DB
 
-type ServiceStatus int
+type ServiceStatus string
 type ServiceCategory int
 
 const (
-	Active ServiceStatus = iota
-	Paused
-	Cancelled
+	Active    ServiceStatus = "active"
+	Paused    ServiceStatus = "paused"
+	Cancelled ServiceStatus = "cancelled"
 )
 
 const (
@@ -68,6 +68,16 @@ func (user *User) Get() error {
 
 func (service *Service) Add() error {
 	result := db.Create(service)
+	return result.Error
+}
+
+func (service *Service) Get() error {
+	result := db.Where(service)
+	return result.Error
+}
+
+func (service *Service) Update() error {
+	result := db.Save(service)
 	return result.Error
 }
 

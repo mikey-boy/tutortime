@@ -45,13 +45,9 @@ export default {
       fetch("/api/accesstoken", {
         method: "POST",
         body: data,
-      })
-        .then((response) => {
-          console.log(response.data);
-        })
-        .catch((error) => {
-          console.error("Error fetching data:", error);
-        });
+      }).catch((error) => {
+        console.error("Error fetching data:", error);
+      });
     },
 
     localAccountCreate(event) {
@@ -59,13 +55,9 @@ export default {
       fetch("/api/users", {
         method: "POST",
         body: data,
-      })
-        .then((response) => {
-          console.log(response.data);
-        })
-        .catch((error) => {
-          console.error("Error fetching data:", error);
-        });
+      }).catch((error) => {
+        console.error("Error fetching data:", error);
+      });
     },
   },
 };

@@ -2,13 +2,19 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
+
+	"gorm.io/gorm"
 )
 
 // GET /api/services
 func GetServices(w http.ResponseWriter, r *http.Request) {
 	var services []Service
+
+	// Return services that are owned by the user and not cancelled
+
 	db.Find(&services)
 	ret, _ := json.Marshal(services)
 	w.Write(ret)
@@ -16,14 +22,19 @@ func GetServices(w http.ResponseWriter, r *http.Request) {
 
 // POST /api/services
 func AddService(w http.ResponseWriter, r *http.Request) {
-	title := r.PostFormValue("title")
-	description := r.PostFormValue("description")
-	category := stringToCategory[r.PostFormValue("category")]
+	var service Service
 
-	service := Service{Title: title, Description: description, Category: category, UserID: 1}
-	err := service.Add()
-	if err != nil {
-		w.Write([]byte("{error:'Service already exist'}"))
+	if err := json.NewDecoder(r.Body).Decode(&service); err != nil {
+		http.Error(w, "error", http.StatusBadRequest)
+		return
+	}
+
+	fmt.Printf("Added service: %+v\n", service)
+	service.UserID = 1
+
+	if err := service.Add(); err != nil {
+		http.Error(w, "error", http.StatusForbidden)
+		return
 	} else {
 		ret, _ := json.Marshal(service)
 		w.Write(ret)
@@ -32,23 +43,40 @@ func AddService(w http.ResponseWriter, r *http.Request) {
 
 // PUT /api/services/{id}
 func UpdateService(w http.ResponseWriter, r *http.Request) {
-	id, _ := strconv.ParseUint(r.PostFormValue("id"), 10, 0)
+	id, _ := strconv.ParseUint(r.PathValue("id"), 10, 0)
+
+	// Verify that the user can modify this service
 
 	service := Service{ID: uint(id)}
-	service.Get()
-	if r.PostFormValue("title") != "" {
-		service.Title = r.PostFormValue("title")
-	}
-	if r.PostFormValue("description") != "" {
-		service.Description = r.PostFormValue("description")
-	}
-	if r.PostFormValue("category") != "" {
-		service.Category = stringToCategory[r.PostFormValue("category")]
+	if err := service.Get(); err == gorm.ErrRecordNotFound {
+		http.Error(w, resourceNotFound.String(), http.StatusNotFound)
+		return
 	}
 
+	fmt.Printf("%+v", service)
+	var edited Service
+	if err := json.NewDecoder(r.Body).Decode(&edited); err != nil {
+		http.Error(w, "error", http.StatusBadRequest)
+		return
+	}
+	if edited.Title != "" {
+		service.Title = edited.Title
+	}
+	if edited.Description != "" {
+		service.Description = edited.Description
+	}
+	if edited.Category != "" {
+		service.Category = edited.Category
+	}
+	if edited.Status != "" {
+		service.Status = edited.Status
+	}
+
+	fmt.Printf("Modified service: %+v\n", service)
 	err := service.Update()
 	if err != nil {
-		w.Write([]byte("{error:'Service already exist'}"))
+		http.Error(w, "error", http.StatusForbidden)
+		return
 	} else {
 		ret, _ := json.Marshal(service)
 		w.Write(ret)

@@ -74,72 +74,38 @@ pre {
 }
 
 .error-text {
-    color: var(--red);
+  color: var(--red);
 }
 
 .relative-container {
-    position: relative;
+  position: relative;
 }
 
 .flex-container {
-    display: flex;
+  display: flex;
 }
 
 .fa-pen-to-square {
-    color: var(--blue1);
+  color: var(--blue1);
 }
 
 .fa-circle-pause {
-    color: var(--base2);
+  color: var(--base2);
 }
 
 .fa-circle-play {
-    color: var(--green0);
+  color: var(--green0);
 }
 
 .fa-trash-can {
-    color: var(--red);
+  color: var(--red);
 }
 
 .truncated-text {
-    display: -webkit-box;
-    line-clamp: 3;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.user-service-table {
-    table-layout: fixed;
-    width: 100%;
-    border: 1px dashed var(--green0);
-    border-spacing: 0;
-    padding: 10px;
-
-    td, th {
-        padding: 3px;
-    }
-    tbody tr:hover {
-        background-color: var(--base1);
-    }
-    th {
-        width: 70px;
-    }
-    th.description {
-        width: 450px;
-    }
-    th.title {
-        width: 150px;
-    }
-    .truncated {
-        white-space: nowrap; /* Prevent text from wrapping */
-        overflow: hidden; /* Hide overflowing text */
-        text-overflow: ellipsis;
-    }
-    .actions {
-        a {
-            margin-left: 2px;
-        }
-    }
+  display: -webkit-box;
+  line-clamp: 3;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

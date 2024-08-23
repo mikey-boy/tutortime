@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 
@@ -11,7 +12,7 @@ import (
 var db *gorm.DB
 
 type ServiceStatus string
-type ServiceCategory int
+type ServiceCategory string
 
 const (
 	Active    ServiceStatus = "active"
@@ -20,12 +21,18 @@ const (
 )
 
 const (
-	Language ServiceCategory = iota
-	Music
-	Software
-	Wellness
-	Other
+	Language ServiceCategory = "language"
+	Music    ServiceCategory = "music"
+	Software ServiceCategory = "software"
+	Wellness ServiceCategory = "wellness"
+	Other    ServiceCategory = "other"
 )
+
+var stringToStatus = map[string]ServiceStatus{
+	"active":    Active,
+	"paused":    Paused,
+	"cancelled": Cancelled,
+}
 
 var stringToCategory = map[string]ServiceCategory{
 	"language": Language,
@@ -50,29 +57,51 @@ type Service struct {
 	ID          uint
 	Title       string
 	Description string
-	Category    ServiceCategory
-	Status      ServiceStatus `gorm:"default:0"`
-	Minutes     uint          `gorm:"default:0"`
+	Category    ServiceCategory `gorm:"default:'other'"`
+	Status      ServiceStatus   `gorm:"default:'active'"`
+	Minutes     uint            `gorm:"default:0"`
 	UserID      uint
+}
+
+func (status *ServiceStatus) UnmarshalJSON(b []byte) error {
+	var s string
+	if err := json.Unmarshal(b, &s); err != nil {
+		return err
+	}
+
+	*status = stringToStatus[s]
+	return nil
+}
+
+func (status *ServiceCategory) UnmarshalJSON(b []byte) error {
+	var s string
+	if err := json.Unmarshal(b, &s); err != nil {
+		return err
+	}
+
+	*status = stringToCategory[s]
+	return nil
 }
 
 func (user *User) Add() error {
 	result := db.Create(user)
+	fmt.Printf("%v\n", user)
 	return result.Error
 }
 
 func (user *User) Get() error {
-	result := db.Where(user)
+	result := db.First(&user)
 	return result.Error
 }
 
 func (service *Service) Add() error {
 	result := db.Create(service)
+	fmt.Printf("%+v\n", service)
 	return result.Error
 }
 
 func (service *Service) Get() error {
-	result := db.Where(service)
+	result := db.First(&service)
 	return result.Error
 }
 

@@ -9,7 +9,7 @@
           </RouterLink>
         </li>
         <li>
-          <RouterLink to="/user/services">
+          <RouterLink :to="{ path: '/user/services', query: { status: 'active' } }">
             <h3>Give lessons</h3>
           </RouterLink>
         </li>

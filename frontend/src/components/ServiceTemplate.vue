@@ -1,6 +1,6 @@
 <template>
-  <div id="user-service-creation">
-    <form enctype="multipart/form-data" @submit.prevent="createLesson">
+  <div id="service-creation">
+    <form enctype="multipart/form-data" @submit.prevent="createOrUpdate">
       <table id="service-creation-table">
         <tbody>
           <tr>
@@ -11,7 +11,7 @@
               </label>
             </td>
             <td>
-              <textarea rows="1" cols="120" name="title" required></textarea>
+              <textarea v-model="service.title" rows="1" cols="120" name="title" required></textarea>
             </td>
           </tr>
           <tr>
@@ -22,7 +22,7 @@
               </label>
             </td>
             <td>
-              <textarea rows="7" cols="120" name="description" required></textarea>
+              <textarea v-model="service.description" rows="7" cols="120" name="description" required></textarea>
             </td>
           </tr>
           <tr>
@@ -33,7 +33,7 @@
               </label>
             </td>
             <td>
-              <select name="category" required>
+              <select v-model="service.category" name="category" required>
                 <option value="" disabled selected>Select a category</option>
                 <option value="language">Language learning</option>
                 <option value="software">Software development</option>
@@ -52,7 +52,8 @@
         </tbody>
       </table>
       <div class="button-container">
-        <button type="submit">Create service</button>
+        <button v-if="id == -1" type="submit">Create service</button>
+        <button v-else type="submit">Update service</button>
       </div>
     </form>
   </div>
@@ -60,18 +61,67 @@
 
 <script>
 export default {
+  props: {
+    id: {
+      type: Number,
+      default: -1,
+    },
+    title: {
+      type: String,
+      default: "",
+    },
+    description: {
+      type: String,
+      default: "",
+    },
+    category: {
+      type: String,
+      default: "",
+    },
+  },
   data() {
-    return {};
+    return {
+      service: {
+        id: this.id,
+        title: this.title,
+        description: this.description,
+        category: this.category,
+      },
+    };
   },
   methods: {
-    createLesson(event) {
+    createService() {
       const data = new FormData(event.target);
       fetch("/api/services", {
         method: "POST",
-        body: data,
+        body: JSON.stringify({
+          title: this.service.title,
+          description: this.service.description,
+          category: this.service.category,
+        }),
       }).catch((error) => {
         console.error("Error fetching data:", error);
       });
+    },
+    editService() {
+      fetch(`/api/services/${this.service.id}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          title: this.service.title,
+          description: this.service.description,
+          category: this.service.category,
+        }),
+      }).catch((error) => {
+        console.error("Error fetching data:", error);
+      });
+    },
+    createOrUpdate() {
+      if (this.service.id == -1) {
+        this.createService();
+      } else {
+        this.editService();
+      }
+      this.$router.push({ path: "/user/services", query: { status: "active" } });
     },
   },
 };
@@ -80,7 +130,7 @@ export default {
 <style lang="scss">
 @import "@/assets/styles/mixins.scss";
 
-#user-service-creation {
+#service-creation {
   border: 1px dashed var(--green0);
   padding: 25px;
   margin: 20px;

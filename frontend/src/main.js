@@ -12,6 +12,7 @@ const routes = [
   { path: '/', component: TakeLessons },
   { path: '/user/services', component: GiveLessons },
   { path: '/user/services/template', component: ServiceTemplate },
+  { path: '/user/services/:id/template', component: ServiceTemplate },
   { path: '/user/login', component: UserLogin },
   // { path: '/about', name: 'HowItWorks', component: HowItWorks },
   // { path: '/learning', name: 'LearningHub', component: LearningHub },

@@ -1,8 +1,5 @@
 <template>
-  <div v-if="serviceTemplateView">
-    <ServiceTemplate :id="id" :title="title" :description="description" :category="category" />
-  </div>
-  <div v-else>
+  <div>
     <table id="user-service-nav">
       <thead>
         <tr>
@@ -33,7 +30,7 @@
           <td class="truncated">{{ service.Title }}</td>
           <td class="truncated">{{ service.Description }}</td>
           <td class="actions">
-            <button @click="editService(service.ID, service.Title, service.Description, service.Category)">
+            <button @click="editService(service.ID)">
               <i class="fa-regular fa-pen-to-square fa-xl"></i>
             </button>
             <button @click="editServiceStatus(service.ID, 'paused')">
@@ -60,23 +57,12 @@ export default {
     ServiceTemplate,
   },
   beforeRouteUpdate(to, from) {
-    if (to.path.endsWith("template")) {
-      this.serviceTemplateView = true;
-    } else {
-      this.status = to.query.status || "active";
-      this.serviceTemplateView = false;
-    }
+    this.status = to.query.status || "active";
   },
   data() {
     return {
       services: [],
       status: this.$route.query.status || "active",
-      serviceTemplateView: false,
-
-      id: -1,
-      title: "",
-      description: "",
-      category: "",
     };
   },
   mounted() {
@@ -86,28 +72,16 @@ export default {
     getServices() {
       fetch("/api/services")
         .then((response) => response.json())
-        .then((data) => (this.services = data))
-        .then((data) => console.log(data))
-        .catch((error) => {
-          console.error("Error fetching data:", error);
-        });
+        .then((data) => (this.services = data));
     },
     changeStatus(status) {
       this.$router.push({ path: "/user/services", query: { status: status } });
     },
     createService() {
-      this.id = -1;
-      this.title = "";
-      this.description = "";
-      this.category = "";
       this.$router.push({ path: "/user/services/template" });
     },
-    editService(serviceID, title, description, category) {
-      this.id = serviceID;
-      this.title = title;
-      this.description = description;
-      this.category = category;
-      this.$router.push({ path: "/user/services/template" });
+    editService(serviceID) {
+      this.$router.push({ path: `/user/services/${serviceID}/template` });
     },
     editServiceStatus(serviceID, status) {
       fetch(`/api/services/${serviceID}`, {

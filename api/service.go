@@ -20,6 +20,20 @@ func GetServices(w http.ResponseWriter, r *http.Request) {
 	w.Write(ret)
 }
 
+// GET /api/services/{id}
+func GetService(w http.ResponseWriter, r *http.Request) {
+	id, _ := strconv.ParseUint(r.PathValue("id"), 10, 0)
+	service := Service{ID: uint(id)}
+	if err := service.Get(); err == gorm.ErrRecordNotFound {
+		http.Error(w, resourceNotFound.String(), http.StatusNotFound)
+		return
+	}
+
+	db.Find(&service)
+	ret, _ := json.Marshal(service)
+	w.Write(ret)
+}
+
 // POST /api/services
 func AddService(w http.ResponseWriter, r *http.Request) {
 	var service Service

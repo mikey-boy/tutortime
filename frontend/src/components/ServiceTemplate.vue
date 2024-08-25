@@ -1,6 +1,6 @@
 <template>
   <div id="service-creation">
-    <form enctype="multipart/form-data" @submit.prevent="createOrUpdate">
+    <form enctype="multipart/form-data" @submit.prevent="createOrEditService">
       <table id="service-creation-table">
         <tbody>
           <tr>
@@ -61,37 +61,36 @@
 
 <script>
 export default {
-  props: {
-    id: {
-      type: Number,
-      default: -1,
-    },
-    title: {
-      type: String,
-      default: "",
-    },
-    description: {
-      type: String,
-      default: "",
-    },
-    category: {
-      type: String,
-      default: "",
-    },
-  },
   data() {
     return {
       service: {
-        id: this.id,
-        title: this.title,
-        description: this.description,
-        category: this.category,
+        id: -1,
+        title: "",
+        description: "",
+        category: "",
       },
     };
   },
+  mounted() {
+    this.getService();
+  },
   methods: {
+    getService() {
+      console.log(this.$route);
+      if (this.$route.params.id) {
+        fetch(`/api/services/${this.$route.params.id}`)
+          .then((response) => response.json())
+          .then(
+            (data) => (
+              (this.service.id = data.ID),
+              (this.service.title = data.Title),
+              (this.service.description = data.Description),
+              (this.service.category = data.Category)
+            )
+          );
+      }
+    },
     createService() {
-      const data = new FormData(event.target);
       fetch("/api/services", {
         method: "POST",
         body: JSON.stringify({
@@ -99,8 +98,6 @@ export default {
           description: this.service.description,
           category: this.service.category,
         }),
-      }).catch((error) => {
-        console.error("Error fetching data:", error);
       });
     },
     editService() {
@@ -111,11 +108,9 @@ export default {
           description: this.service.description,
           category: this.service.category,
         }),
-      }).catch((error) => {
-        console.error("Error fetching data:", error);
       });
     },
-    createOrUpdate() {
+    createOrEditService() {
       if (this.service.id == -1) {
         this.createService();
       } else {

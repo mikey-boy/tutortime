@@ -63,6 +63,7 @@ func main() {
 	mux.HandleFunc("POST /api/accesstoken", api.AddAccessToken)
 
 	mux.HandleFunc("GET /api/services", api.GetServices)
+	mux.HandleFunc("GET /api/services/{id}", api.GetService)
 	mux.HandleFunc("POST /api/services", api.AddService)
 	mux.HandleFunc("PUT /api/services/{id}", api.UpdateService)
 

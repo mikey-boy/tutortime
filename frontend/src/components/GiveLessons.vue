@@ -33,10 +33,10 @@
             <button @click="editService(service.ID)">
               <i class="fa-regular fa-pen-to-square fa-xl"></i>
             </button>
-            <button @click="editServiceStatus(service.ID, 'paused')">
+            <button v-if="service.Status == 'active'" @click="editServiceStatus(service.ID, 'paused')">
               <i class="fa-regular fa-circle-pause fa-xl"></i>
             </button>
-            <button @click="editServiceStatus(service.ID, 'active')">
+            <button v-if="service.Status == 'paused'" @click="editServiceStatus(service.ID, 'active')">
               <i class="fa-regular fa-circle-play fa-xl"></i>
             </button>
             <button @click="editServiceStatus(service.ID, 'cancelled')">

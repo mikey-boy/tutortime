@@ -11,7 +11,7 @@
               </label>
             </td>
             <td>
-              <textarea v-model="service.title" rows="1" cols="120" name="title" required></textarea>
+              <input type="text" v-model="service.title" name="title" required></input>
             </td>
           </tr>
           <tr>
@@ -134,7 +134,7 @@ export default {
   table {
     width: 100%;
   }
-  textarea {
+  textarea, input {
     width: 100%;
     box-sizing: border-box;
   }
@@ -155,9 +155,6 @@ export default {
   #service-creation-table > tbody > tr > td {
     padding-bottom: 30px;
 
-    textarea {
-      font-size: large;
-    }
     &:first-child {
       vertical-align: top;
       padding-right: 10px;

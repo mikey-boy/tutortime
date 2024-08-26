@@ -1,6 +1,7 @@
 package api
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -12,10 +13,19 @@ import (
 // GET /api/services
 func GetServices(w http.ResponseWriter, r *http.Request) {
 	var services []Service
+	query := r.URL.Query().Get("query")
+	category := r.URL.Query().Get("category")
 
-	// Return services that are owned by the user and not cancelled
+	if query != "" && category != "" {
+		db.Where("title ILIKE @query OR description ILIKE @query", sql.Named("query", fmt.Sprint("%", query, "%"))).Where("category = ?", category).Find(&services)
+	} else if query != "" {
+		db.Where("title ILIKE @query OR description ILIKE @query", sql.Named("query", fmt.Sprint("%", query, "%"))).Find(&services)
+	} else if category != "" {
+		db.Where("category = ?", category).Find(&services)
+	} else {
+		db.Find(&services)
+	}
 
-	db.Find(&services)
 	ret, _ := json.Marshal(services)
 	w.Write(ret)
 }

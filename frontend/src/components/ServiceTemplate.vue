@@ -1,6 +1,6 @@
 <template>
   <div id="service-creation">
-    <form enctype="multipart/form-data" @submit.prevent="createOrEditService">
+    <form @submit.prevent="createOrEditService">
       <table id="service-creation-table">
         <tbody>
           <tr>
@@ -52,7 +52,7 @@
         </tbody>
       </table>
       <div class="button-container">
-        <button v-if="id == -1" type="submit">Create service</button>
+        <button v-if="service.id == -1" type="submit">Create service</button>
         <button v-else type="submit">Update service</button>
       </div>
     </form>
@@ -76,7 +76,6 @@ export default {
   },
   methods: {
     getService() {
-      console.log(this.$route);
       if (this.$route.params.id) {
         fetch(`/api/services/${this.$route.params.id}`)
           .then((response) => response.json())

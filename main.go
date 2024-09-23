@@ -56,6 +56,7 @@ func main() {
 	// Requests to the root are served frontend Vue JS
 	mux := http.NewServeMux()
 	mux.Handle("/", http.FileServer(http.FS(frontend)))
+	mux.Handle("GET /img/{uuid}", http.FileServer(http.Dir("./instance")))
 
 	// All other requests are served by the backend API
 	// mux.HandleFunc("GET /api/users/{id}", api.GetUser)

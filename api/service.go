@@ -23,7 +23,7 @@ func GetServices(w http.ResponseWriter, r *http.Request) {
 	} else if category != "" {
 		db.Where("category = ?", category).Find(&services)
 	} else {
-		db.Find(&services)
+		db.Preload("Image").Find(&services)
 	}
 
 	ret, _ := json.Marshal(services)
@@ -46,23 +46,37 @@ func GetService(w http.ResponseWriter, r *http.Request) {
 
 // POST /api/services
 func AddService(w http.ResponseWriter, r *http.Request) {
-	var service Service
-
-	if err := json.NewDecoder(r.Body).Decode(&service); err != nil {
+	err := r.ParseMultipartForm(10 << 20) // 10 MB limit
+	if err != nil {
 		http.Error(w, "error", http.StatusBadRequest)
 		return
 	}
 
-	fmt.Printf("Added service: %+v\n", service)
+	title := r.FormValue("title")
+	description := r.FormValue("description")
+	category := stringToCategory[r.FormValue("category")]
+	service := Service{Title: title, Description: description, Category: category}
 	service.UserID = 1
+
+	image := Image{}
+	var uploadErr error = nil
+	file, file_header, formErr := r.FormFile("image")
+	if formErr == nil {
+		image.Name = file_header.Filename
+		uploadErr = image.Upload(file)
+	}
+	if uploadErr != nil || file == nil {
+		image.Add(category) // Add default image if upload fails or user does not specify file
+	}
+	service.Image = image
 
 	if err := service.Add(); err != nil {
 		http.Error(w, "error", http.StatusForbidden)
 		return
-	} else {
-		ret, _ := json.Marshal(service)
-		w.Write(ret)
 	}
+
+	ret, _ := json.Marshal(service)
+	w.Write(ret)
 }
 
 // PUT /api/services/{id}

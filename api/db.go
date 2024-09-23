@@ -3,8 +3,12 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
+	"mime/multipart"
+	"os"
 
+	"github.com/google/uuid"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -44,23 +48,32 @@ var stringToCategory = map[string]ServiceCategory{
 
 type User struct {
 	ID           uint
-	Username     string `gorm:"unique"`
-	Password     string
-	Description  string
-	Availability uint `gorm:"default:0"`
-	Image_Path   string
-	Minutes      uint `gorm:"default:60"`
+	Username     string `gorm:"unique,not null"`
+	Password     string `gorm:"not null"`
+	Description  string `gorm:"not null"`
+	Availability uint   `gorm:"default:0"`
+	Minutes      uint   `gorm:"default:60"`
+	Image        Image
 	Services     []Service
 }
 
 type Service struct {
 	ID          uint
-	Title       string
-	Description string
+	Title       string          `gorm:"not null"`
+	Description string          `gorm:"not null"`
 	Category    ServiceCategory `gorm:"default:'other'"`
 	Status      ServiceStatus   `gorm:"default:'active'"`
 	Minutes     uint            `gorm:"default:0"`
+	Image       Image
 	UserID      uint
+}
+
+type Image struct {
+	ID        uint
+	Name      string `gorm:"not null"`
+	Path      string `gorm:"unique,not null"`
+	ServiceID *uint
+	UserID    *uint
 }
 
 func (status *ServiceStatus) UnmarshalJSON(b []byte) error {
@@ -110,9 +123,33 @@ func (service *Service) Update() error {
 	return result.Error
 }
 
+func (image *Image) Add(category ServiceCategory) {
+	image.Name = fmt.Sprintf("%s.jpg", string(category))
+	image.Path = fmt.Sprintf("/default/img/%s", image.Name)
+}
+
+func (image *Image) Upload(file multipart.File) error {
+	defer file.Close()
+	path := "/img/" + uuid.New().String()
+	outFile, err := os.Create("instance" + path)
+	if err != nil {
+		return err
+	}
+
+	defer outFile.Close()
+	_, err = io.Copy(outFile, file)
+	if err != nil {
+		return err
+	}
+
+	image.Path = path
+	return nil
+}
+
 func createTables() {
 	db.AutoMigrate(&User{})
 	db.AutoMigrate(&Service{})
+	db.AutoMigrate(&Image{})
 }
 
 func CreateConnection(host string, user string, password string, dbname string, port uint16) {

@@ -1,6 +1,6 @@
 <template>
   <div id="service-creation">
-    <form @submit.prevent="createOrEditService">
+    <form @submit.prevent="createOrEditService" enctype="multipart/form-data">
       <table id="service-creation-table">
         <tbody>
           <tr>
@@ -46,7 +46,7 @@
           <tr>
             <td>Upload images:</td>
             <td>
-              <input type="file" name="images" accept="image/png, image/jpeg" multiple />
+              <input type="file" name="image" accept="image/png, image/jpeg" />
             </td>
           </tr>
         </tbody>
@@ -89,31 +89,24 @@ export default {
           );
       }
     },
-    createService() {
+    createService(form) {
       fetch("/api/services", {
         method: "POST",
-        body: JSON.stringify({
-          title: this.service.title,
-          description: this.service.description,
-          category: this.service.category,
-        }),
+        body: form,
       });
     },
-    editService() {
+    editService(form) {
       fetch(`/api/services/${this.service.id}`, {
         method: "PUT",
-        body: JSON.stringify({
-          title: this.service.title,
-          description: this.service.description,
-          category: this.service.category,
-        }),
+        body: form,
       });
     },
     createOrEditService() {
+      const form = new FormData(event.target);
       if (this.service.id == -1) {
-        this.createService();
+        this.createService(form);
       } else {
-        this.editService();
+        this.editService(form);
       }
       this.$router.push({ path: "/user/services", query: { status: "active" } });
     },

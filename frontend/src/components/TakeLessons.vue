@@ -14,6 +14,9 @@
     </form>
     <div class="post-grid-container">
       <div class="post" v-for="service in services" :key="service.ID">
+        <div class="image-container">
+          <img :src="service.Image.Path" :alt="service.Image.Name" />
+        </div>
         <h3 class="truncated-text">{{ service.Title }}</h3>
         <p class="truncated-text">{{ service.Description }}</p>
         <p>Username</p>
@@ -67,6 +70,12 @@ export default {
 
   .post {
     width: 300px;
+  }
+}
+.image-container {
+  img {
+    width: 300px;
+    height: 170px;
   }
 }
 #service-filter-box {

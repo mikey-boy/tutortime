@@ -1,6 +1,7 @@
 package api
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -72,6 +73,7 @@ type Image struct {
 	ID        uint
 	Name      string `gorm:"not null"`
 	Path      string `gorm:"unique,not null"`
+	OSPath    string
 	ServiceID *uint
 	UserID    *uint
 }
@@ -114,12 +116,16 @@ func (service *Service) Add() error {
 }
 
 func (service *Service) Get() error {
-	result := db.First(&service)
+	result := db.Preload("Image").First(&service)
 	return result.Error
 }
 
 func (service *Service) Update() error {
 	result := db.Save(service)
+	if result.Error != nil {
+		return result.Error
+	}
+	result = db.Save(service.Image)
 	return result.Error
 }
 
@@ -128,7 +134,7 @@ func (image *Image) Add(category ServiceCategory) {
 	image.Path = fmt.Sprintf("/default/img/%s", image.Name)
 }
 
-func (image *Image) Upload(file multipart.File) error {
+func (image *Image) Upload(file multipart.File, name string) error {
 	defer file.Close()
 	path := "/img/" + uuid.New().String()
 	outFile, err := os.Create("instance" + path)
@@ -142,8 +148,31 @@ func (image *Image) Upload(file multipart.File) error {
 		return err
 	}
 
+	image.Name = name
 	image.Path = path
+	image.OSPath = outFile.Name()
 	return nil
+}
+
+func (image *Image) Delete() {
+	if image.OSPath != "" {
+		os.Remove(image.OSPath)
+		image.OSPath = ""
+	}
+	image.Name = ""
+	image.Path = ""
+}
+
+func ServicesGet(services *[]Service, query string, category ServiceCategory) {
+	if query != "" && category != "" {
+		db.Preload("Image").Where("title ILIKE @query OR description ILIKE @query", sql.Named("query", fmt.Sprint("%", query, "%"))).Where("category = ?", category).Find(&services)
+	} else if query != "" {
+		db.Preload("Image").Where("title ILIKE @query OR description ILIKE @query", sql.Named("query", fmt.Sprint("%", query, "%"))).Find(&services)
+	} else if category != "" {
+		db.Preload("Image").Where("category = ?", category).Find(&services)
+	} else {
+		db.Preload("Image").Find(&services)
+	}
 }
 
 func createTables() {

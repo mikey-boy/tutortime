@@ -1,9 +1,7 @@
 package api
 
 import (
-	"database/sql"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -15,17 +13,7 @@ func GetServices(w http.ResponseWriter, r *http.Request) {
 	var services []Service
 	query := r.URL.Query().Get("query")
 	category := r.URL.Query().Get("category")
-
-	if query != "" && category != "" {
-		db.Where("title ILIKE @query OR description ILIKE @query", sql.Named("query", fmt.Sprint("%", query, "%"))).Where("category = ?", category).Find(&services)
-	} else if query != "" {
-		db.Where("title ILIKE @query OR description ILIKE @query", sql.Named("query", fmt.Sprint("%", query, "%"))).Find(&services)
-	} else if category != "" {
-		db.Where("category = ?", category).Find(&services)
-	} else {
-		db.Preload("Image").Find(&services)
-	}
-
+	ServicesGet(&services, query, stringToCategory[category])
 	ret, _ := json.Marshal(services)
 	w.Write(ret)
 }
@@ -39,7 +27,6 @@ func GetService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db.Find(&service)
 	ret, _ := json.Marshal(service)
 	w.Write(ret)
 }
@@ -52,20 +39,16 @@ func AddService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	title := r.FormValue("title")
-	description := r.FormValue("description")
+	image := Image{}
 	category := stringToCategory[r.FormValue("category")]
-	service := Service{Title: title, Description: description, Category: category}
+	service := Service{Title: r.FormValue("title"), Description: r.FormValue("description"), Category: category}
 	service.UserID = 1
 
-	image := Image{}
-	var uploadErr error = nil
 	file, file_header, formErr := r.FormFile("image")
 	if formErr == nil {
-		image.Name = file_header.Filename
-		uploadErr = image.Upload(file)
+		image.Upload(file, file_header.Filename)
 	}
-	if uploadErr != nil || file == nil {
+	if image.Name == "" {
 		image.Add(category) // Add default image if upload fails or user does not specify file
 	}
 	service.Image = image
@@ -91,26 +74,30 @@ func UpdateService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Printf("%+v", service)
-	var edited Service
-	if err := json.NewDecoder(r.Body).Decode(&edited); err != nil {
-		http.Error(w, "error", http.StatusBadRequest)
-		return
-	}
-	if edited.Title != "" {
-		service.Title = edited.Title
-	}
-	if edited.Description != "" {
-		service.Description = edited.Description
-	}
-	if edited.Category != "" {
-		service.Category = edited.Category
-	}
-	if edited.Status != "" {
-		service.Status = edited.Status
+	if r.FormValue("title") != "" {
+		service.Title = r.FormValue("title")
+		service.Description = r.FormValue("description")
+		service.Category = stringToCategory[r.FormValue("category")]
+
+		file, file_header, formErr := r.FormFile("image")
+		if formErr == nil {
+			service.Image.Delete()
+			service.Image.Upload(file, file_header.Filename)
+		}
+		if service.Image.Name == "" || file == nil {
+			service.Image.Add(service.Category) // Add default image if upload fails or user does not specify file
+		}
+	} else {
+		var edited Service
+		if err := json.NewDecoder(r.Body).Decode(&edited); err != nil {
+			http.Error(w, "error", http.StatusBadRequest)
+			return
+		}
+		if edited.Status != "" {
+			service.Status = edited.Status
+		}
 	}
 
-	fmt.Printf("Modified service: %+v\n", service)
 	err := service.Update()
 	if err != nil {
 		http.Error(w, "error", http.StatusForbidden)

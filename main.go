@@ -61,12 +61,14 @@ func main() {
 	// All other requests are served by the backend API
 	// mux.HandleFunc("GET /api/users/{id}", api.GetUser)
 	mux.HandleFunc("POST /api/users", api.AddUser)
-	mux.HandleFunc("POST /api/accesstoken", api.AddAccessToken)
+	mux.HandleFunc("POST /api/sessiontoken", api.AddSessionToken)
 
 	mux.HandleFunc("GET /api/services", api.GetServices)
 	mux.HandleFunc("GET /api/services/{id}", api.GetService)
-	mux.HandleFunc("POST /api/services", api.AddService)
-	mux.HandleFunc("PUT /api/services/{id}", api.UpdateService)
+	mux.HandleFunc("GET /api/users/me/services", api.ValidateSessionToken(api.GetMyServices))
+	mux.HandleFunc("GET /api/users/{id}/services", api.GetUserServices)
+	mux.HandleFunc("POST /api/services", api.ValidateSessionToken(api.AddService))
+	mux.HandleFunc("PUT /api/services/{id}", api.ValidateSessionToken(api.UpdateService))
 
 	addr := fmt.Sprintf("%s:%d", config.Webserver.Host, config.Webserver.Port)
 	fmt.Printf("Serving the application on http://%s\n", addr)

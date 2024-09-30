@@ -70,7 +70,7 @@ export default {
   },
   methods: {
     getServices() {
-      fetch("/api/services")
+      fetch("/api/users/me/services")
         .then((response) => response.json())
         .then((data) => (this.services = data));
     },

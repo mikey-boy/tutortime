@@ -13,7 +13,7 @@
             <h3>Give lessons</h3>
           </RouterLink>
         </li>
-        <li>
+        <!-- <li>
           <RouterLink to="/">
             <h3>How it works</h3>
           </RouterLink>
@@ -22,7 +22,7 @@
           <RouterLink to="/">
             <h3>Learning hub</h3>
           </RouterLink>
-        </li>
+        </li> -->
         <li>
           <RouterLink to="/user/login">
             <h3>Login</h3>

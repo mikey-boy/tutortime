@@ -8,43 +8,112 @@ import (
 	"gorm.io/gorm"
 )
 
+type Service struct {
+	ID          uint
+	Title       string          `gorm:"not null"`
+	Description string          `gorm:"not null"`
+	Category    ServiceCategory `gorm:"default:'other'"`
+	Status      ServiceStatus   `gorm:"default:'active'"`
+	Minutes     uint            `gorm:"default:0"`
+	Image       Image
+	UserID      uint
+}
+
+type ServiceStatus string
+type ServiceCategory string
+
+const (
+	Active    ServiceStatus = "active"
+	Paused    ServiceStatus = "paused"
+	Cancelled ServiceStatus = "cancelled"
+)
+
+const (
+	Language ServiceCategory = "language"
+	Music    ServiceCategory = "music"
+	Software ServiceCategory = "software"
+	Wellness ServiceCategory = "wellness"
+	Other    ServiceCategory = "other"
+)
+
+var stringToStatus = map[string]ServiceStatus{
+	"active":    Active,
+	"paused":    Paused,
+	"cancelled": Cancelled,
+}
+
+var stringToCategory = map[string]ServiceCategory{
+	"language": Language,
+	"music":    Music,
+	"software": Software,
+	"wellness": Wellness,
+	"other":    Other,
+}
+
 // GET /api/services
-func GetServices(w http.ResponseWriter, r *http.Request) {
+func GetServices(writer http.ResponseWriter, request *http.Request) {
 	var services []Service
-	query := r.URL.Query().Get("query")
-	category := r.URL.Query().Get("category")
+	query := request.URL.Query().Get("query")
+	category := request.URL.Query().Get("category")
 	ServicesGet(&services, query, stringToCategory[category])
 	ret, _ := json.Marshal(services)
-	w.Write(ret)
+	writer.Write(ret)
 }
 
 // GET /api/services/{id}
-func GetService(w http.ResponseWriter, r *http.Request) {
-	id, _ := strconv.ParseUint(r.PathValue("id"), 10, 0)
+func GetService(writer http.ResponseWriter, request *http.Request) {
+	id, _ := strconv.ParseUint(request.PathValue("id"), 10, 0)
 	service := Service{ID: uint(id)}
 	if err := service.Get(); err == gorm.ErrRecordNotFound {
-		http.Error(w, resourceNotFound.String(), http.StatusNotFound)
+		http.Error(writer, resourceNotFound.String(), http.StatusNotFound)
 		return
 	}
 
 	ret, _ := json.Marshal(service)
-	w.Write(ret)
+	writer.Write(ret)
+}
+
+// GET /api/users/{id}/services/
+func GetUserServices(writer http.ResponseWriter, request *http.Request) {
+	var services []Service
+	id, _ := strconv.ParseUint(request.PathValue("id"), 10, 0)
+	user := User{ID: uint(id)}
+	UserServicesGet(user, &services, false)
+	ret, _ := json.Marshal(services)
+	writer.Write(ret)
+}
+
+// GET /api/users/me/services/
+func GetMyServices(writer http.ResponseWriter, request *http.Request) {
+	var services []Service
+	user, ok := UserFromRequest(*request)
+	if !ok {
+		http.Error(writer, invalidSessionToken.String(), http.StatusUnauthorized)
+		return
+	}
+	UserServicesGet(user, &services, true)
+	ret, _ := json.Marshal(services)
+	writer.Write(ret)
 }
 
 // POST /api/services
-func AddService(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseMultipartForm(10 << 20) // 10 MB limit
+func AddService(writer http.ResponseWriter, request *http.Request) {
+	err := request.ParseMultipartForm(10 << 20) // 10 MB limit
 	if err != nil {
-		http.Error(w, "error", http.StatusBadRequest)
+		http.Error(writer, "error", http.StatusBadRequest)
+		return
+	}
+
+	user, ok := UserFromRequest(*request)
+	if !ok {
+		http.Error(writer, wrongSessionToken.String(), http.StatusUnauthorized)
 		return
 	}
 
 	image := Image{}
-	category := stringToCategory[r.FormValue("category")]
-	service := Service{Title: r.FormValue("title"), Description: r.FormValue("description"), Category: category}
-	service.UserID = 1
-
-	file, file_header, formErr := r.FormFile("image")
+	category := stringToCategory[request.FormValue("category")]
+	service := Service{UserID: user.ID, Title: request.FormValue("title"), Description: request.FormValue("description"), Category: category}
+	file, file_header, formErr := request.FormFile("image")
 	if formErr == nil {
 		image.Upload(file, file_header.Filename)
 	}
@@ -54,32 +123,37 @@ func AddService(w http.ResponseWriter, r *http.Request) {
 	service.Image = image
 
 	if err := service.Add(); err != nil {
-		http.Error(w, "error", http.StatusForbidden)
+		http.Error(writer, "error", http.StatusForbidden)
 		return
 	}
 
 	ret, _ := json.Marshal(service)
-	w.Write(ret)
+	writer.Write(ret)
 }
 
 // PUT /api/services/{id}
-func UpdateService(w http.ResponseWriter, r *http.Request) {
-	id, _ := strconv.ParseUint(r.PathValue("id"), 10, 0)
-
-	// Verify that the user can modify this service
-
+func UpdateService(writer http.ResponseWriter, request *http.Request) {
+	id, _ := strconv.ParseUint(request.PathValue("id"), 10, 0)
 	service := Service{ID: uint(id)}
+
+	// Verify service exists
 	if err := service.Get(); err == gorm.ErrRecordNotFound {
-		http.Error(w, resourceNotFound.String(), http.StatusNotFound)
+		http.Error(writer, resourceNotFound.String(), http.StatusNotFound)
 		return
 	}
 
-	if r.FormValue("title") != "" {
-		service.Title = r.FormValue("title")
-		service.Description = r.FormValue("description")
-		service.Category = stringToCategory[r.FormValue("category")]
+	// Verify user can modify this service
+	if user, ok := UserFromRequest(*request); !ok || service.UserID != user.ID {
+		http.Error(writer, wrongSessionToken.String(), http.StatusUnauthorized)
+		return
+	}
 
-		file, file_header, formErr := r.FormFile("image")
+	if request.FormValue("title") != "" {
+		service.Title = request.FormValue("title")
+		service.Description = request.FormValue("description")
+		service.Category = stringToCategory[request.FormValue("category")]
+
+		file, file_header, formErr := request.FormFile("image")
 		if formErr == nil {
 			service.Image.Delete()
 			service.Image.Upload(file, file_header.Filename)
@@ -89,8 +163,8 @@ func UpdateService(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		var edited Service
-		if err := json.NewDecoder(r.Body).Decode(&edited); err != nil {
-			http.Error(w, "error", http.StatusBadRequest)
+		if err := json.NewDecoder(request.Body).Decode(&edited); err != nil {
+			http.Error(writer, "error", http.StatusBadRequest)
 			return
 		}
 		if edited.Status != "" {
@@ -100,10 +174,10 @@ func UpdateService(w http.ResponseWriter, r *http.Request) {
 
 	err := service.Update()
 	if err != nil {
-		http.Error(w, "error", http.StatusForbidden)
+		http.Error(writer, "error", http.StatusForbidden)
 		return
 	} else {
 		ret, _ := json.Marshal(service)
-		w.Write(ret)
+		writer.Write(ret)
 	}
 }

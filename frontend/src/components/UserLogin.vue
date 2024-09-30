@@ -19,14 +19,14 @@
       </div>
 
       <div v-show="!socialView">
-        <form id="local-account-form" @submit.prevent="localAccountLogin">
+        <form id="local-account-form" @submit.prevent>
           <label for="username">Username:</label>
           <input type="text" name="username" required />
           <label for="password">Password: </label>
           <input type="password" name="password" required />
-          <button type="submit" class="local-login-button">Login</button>
+          <button class="local-login-button" @click="localAccount(true)">Login</button>
+          <button class="local-signup-button" @click="localAccount(false)">Create account</button>
         </form>
-        <button class="local-signup-button" @click="localAccountCreate">Create account</button>
       </div>
     </div>
   </div>
@@ -40,24 +40,33 @@ export default {
     };
   },
   methods: {
-    localAccountLogin(event) {
-      const data = new FormData(document.querySelector("#local-account-form"));
-      fetch("/api/accesstoken", {
-        method: "POST",
-        body: data,
-      }).catch((error) => {
-        console.error("Error fetching data:", error);
+    localAccount(login) {
+      const form = new FormData(document.querySelector("#local-account-form"));
+      const jsonObject = {};
+      form.forEach((value, key) => {
+        jsonObject[key] = value;
       });
-    },
 
-    localAccountCreate(event) {
-      const data = new FormData(document.querySelector("#local-account-form"));
-      fetch("/api/users", {
+      if (!jsonObject["username"] || !jsonObject["password"]) {
+        return;
+      }
+
+      // Convert the object to JSON string
+      const json = JSON.stringify(jsonObject);
+      const path = login == true ? "/api/sessiontoken" : "/api/users";
+      fetch(path, {
         method: "POST",
-        body: data,
-      }).catch((error) => {
-        console.error("Error fetching data:", error);
-      });
+        body: json,
+      })
+        .then((response) => {
+          if (response.status == 200) {
+            this.$router.push({ path: "/" });
+          } else {
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching data:", error);
+        });
     },
   },
 };

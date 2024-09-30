@@ -16,68 +16,6 @@ import (
 
 var db *gorm.DB
 
-type ServiceStatus string
-type ServiceCategory string
-
-const (
-	Active    ServiceStatus = "active"
-	Paused    ServiceStatus = "paused"
-	Cancelled ServiceStatus = "cancelled"
-)
-
-const (
-	Language ServiceCategory = "language"
-	Music    ServiceCategory = "music"
-	Software ServiceCategory = "software"
-	Wellness ServiceCategory = "wellness"
-	Other    ServiceCategory = "other"
-)
-
-var stringToStatus = map[string]ServiceStatus{
-	"active":    Active,
-	"paused":    Paused,
-	"cancelled": Cancelled,
-}
-
-var stringToCategory = map[string]ServiceCategory{
-	"language": Language,
-	"music":    Music,
-	"software": Software,
-	"wellness": Wellness,
-	"other":    Other,
-}
-
-type User struct {
-	ID           uint
-	Username     string `gorm:"unique,not null"`
-	Password     string `gorm:"not null"`
-	Description  string `gorm:"not null"`
-	Availability uint   `gorm:"default:0"`
-	Minutes      uint   `gorm:"default:60"`
-	Image        Image
-	Services     []Service
-}
-
-type Service struct {
-	ID          uint
-	Title       string          `gorm:"not null"`
-	Description string          `gorm:"not null"`
-	Category    ServiceCategory `gorm:"default:'other'"`
-	Status      ServiceStatus   `gorm:"default:'active'"`
-	Minutes     uint            `gorm:"default:0"`
-	Image       Image
-	UserID      uint
-}
-
-type Image struct {
-	ID        uint
-	Name      string `gorm:"not null"`
-	Path      string `gorm:"unique,not null"`
-	OSPath    string
-	ServiceID *uint
-	UserID    *uint
-}
-
 func (status *ServiceStatus) UnmarshalJSON(b []byte) error {
 	var s string
 	if err := json.Unmarshal(b, &s); err != nil {
@@ -99,8 +37,12 @@ func (status *ServiceCategory) UnmarshalJSON(b []byte) error {
 }
 
 func (user *User) Add() error {
-	result := db.Create(user)
-	fmt.Printf("%v\n", user)
+	result := db.Select("username", "password").Create(&user)
+	return result.Error
+}
+
+func (user *User) Login() error {
+	result := db.Where(&user, "username", "password").First(&user)
 	return result.Error
 }
 
@@ -109,9 +51,22 @@ func (user *User) Get() error {
 	return result.Error
 }
 
+func (session *Session) Add() error {
+	result := db.Create(session)
+	return result.Error
+}
+
+func (session *Session) Get() error {
+	result := db.Where(&session, "uuid").First(&session)
+	return result.Error
+}
+
+func (session *Session) Valid() bool {
+	return true
+}
+
 func (service *Service) Add() error {
 	result := db.Create(service)
-	fmt.Printf("%+v\n", service)
 	return result.Error
 }
 
@@ -175,8 +130,17 @@ func ServicesGet(services *[]Service, query string, category ServiceCategory) {
 	}
 }
 
+func UserServicesGet(user User, services *[]Service, all bool) {
+	if all {
+		db.Where("user_id = ?", user.ID).Find(&services)
+	} else {
+		db.Where("user_id = ? AND status = ?", user.ID, Active).Find(&services)
+	}
+}
+
 func createTables() {
 	db.AutoMigrate(&User{})
+	db.AutoMigrate(&Session{})
 	db.AutoMigrate(&Service{})
 	db.AutoMigrate(&Image{})
 }

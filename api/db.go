@@ -71,7 +71,11 @@ func (service *Service) Add() error {
 }
 
 func (service *Service) Get() error {
-	result := db.Preload("Image").First(&service)
+	preloadFunc := func(db *gorm.DB) *gorm.DB {
+		return db.Select("id", "username")
+	}
+
+	result := db.Preload("Image").Preload("User", preloadFunc).First(&service)
 	return result.Error
 }
 
@@ -119,14 +123,18 @@ func (image *Image) Delete() {
 }
 
 func ServicesGet(services *[]Service, query string, category ServiceCategory) {
+	preloadFunc := func(db *gorm.DB) *gorm.DB {
+		return db.Select("id", "username")
+	}
+
 	if query != "" && category != "" {
-		db.Preload("Image").Where("title ILIKE @query OR description ILIKE @query", sql.Named("query", fmt.Sprint("%", query, "%"))).Where("category = ?", category).Find(&services)
+		db.Preload("Image").Preload("User", preloadFunc).Where("title ILIKE @query OR description ILIKE @query", sql.Named("query", fmt.Sprint("%", query, "%"))).Where("category = ?", category).Find(&services)
 	} else if query != "" {
-		db.Preload("Image").Where("title ILIKE @query OR description ILIKE @query", sql.Named("query", fmt.Sprint("%", query, "%"))).Find(&services)
+		db.Preload("Image").Preload("User", preloadFunc).Where("title ILIKE @query OR description ILIKE @query", sql.Named("query", fmt.Sprint("%", query, "%"))).Find(&services)
 	} else if category != "" {
-		db.Preload("Image").Where("category = ?", category).Find(&services)
+		db.Preload("Image").Preload("User", preloadFunc).Where("category = ?", category).Find(&services)
 	} else {
-		db.Preload("Image").Find(&services)
+		db.Preload("Image").Preload("User", preloadFunc).Find(&services)
 	}
 }
 

@@ -13,14 +13,14 @@ import (
 
 type User struct {
 	ID           uint
-	Username     string `gorm:"unique,not null"`
-	Password     string `gorm:"not null"`
-	Description  string
-	Availability uint `gorm:"default:0"`
-	Minutes      uint `gorm:"default:60"`
-	Image        Image
-	Services     []Service
-	Sessions     []Session
+	Username     string    `gorm:"unique,not null"`
+	Password     string    `gorm:"not null" json:"-"`
+	Description  string    `json:",omitempty"`
+	Availability uint      `gorm:"default:0" json:",omitempty"`
+	Minutes      uint      `gorm:"default:60" json:",omitempty"`
+	Image        Image     `json:",omitempty"`
+	Services     []Service `json:",omitempty"`
+	Sessions     []Session `json:",omitempty"`
 }
 
 type Session struct {

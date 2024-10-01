@@ -17,6 +17,7 @@ type Service struct {
 	Minutes     uint            `gorm:"default:0"`
 	Image       Image
 	UserID      uint
+	User        User `gorm:"foreignKey:UserID"`
 }
 
 type ServiceStatus string

@@ -23,15 +23,53 @@
             <h3>Learning hub</h3>
           </RouterLink>
         </li> -->
+      </ul>
+      <ul v-if="!isLoggedIn()" class="user-buttons">
         <li>
           <RouterLink to="/user/login">
             <h3>Login</h3>
           </RouterLink>
         </li>
       </ul>
+      <ul v-else class="user-buttons">
+        <li>
+          <RouterLink to="/"><i class="fa-regular fa-calendar-days fa-lg"></i></RouterLink>
+        </li>
+        <li>
+          <RouterLink to="/"><i class="fa-regular fa-paper-plane fa-lg"></i></RouterLink>
+        </li>
+        <li>
+          <span @click="modal = !modal"><i class="fa-regular fa-user fa-lg"></i></span>
+        </li>
+        <div class="relative-container" v-if="modal">
+          <div id="user-modal-popout">
+            <div>
+              <RouterLink to="/"><div class="options">Profile</div></RouterLink>
+              <RouterLink to="/"><div class="options">Logout</div></RouterLink>
+            </div>
+          </div>
+        </div>
+      </ul>
     </div>
   </div>
 </template>
+
+<script>
+import { isLoggedIn } from "../utils/auth";
+
+export default {
+  data() {
+    return {
+      modal: false,
+    };
+  },
+  methods: {
+    isLoggedIn() {
+      return isLoggedIn();
+    },
+  },
+};
+</script>
 
 <style lang="scss">
 #nav-container {
@@ -67,20 +105,38 @@
       align-items: center;
     }
 
-    a {
-      color: var(--text0);
-    }
-
     .user-buttons {
       justify-content: flex-end;
       margin-left: auto;
       padding: 10px;
       cursor: pointer;
+
+      i {
+        color: var(--text0);
+      }
+      i:hover {
+        color: var(--text1);
+      }
     }
   }
+}
+#user-modal-popout {
+  position: absolute;
+  z-index: 100;
+  top: 15px;
+  right: 3px;
+  text-align: left;
+  background-color: var(--base0);
+  border: 2px solid var(--green0);
+  border-radius: 3px;
+  font-weight: 600;
 
-  .new-messages {
-    color: var(--green0);
+  .options {
+    color: var(--text1);
+    padding: 5px 15px;
+  }
+  .options:hover {
+    background-color: var(--base1);
   }
 }
 </style>

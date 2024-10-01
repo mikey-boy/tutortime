@@ -60,8 +60,11 @@ export default {
       })
         .then((response) => {
           if (response.status == 200) {
-            this.$router.push({ path: "/" });
-          } else {
+            if (this.$route.query.redirect != null) {
+              this.$router.push({ path: this.$route.query.redirect });
+            } else {
+              this.$router.push({ path: "/" });
+            }
           }
         })
         .catch((error) => {

@@ -17,9 +17,11 @@
         <div class="image-container">
           <img :src="service.Image.Path" :alt="service.Image.Name" />
         </div>
-        <h3 class="truncated-text">{{ service.Title }}</h3>
+        <RouterLink :to="{ path: `/services/${service.ID}` }">
+          <h3 class="truncated-text">{{ service.Title }}</h3>
+        </RouterLink>
         <p class="truncated-text">{{ service.Description }}</p>
-        <p>Username</p>
+        <p>{{ service.User.Username }}</p>
       </div>
     </div>
     <div id="service-page-control"></div>

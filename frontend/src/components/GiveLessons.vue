@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-if="services.length > 0">
     <table id="user-service-nav">
       <thead>
         <tr>
@@ -47,6 +47,14 @@
       </tbody>
     </table>
   </div>
+  <div v-else>
+    <div class="empty-container empty-service">
+      <div><p>Create a service to begin offering lessons</p></div>
+      <div>
+        <button id="new-service-button" @click="createService()">Create a service</button>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script>
@@ -65,14 +73,13 @@ export default {
       status: this.$route.query.status || "active",
     };
   },
-  mounted() {
+  created() {
     this.getServices();
   },
   methods: {
-    getServices() {
-      fetch("/api/users/me/services")
-        .then((response) => response.json())
-        .then((data) => (this.services = data));
+    async getServices() {
+      const response = await fetch("/api/users/me/services");
+      this.services = await response.json();
     },
     changeStatus(status) {
       this.$router.push({ path: "/user/services", query: { status: status } });
@@ -158,6 +165,23 @@ export default {
     button {
       background-color: transparent;
     }
+  }
+}
+
+.empty-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 250px;
+  border: 1px dashed var(--green0);
+
+  button {
+    @include common-button;
+    background-color: var(--green1);
+  }
+  &.empty-service {
+    margin-top: 25px;
   }
 }
 </style>

@@ -127,6 +127,7 @@ func ServicesGet(services *[]Service, query string, category ServiceCategory) {
 		return db.Select("id", "username")
 	}
 
+	// TODO: Probably really inefficient to Preload like this
 	if query != "" && category != "" {
 		db.Preload("Image").Preload("User", preloadFunc).Where("title ILIKE @query OR description ILIKE @query", sql.Named("query", fmt.Sprint("%", query, "%"))).Where("category = ?", category).Find(&services)
 	} else if query != "" {
@@ -144,6 +145,10 @@ func UserServicesGet(user User, services *[]Service, all bool) {
 	} else {
 		db.Where("user_id = ? AND status = ?", user.ID, Active).Find(&services)
 	}
+}
+
+func UserLessonsGet(user User, lessons *[]Lesson) {
+	db.Where("user_id = ?", user.ID).Find(&lessons)
 }
 
 func createTables() {

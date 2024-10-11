@@ -9,6 +9,7 @@ import ServiceDetails from './components/ServiceDetails.vue'
 import GiveLessons from './components/GiveLessons.vue'
 import ServiceTemplate from './components/ServiceTemplate.vue'
 import UserLogin from './components/UserLogin.vue'
+import Calendar from './components/Calendar.vue'
 
 function authenticated(to) {
   if (!isLoggedIn()) {
@@ -23,6 +24,7 @@ const routes = [
   { path: '/user/services/template', component: ServiceTemplate, beforeEnter: [authenticated] },
   { path: '/user/services/:id/template', component: ServiceTemplate, beforeEnter: [authenticated] },
   { path: '/user/login', component: UserLogin },
+  { path: '/user/calendar', component: Calendar , beforeEnter: [authenticated] },
   // { path: '/about', name: 'HowItWorks', component: HowItWorks },
   // { path: '/learning', name: 'LearningHub', component: LearningHub },
 ]

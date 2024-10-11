@@ -33,7 +33,7 @@
       </ul>
       <ul v-else class="user-buttons">
         <li>
-          <RouterLink to="/"><i class="fa-regular fa-calendar-days fa-lg"></i></RouterLink>
+          <RouterLink :to="{ path: '/user/calendar' }"><i class="fa-regular fa-calendar-days fa-lg"></i></RouterLink>
         </li>
         <li>
           <RouterLink to="/"><i class="fa-regular fa-paper-plane fa-lg"></i></RouterLink>

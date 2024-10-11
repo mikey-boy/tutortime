@@ -69,6 +69,7 @@ func main() {
 	mux.HandleFunc("GET /api/users/{id}/services", api.GetUserServices)
 	mux.HandleFunc("POST /api/services", api.ValidateSessionToken(api.AddService))
 	mux.HandleFunc("PUT /api/services/{id}", api.ValidateSessionToken(api.UpdateService))
+	mux.HandleFunc("GET /api/users/me/lessons", api.ValidateSessionToken(api.GetMyLessons))
 
 	addr := fmt.Sprintf("%s:%d", config.Webserver.Host, config.Webserver.Port)
 	fmt.Printf("Serving the application on http://%s\n", addr)

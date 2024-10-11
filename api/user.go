@@ -21,6 +21,7 @@ type User struct {
 	Image        Image     `json:",omitempty"`
 	Services     []Service `json:",omitempty"`
 	Sessions     []Session `json:",omitempty"`
+	Lessons      []Session `json:",omitempty"`
 }
 
 type Session struct {

@@ -17,9 +17,17 @@ var malformedJson = ApiError{
 	Error:   "Malformed JSON provided",
 	Details: "The user supplied a malformed JSON object that the server could not parse",
 }
+var malformedRequest = ApiError{
+	Error:   "Malformed request",
+	Details: "The request to the server contained malformed data",
+}
 
 // User errors
 
+var userNotFound = ApiError{
+	Error:   "User not found",
+	Details: "The user you were looking for was not found",
+}
 var usernameTaken = ApiError{
 	Error:   "Unable to create account",
 	Details: "The username you have chosen is already taken",
@@ -54,4 +62,11 @@ var wrongSessionToken = ApiError{
 var resourceNotFound = ApiError{
 	Error:   "Resource not found",
 	Details: "The resource you were looking for was not found",
+}
+
+// Websocket errors
+
+var websocketUpgradeFailed = ApiError{
+	Error:   "Websocket connection failed",
+	Details: "Connection failed while trying to upgrade from HTTP to Websocket protocol",
 }

@@ -40,12 +40,16 @@ func GetUser(writer http.ResponseWriter, request *http.Request) {
 	path := strings.Split(request.URL.Path, "/")
 	id, err := strconv.ParseUint(path[2], 10, 0)
 	if err != nil {
-		writer.Write([]byte("{}"))
+		http.Error(writer, malformedRequest.String(), http.StatusBadRequest)
 		return
 	}
 
-	user_struct := User{ID: uint(id)}
-	user := user_struct.Get()
+	user := User{ID: uint(id)}
+	if err := user.Get(); err != nil {
+		http.Error(writer, userNotFound.String(), http.StatusNotFound)
+		return
+	}
+
 	ret, _ := json.Marshal(user)
 	writer.Write(ret)
 }

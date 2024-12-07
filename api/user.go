@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -37,8 +36,7 @@ const ContextUserKey ContextKey = "user"
 
 // GET /users/{id}
 func GetUser(writer http.ResponseWriter, request *http.Request) {
-	path := strings.Split(request.URL.Path, "/")
-	id, err := strconv.ParseUint(path[2], 10, 0)
+	id, err := strconv.ParseUint(request.PathValue("id"), 10, 0)
 	if err != nil {
 		http.Error(writer, malformedRequest.String(), http.StatusBadRequest)
 		return

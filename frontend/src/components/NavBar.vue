@@ -36,7 +36,7 @@
           <RouterLink :to="{ path: '/user/calendar' }"><i class="fa-regular fa-calendar-days fa-lg"></i></RouterLink>
         </li>
         <li>
-          <RouterLink to="/"><i class="fa-regular fa-paper-plane fa-lg"></i></RouterLink>
+          <RouterLink :to="{ path: '/chat' }"><i class="fa-regular fa-paper-plane fa-lg"></i></RouterLink>
         </li>
         <li>
           <span @click="modal = !modal"><i class="fa-regular fa-user fa-lg"></i></span>

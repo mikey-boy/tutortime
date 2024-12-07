@@ -49,16 +49,12 @@
         </tbody>
       </table>
       <div class="flex-container">
-        <a href="">
-          <button class="blue-button">
-            <i class="fa-regular fa-paper-plane"></i> Message {{ service.User.Username }}
-          </button>
-        </a>
-        <a href="">
-          <button class="green-button">
-            <i class="fa-regular fa-user"></i> View {{ service.User.Username }}'s profile
-          </button>
-        </a>
+        <button class="blue-button" @click="messageUser(service.User.ID)">
+          <i class="fa-regular fa-paper-plane"></i> Message {{ service.User.Username }}
+        </button>
+        <button class="green-button">
+          <i class="fa-regular fa-user"></i> View {{ service.User.Username }}'s profile
+        </button>
       </div>
     </div>
   </div>
@@ -75,7 +71,11 @@ export default {
     const response = await fetch(`/api/services/${this.$route.params.id}`);
     this.service = await response.json();
   },
-  methods: {},
+  methods: {
+    messageUser(UserID) {
+      this.$router.push({ path: "/chat/", query: { user: UserID } });
+    },
+  },
 };
 </script>
 
@@ -95,11 +95,9 @@ export default {
     flex: 3;
   }
   .flex-container {
-    a {
-      margin: 15px 10px 0px 10px;
-      flex: 1;
-    }
     button {
+      flex: 1;
+      margin: 15px 10px 0px 10px;
       padding: 8px;
     }
   }

@@ -11,7 +11,7 @@
               </label>
             </td>
             <td>
-              <input type="text" v-model="service.title" name="title" required></input>
+              <input type="text" v-model="service.title" name="title" required />
             </td>
           </tr>
           <tr>
@@ -79,26 +79,28 @@ export default {
       if (this.$route.params.id) {
         fetch(`/api/services/${this.$route.params.id}`)
           .then((response) => response.json())
-          .then(
-            (data) => (
-              (this.service.id = data.ID),
-              (this.service.title = data.Title),
-              (this.service.description = data.Description),
-              (this.service.category = data.Category)
-            )
-          );
+          .then((data) => {
+            this.service.id = data.ID;
+            this.service.title = data.Title;
+            this.service.description = data.Description;
+            this.service.category = data.Category;
+          });
       }
     },
     createService(form) {
       fetch("/api/services", {
         method: "POST",
         body: form,
+      }).then(() => {
+        this.$router.push({ path: "/user/services", query: { status: "active" } });
       });
     },
     editService(form) {
       fetch(`/api/services/${this.service.id}`, {
         method: "PUT",
         body: form,
+      }).then(() => {
+        this.$router.push({ path: "/user/services", query: { status: "active" } });
       });
     },
     createOrEditService() {
@@ -108,7 +110,6 @@ export default {
       } else {
         this.editService(form);
       }
-      this.$router.push({ path: "/user/services", query: { status: "active" } });
     },
   },
 };
@@ -126,7 +127,8 @@ export default {
   table {
     width: 100%;
   }
-  textarea, input {
+  textarea,
+  input {
     width: 100%;
     box-sizing: border-box;
   }

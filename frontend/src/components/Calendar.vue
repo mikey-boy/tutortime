@@ -15,13 +15,13 @@
       </span>
     </div>
     <div class="calendar">
+      <span class="day-name">Sun</span>
       <span class="day-name">Mon</span>
       <span class="day-name">Tue</span>
       <span class="day-name">Wed</span>
       <span class="day-name">Thu</span>
       <span class="day-name">Fri</span>
       <span class="day-name">Sat</span>
-      <span class="day-name">Sun</span>
       <template v-for="i in current_month.offset">
         <div class="day"></div>
       </template>

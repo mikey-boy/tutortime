@@ -88,6 +88,20 @@ func (service *Service) Update() error {
 	return result.Error
 }
 
+func (lesson *Lesson) Add() error {
+	result := db.Create(lesson)
+	return result.Error
+}
+
+func (lesson *Lesson) Get() error {
+	result := db.First(&lesson)
+	return result.Error
+}
+
+func (service *Lesson) Update() error {
+	return nil
+}
+
 func (image *Image) Add(category ServiceCategory) {
 	image.Name = fmt.Sprintf("%s.jpg", string(category))
 	image.Path = fmt.Sprintf("/default/img/%s", image.Name)
@@ -122,6 +136,19 @@ func (image *Image) Delete() {
 	image.Path = ""
 }
 
+func (message *Message) Add() error {
+	var room Room
+	if message.SenderID < message.RecieverID {
+		db.FirstOrCreate(&room, Room{User1ID: message.SenderID, User2ID: message.RecieverID})
+	} else {
+		db.FirstOrCreate(&room, Room{User1ID: message.RecieverID, User2ID: message.SenderID})
+	}
+
+	message.RoomID = room.ID
+	result := db.Create(message)
+	return result.Error
+}
+
 func ServicesGet(services *[]Service, query string, category ServiceCategory) {
 	preloadFunc := func(db *gorm.DB) *gorm.DB {
 		return db.Select("id", "username")
@@ -147,8 +174,30 @@ func UserServicesGet(user User, services *[]Service, all bool) {
 	}
 }
 
-func UserLessonsGet(user User, lessons *[]Lesson) {
-	db.Where("user_id = ?", user.ID).Find(&lessons)
+func UserLessonsGet(user User, other User, lessons *[]Lesson) {
+	db.Where("tutor_id = ? AND student_id = ?", user.ID, other.ID).Or("tutor_id = ? AND student_id = ?", other.ID, user.ID).Find(&lessons)
+}
+
+func MessagesGet(messages *[]Message, user User, other User) {
+	db.Preload("Lesson").Where("sender_id = ? AND reciever_id = ?", user.ID, other.ID).Or("sender_id = ? AND reciever_id = ?", other.ID, user.ID).Find(&messages)
+}
+
+func ContactsGet(contacts *[]User, user User) {
+	preloadFunc := func(db *gorm.DB) *gorm.DB {
+		return db.Select("id", "username")
+	}
+
+	var rooms1 []Room
+	var rooms2 []Room
+	db.Model(&Room{}).Preload("User2", preloadFunc).Where("user1_id = ?", user.ID).Find(&rooms1)
+	db.Model(&Room{}).Preload("User1", preloadFunc).Where("user2_id = ?", user.ID).Find(&rooms2)
+
+	for _, room := range rooms1 {
+		*contacts = append(*contacts, room.User2)
+	}
+	for _, room := range rooms2 {
+		*contacts = append(*contacts, room.User1)
+	}
 }
 
 func createTables() {
@@ -156,6 +205,9 @@ func createTables() {
 	db.AutoMigrate(&Session{})
 	db.AutoMigrate(&Service{})
 	db.AutoMigrate(&Image{})
+	db.AutoMigrate(&Message{})
+	db.AutoMigrate(&Lesson{})
+	db.AutoMigrate(&Room{})
 }
 
 func CreateConnection(host string, user string, password string, dbname string, port uint16) {

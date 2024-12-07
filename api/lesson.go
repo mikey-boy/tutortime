@@ -3,13 +3,21 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
+	"time"
+
+	"gorm.io/gorm"
 )
 
 type Lesson struct {
 	ID        uint
+	ServiceID uint
 	TutorID   uint
 	StudentID uint
-	ServiceID uint
+	MessageID uint
+	Duration  uint
+	Datetime  time.Time
+	Status    LessonStatus
 }
 
 type LessonStatus string
@@ -20,21 +28,93 @@ const (
 	ACCEPTED          LessonStatus = "accepted"
 	ACCEPTED_STUDENT  LessonStatus = "accepted_student"
 	ACCEPTED_TUTOR    LessonStatus = "accepted_tutor"
+	COMPLETED         LessonStatus = "completed"
 	CONFIRMED         LessonStatus = "confirmed"
 	CONFIRMED_STUDENT LessonStatus = "confirmed_student"
 	CONFIRMED_TUTOR   LessonStatus = "confirmed_tutor"
 )
 
-// GET /api/users/me/services/
-func GetMyLessons(writer http.ResponseWriter, request *http.Request) {
-	var lessons []Lesson
+// GET /api/users/{id}/lessons/
+func GetOurLessons(writer http.ResponseWriter, request *http.Request) {
+	id, err := strconv.ParseUint(request.PathValue("id"), 10, 0)
+	if err != nil {
+		http.Error(writer, malformedRequest.String(), http.StatusBadRequest)
+		return
+	}
+
+	other := User{ID: uint(id)}
+	if err := other.Get(); err != nil {
+		http.Error(writer, userNotFound.String(), http.StatusNotFound)
+		return
+	}
+
 	user, ok := UserFromRequest(*request)
 	if !ok {
 		http.Error(writer, invalidSessionToken.String(), http.StatusUnauthorized)
 		return
 	}
 
-	UserLessonsGet(user, &lessons)
+	var lessons []Lesson
+	UserLessonsGet(user, other, &lessons)
 	ret, _ := json.Marshal(lessons)
 	writer.Write(ret)
+}
+
+// PATCH /api/lessons/{id}
+func UpdateLesson(writer http.ResponseWriter, request *http.Request) {
+	id, _ := strconv.ParseUint(request.PathValue("id"), 10, 0)
+	lesson := Lesson{ID: uint(id)}
+
+	// Verify lesson exists
+	if err := lesson.Get(); err == gorm.ErrRecordNotFound {
+		http.Error(writer, resourceNotFound.String(), http.StatusNotFound)
+		return
+	}
+
+	// Verify user can modify this lesson
+	var user User
+	if user, ok := UserFromRequest(*request); !ok || (lesson.StudentID != user.ID && lesson.TutorID != user.ID) {
+		http.Error(writer, wrongSessionToken.String(), http.StatusUnauthorized)
+		return
+	}
+
+	var updated Lesson
+	if err := json.NewDecoder(request.Body).Decode(&updated); err != nil {
+		http.Error(writer, malformedJson.String(), http.StatusBadRequest)
+		return
+	}
+
+	if updated.Status == CANCELLED {
+		lesson.Status = updated.Status
+	} else if lesson.Status == ACCEPTED_STUDENT && lesson.TutorID == user.ID {
+		if updated.Status == ACCEPTED {
+			lesson.Status = updated.Status
+		} else if updated.Status == ACCEPTED_TUTOR {
+			lesson.Status = updated.Status
+			lesson.Datetime = updated.Datetime
+			lesson.Duration = updated.Duration
+		}
+	} else if lesson.Status == ACCEPTED_TUTOR && lesson.StudentID == user.ID {
+		if updated.Status == ACCEPTED {
+			lesson.Status = updated.Status
+		} else if updated.Status == ACCEPTED_STUDENT {
+			lesson.Status = updated.Status
+			lesson.Datetime = updated.Datetime
+			lesson.Duration = updated.Duration
+		}
+	} else if lesson.Status == COMPLETED && lesson.TutorID == user.ID {
+		if updated.Status == CONFIRMED {
+			lesson.Status = updated.Status
+		} else if updated.Status == CONFIRMED_TUTOR {
+			lesson.Status = updated.Status
+			lesson.Duration = updated.Duration
+		}
+	} else if lesson.Status == COMPLETED && lesson.StudentID == user.ID {
+		if updated.Status == CONFIRMED {
+			lesson.Status = updated.Status
+		} else if updated.Status == CONFIRMED_STUDENT {
+			lesson.Status = updated.Status
+			lesson.Duration = updated.Duration
+		}
+	}
 }

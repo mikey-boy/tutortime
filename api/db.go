@@ -98,8 +98,9 @@ func (lesson *Lesson) Get() error {
 	return result.Error
 }
 
-func (service *Lesson) Update() error {
-	return nil
+func (lesson *Lesson) Update() error {
+	result := db.Save(lesson)
+	return result.Error
 }
 
 func (image *Image) Add(category ServiceCategory) {
@@ -136,6 +137,10 @@ func (image *Image) Delete() {
 	image.Path = ""
 }
 
+func (message *Message) Get() error {
+	result := db.First(&message)
+	return result.Error
+}
 func (message *Message) Add() error {
 	var room Room
 	if message.SenderID < message.RecieverID {
@@ -146,6 +151,10 @@ func (message *Message) Add() error {
 
 	message.RoomID = room.ID
 	result := db.Create(message)
+	return result.Error
+}
+func (message *Message) Update() error {
+	result := db.Save(message)
 	return result.Error
 }
 
@@ -178,8 +187,18 @@ func UserLessonsGet(user User, other User, lessons *[]Lesson) {
 	db.Where("tutor_id = ? AND student_id = ?", user.ID, other.ID).Or("tutor_id = ? AND student_id = ?", other.ID, user.ID).Find(&lessons)
 }
 
+func (room *Room) Get(user User, other User) {
+	if user.ID < other.ID {
+		db.Where("user1_id = ? AND user2_id = ?", user.ID, other.ID).First(&room)
+	} else {
+		db.Where("user1_id = ? AND user2_id = ?", other.ID, user.ID).First(&room)
+	}
+}
+
 func MessagesGet(messages *[]Message, user User, other User) {
-	db.Preload("Lesson").Where("sender_id = ? AND reciever_id = ?", user.ID, other.ID).Or("sender_id = ? AND reciever_id = ?", other.ID, user.ID).Find(&messages)
+	var room Room
+	room.Get(user, other)
+	db.Model(Message{}).Joins("Lesson").Where("room_id = ?", room.ID).Order("ID asc").Find(&messages)
 }
 
 func ContactsGet(contacts *[]User, user User) {

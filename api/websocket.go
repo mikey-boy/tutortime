@@ -38,19 +38,6 @@ type Client struct {
 	send chan Message
 }
 
-type apiMessage struct {
-	RecieverID uint
-	Message    string
-	Lesson     struct {
-		ServiceID uint
-		LessonID  uint
-		Title     string
-		Date      string
-		Time      string
-		Duration  uint
-	}
-}
-
 const (
 	// Time allowed to write a message to the peer.
 	writeWait = 10 * time.Second
@@ -98,15 +85,53 @@ func (client *Client) readMessage() {
 			break
 		}
 
-		var apiMessage apiMessage
-		json.NewDecoder(reader).Decode(&apiMessage)
+		var message Message
+		var api_message Message
+		json.NewDecoder(reader).Decode(&api_message)
 
-		var message = Message{SenderID: client.userID, RecieverID: apiMessage.RecieverID, Message: apiMessage.Message}
-		if apiMessage.Lesson.ServiceID != 0 || apiMessage.Lesson.LessonID != 0 {
-			var service = Service{ID: apiMessage.Lesson.ServiceID}
+		if api_message.Lesson != nil && api_message.Lesson.ID != 0 {
+			message = Message{ID: api_message.ID}
+			message.Get()
+
+			if client.userID != message.SenderID && client.userID != message.RecieverID {
+				continue
+			}
+			if api_message.Lesson.Status == ACCEPTED_TUTOR || api_message.Lesson.Status == ACCEPTED_STUDENT {
+				if client.userID == api_message.Lesson.TutorID {
+					api_message.Lesson.Status = ACCEPTED_TUTOR
+				} else {
+					api_message.Lesson.Status = ACCEPTED_STUDENT
+				}
+			}
+
+			sender := User{ID: client.userID}
+			service := Service{ID: api_message.Lesson.ServiceID}
+			service.Get()
+			sender.Get()
+
+			api_lesson := Lesson{ID: api_message.Lesson.ID, Status: api_message.Lesson.Status, Duration: api_message.Lesson.Duration, Datetime: api_message.Lesson.Datetime}
+			lesson := Lesson{ID: api_message.Lesson.ID}
+			lesson.Get()
+			lesson.merge(&api_lesson, client.userID)
+			lesson.Update()
+
+			system_message := Message{RoomID: message.RoomID}
+			if api_message.Lesson.Status == ACCEPTED || api_message.Lesson.Status == CANCELLED {
+				datetime := lesson.Datetime.UTC().Format(time.RFC3339)
+				system_message.Message = fmt.Sprintf("%s %s %s scheduled for %s", sender.Username, api_message.Lesson.Status, service.Title, datetime)
+			}
+			system_message.Add()
+
+			message.SenderID = client.userID
+			message.RecieverID = api_message.RecieverID
+			message.Lesson = &lesson
+			message.Update()
+		} else if api_message.Lesson != nil && api_message.Lesson.ServiceID != 0 {
+			service := Service{ID: api_message.Lesson.ServiceID}
 			service.Get()
 
-			var lesson = Lesson{ServiceID: apiMessage.Lesson.ServiceID, TutorID: service.UserID, Duration: apiMessage.Lesson.Duration}
+			message = Message{SenderID: client.userID, RecieverID: api_message.RecieverID}
+			lesson := Lesson{ServiceID: api_message.Lesson.ServiceID, TutorID: service.UserID, Duration: api_message.Lesson.Duration, Datetime: api_message.Lesson.Datetime}
 			if service.UserID == message.SenderID {
 				lesson.StudentID = message.RecieverID
 				lesson.Status = ACCEPTED_TUTOR
@@ -116,16 +141,12 @@ func (client *Client) readMessage() {
 			} else {
 				continue
 			}
-			lesson.Datetime, err = time.Parse("2006-01-02 15:04:05", fmt.Sprintf("%s %s:00", apiMessage.Lesson.Date, apiMessage.Lesson.Time))
-			if err != nil {
-				fmt.Println(err)
-			}
-
 			message.Lesson = &lesson
+			message.Add()
+		} else {
+			message = Message{SenderID: client.userID, RecieverID: api_message.RecieverID, Message: api_message.Message}
+			message.Add()
 		}
-
-		message.Add()
-		fmt.Printf("Message to read from client: '%+v'\n", message)
 
 		client.hub.message <- message
 	}
@@ -145,7 +166,6 @@ func (client *Client) writeMessage() {
 	for {
 		select {
 		case message, ok := <-client.send:
-			fmt.Printf("Message to write to client: '%s'\n", message.Message)
 			client.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
 				// The hub closed the channel.
@@ -197,7 +217,6 @@ func ServeWs(writer http.ResponseWriter, request *http.Request) {
 
 	client := &Client{hub: &hub, conn: conn, userID: user.ID, send: make(chan Message)}
 	client.hub.register <- client
-	fmt.Printf("Registered a new client for: %d\n", user.ID)
 
 	// Allow collection of memory referenced by the caller by doing all work in
 	// new goroutines.

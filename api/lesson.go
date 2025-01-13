@@ -34,6 +34,34 @@ const (
 	CONFIRMED_TUTOR   LessonStatus = "confirmed_tutor"
 )
 
+func (current *Lesson) merge(updated *Lesson, user_id uint) {
+	if updated.Status == CANCELLED {
+		current.Status = updated.Status
+	} else if current.Status == ACCEPTED_STUDENT && current.TutorID == user_id && updated.Status == ACCEPTED {
+		current.Status = ACCEPTED
+	} else if current.Status == ACCEPTED_TUTOR && current.StudentID == user_id && updated.Status == ACCEPTED {
+		current.Status = ACCEPTED
+	} else if (current.Status == ACCEPTED_STUDENT || current.Status == ACCEPTED_TUTOR) && (updated.Status == ACCEPTED_STUDENT || updated.Status == ACCEPTED_TUTOR) {
+		current.Status = updated.Status
+		current.Datetime = updated.Datetime
+		current.Duration = updated.Duration
+	} else if current.Status == COMPLETED && current.TutorID == user_id {
+		if updated.Status == CONFIRMED {
+			current.Status = updated.Status
+		} else if updated.Status == CONFIRMED_TUTOR {
+			current.Status = updated.Status
+			current.Duration = updated.Duration
+		}
+	} else if current.Status == COMPLETED && current.StudentID == user_id {
+		if updated.Status == CONFIRMED {
+			current.Status = updated.Status
+		} else if updated.Status == CONFIRMED_STUDENT {
+			current.Status = updated.Status
+			current.Duration = updated.Duration
+		}
+	}
+}
+
 // GET /api/users/{id}/lessons/
 func GetOurLessons(writer http.ResponseWriter, request *http.Request) {
 	id, err := strconv.ParseUint(request.PathValue("id"), 10, 0)

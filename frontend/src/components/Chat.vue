@@ -14,14 +14,25 @@
         <div
           v-for="message in messages"
           :class="{
+            'flex-container-system': message.SenderID == 0,
             'flex-container-user': message.RecieverID == activeContact.ID,
-            'flex-container-peer': message.RecieverID != activeContact.ID,
+            'flex-container-peer': message.RecieverID != activeContact.ID && message.SenderID != 0,
           }"
         >
-          <span v-if="message.Lesson" class="message-item lesson">
-            <Lesson :lesson="message.Lesson" :service="findService(message.Lesson)" />
+          <span v-if="message.Lesson && displayInChat(message.Lesson)" class="message-item lesson">
+            <Lesson
+              @modify-lesson="sendModifiedLesson"
+              :lesson="message.Lesson"
+              :service="services[message.Lesson.ServiceID]"
+              :sender="message.RecieverID == activeContact.ID"
+            />
           </span>
-          <span v-else class="message-item">{{ message.Message }}</span>
+          <span v-else-if="message.Message && message.SenderID == 0" class="message-item-system">
+            {{ parseSystemMessage(message.Message) }}
+          </span>
+          <span v-else-if="message.Message" class="message-item">
+            {{ message.Message }}
+          </span>
         </div>
         <div v-if="lessonRequest.Title" id="chat-lesson-request">
           <form @submit.prevent="sendLessonRequest()">
@@ -30,8 +41,8 @@
               <i id="cancel-request-button" @click="resetLessonRequest" class="fa-regular fa-circle-xmark fa-lg"></i>
             </div>
             <label>Datetime: </label>
-            <input v-model="lessonRequest.Date" type="date" required :min="today" />
-            <input v-model="lessonRequest.Time" type="time" required />
+            <input v-model="lessonRequest.Date" type="date" class="date" required :min="today" />
+            <input v-model="lessonRequest.Time" type="time" class="time" required />
             <label>Duration: </label>
             <select v-model="lessonRequest.Duration">
               <option v-for="i in 17" :value="i * 15">
@@ -40,8 +51,6 @@
               </option>
             </select>
             <button id="send-request-button">Send</button>
-            <button id="modify-request-button">Modify</button>
-            <p id="lesson-request-error"></p>
           </form>
         </div>
       </div>
@@ -59,19 +68,24 @@
     <div id="lessons">
       <h2>Lessons</h2>
       <div class="flex-container subnav" v-show="lessonView">
-        <button :class="{ active: completed }" @click="completed = true">Scheduled</button>
-        <button :class="{ active: !completed }" @click="completed = false">Completed</button>
+        <button :class="{ active: !completedView }" @click="completedView = false">Scheduled</button>
+        <button :class="{ active: completedView }" @click="completedView = true">Completed</button>
       </div>
       <div v-if="lessonView" class="lesson-container">
-        <div class="lesson" v-for="lesson in lessons" v-show="completed">
-          <Lesson :lesson="lesson" :service="findService(lesson)" />
-        </div>
+        <template v-for="lesson in lessons">
+          <div v-if="displayOnSide(lesson) && completedView && lesson.Status != 'accepted'" class="lesson">
+            <Lesson @modify-lesson="sendModifiedLesson" :lesson="lesson" :service="services[lesson.ServiceID]" />
+          </div>
+          <div v-else-if="displayOnSide(lesson) && !completedView" class="lesson">
+            <Lesson @modify-lesson="sendModifiedLesson" :lesson="lesson" :service="services[lesson.ServiceID]" />
+          </div>
+        </template>
       </div>
       <div v-else>
         <div class="lesson-container without-subnav">
           <h3>As a student:</h3>
           <template v-for="service in services">
-            <div v-if="service.UserID != activeContact.ID">
+            <div v-if="service.UserID == activeContact.ID">
               <label class="lesson-request-item" @click="newLessonRequest(service)">
                 <input type="radio" name="service" id="service-{{ service.id }}" /> {{ service.Title }}
               </label>
@@ -79,7 +93,7 @@
           </template>
           <h3>As a tutor:</h3>
           <template v-for="service in services">
-            <div v-if="service.UserID == activeContact.ID">
+            <div v-if="service.UserID != activeContact.ID">
               <label class="lesson-request-item" @click="newLessonRequest(service)">
                 <input type="radio" name="service" id="service-{{ service.id }}" /> {{ service.Title }}
               </label>
@@ -101,6 +115,7 @@
 <script>
 import Lesson from "./Lesson.vue";
 import { nextTick } from "vue";
+import dayjs from "dayjs";
 
 const socket = new WebSocket("ws://localhost:8080/ws");
 
@@ -110,28 +125,34 @@ export default {
       text: "",
       activeContact: null,
       contacts: [],
-      lessons: [],
       messages: [],
-      services: [],
+      lessons: {},
+      services: {},
       lessonView: true,
-      completed: true,
+      completedView: false,
+      today: dayjs().format("YYYY-MM-DD"),
       lessonRequest: {
-        LessonID: 0,
-        ServiceID: 0,
-        Title: "",
-        Date: null,
-        Time: null,
-        Duration: 0,
+        Date: dayjs().format("YYYY-MM-DD"),
+        Time: dayjs().endOf("hour").add(1, "minute").format("HH:mm"),
       },
-      today: new Date().toISOString().split("T")[0],
     };
   },
   created() {
     this.initChat();
     socket.onmessage = (event) => {
       const message = JSON.parse(event.data);
-      this.messages.push(message);
-      this.scrollToBottom();
+      if (message.Lesson != null) {
+        if (this.messages.at(-1) == null || this.messages.at(-1).ID < message.ID) {
+          this.messages.push(message);
+          this.scrollToBottom();
+        } else {
+          this.getMessages();
+        }
+        this.lessons[message.Lesson.ID] = message.Lesson;
+      } else {
+        this.messages.push(message);
+        this.scrollToBottom();
+      }
     };
   },
   components: {
@@ -164,16 +185,22 @@ export default {
       let myServicesUrl = "/api/users/me/services";
       let yourServicesUrl = `/api/users/${userID}/services`;
 
-      const myServices = await fetch(myServicesUrl);
-      const yourServices = await fetch(yourServicesUrl);
+      const myServicesResponse = await fetch(myServicesUrl);
+      const yourServicesResponse = await fetch(yourServicesUrl);
+      const myServices = await myServicesResponse.json();
+      const yourServices = await yourServicesResponse.json();
 
-      let a1 = await myServices.json();
-      let a2 = await yourServices.json();
-      this.services = [].concat(a1, a2);
+      for (let i = 0; i < myServices.length; i++) {
+        if (myServices[i].status == "active") {
+          this.services[myServices[i].ID] = service;
+        }
+      }
+      yourServices.forEach((service) => (this.services[service.ID] = service));
     },
     async getLessons(userID) {
       const response = await fetch(`/api/users/${userID}/lessons`);
-      this.lessons = await response.json();
+      const ourLessons = await response.json();
+      ourLessons.forEach((lesson) => (this.lessons[lesson.ID] = lesson));
     },
     async getMessages() {
       const response = await fetch(`/api/users/${this.activeContact.ID}/messages`);
@@ -199,31 +226,50 @@ export default {
       this.text = "";
     },
     sendLessonRequest() {
-      let message = { Message: "", RecieverID: this.activeContact.ID, Lesson: this.lessonRequest };
+      this.lessonRequest.Datetime = dayjs(`${this.lessonRequest.Date} ${this.lessonRequest.Time}`).format();
+      let message = {
+        Message: "",
+        RecieverID: this.activeContact.ID,
+        Lesson: this.lessonRequest,
+      };
       socket.send(JSON.stringify(message));
       this.resetLessonRequest();
     },
-    findService(lesson) {
-      return this.services.find((service) => service.ID == lesson.ServiceID);
+    sendModifiedLesson(lesson) {
+      lesson.Datetime = dayjs(`${lesson.Date} ${lesson.Time}`).format();
+      message = { ID: lesson.MessageID, Message: "", RecieverID: this.activeContact.ID, Lesson: lesson };
+      socket.send(JSON.stringify(message));
     },
     newLessonRequest(service) {
       this.lessonRequest.Title = service.Title;
       this.lessonRequest.ServiceID = service.ID;
       this.scrollToBottom();
     },
-    modifyLessonRequest(lesson) {},
     resetLessonRequest() {
       this.lessonRequest.Title = "";
-      this.lessonRequest.LessonID = 0;
       this.lessonRequest.ServiceID = 0;
-      this.lessonRequest.Duration = 0;
-      this.lessonRequest.Date = null;
-      this.lessonRequest.Time = null;
 
       let radios = document.getElementsByName("service");
       for (let i = 0; i < radios.length; i++) {
         radios[i].checked = false;
       }
+    },
+    parseSystemMessage(message) {
+      // Original: mike cancelled yoga practice scheduled for 2025-01-13T14:00:00Z
+      // Parsed: mike cancelled yoga practice scheduled for 2025-01-13 @ 09:00AM
+      return message.slice(0, -20) + dayjs(message.slice(-20)).format("YYYY-MM-DD @ hh:mmA");
+    },
+    displayInChat(lesson) {
+      if (["accepted_student", "accepted_tutor"].includes(lesson.Status)) {
+        return true;
+      }
+      return false;
+    },
+    displayOnSide(lesson) {
+      if (["accepted", "completed", "confirmed", "comfirmed_student", "confirmed_tutor"].includes(lesson.Status)) {
+        return true;
+      }
+      return false;
     },
   },
 };
@@ -301,11 +347,17 @@ export default {
       display: flex;
       justify-content: right;
       color: var(--blue0);
+      h3 {
+        color: var(--blue0);
+      }
     }
     .flex-container-peer {
       display: flex;
       justify-content: left;
       color: var(--orange);
+      h3 {
+        color: var(--orange);
+      }
     }
     .flex-container-system {
       display: flex;
@@ -335,20 +387,29 @@ export default {
     justify-content: right;
 
     h3 {
-      margin-top: 0px;
+      margin: 0px 0px 15px;
       justify-content: left;
     }
     > form {
       padding: 8px;
-      background-color: var(--base1);
       border: 1px dashed var(--green0);
       border-radius: 3px;
-      width: 330px;
+      width: 315px;
 
-      select,
       input {
         padding: 4px;
         margin-bottom: 10px;
+      }
+      input.date {
+        width: 128px;
+        margin-right: 5px;
+      }
+      input.time {
+        width: 75px;
+      }
+      select {
+        padding: 4px;
+        margin-right: 5px;
       }
     }
     .truncated-text {

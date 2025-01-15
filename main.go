@@ -70,8 +70,7 @@ func main() {
 	mux.HandleFunc("GET /api/users/{id}/messages", api.ValidateSessionToken(api.GetOurMessages))
 	mux.HandleFunc("GET /api/users/{id}/lessons", api.ValidateSessionToken(api.GetOurLessons))
 	mux.HandleFunc("GET /api/users/me/services", api.ValidateSessionToken(api.GetMyServices))
-
-	mux.HandleFunc("PATCH /api/lessons/{id}", api.ValidateSessionToken(api.UpdateLesson))
+	mux.HandleFunc("GET /api/users/me/lessons", api.ValidateSessionToken(api.GetMyLessons))
 
 	mux.HandleFunc("POST /api/sessiontoken", api.AddSessionToken)
 	mux.HandleFunc("GET /api/contacts", api.ValidateSessionToken(api.GetContacts))

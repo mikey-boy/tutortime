@@ -5,8 +5,6 @@ import (
 	"net/http"
 	"strconv"
 	"time"
-
-	"gorm.io/gorm"
 )
 
 type Lesson struct {
@@ -17,6 +15,7 @@ type Lesson struct {
 	MessageID uint
 	Duration  uint
 	Datetime  time.Time
+	Service   Service
 	Status    LessonStatus
 }
 
@@ -62,6 +61,20 @@ func (current *Lesson) merge(updated *Lesson, user_id uint) {
 	}
 }
 
+// GET /api/users/me/lessons/
+func GetMyLessons(writer http.ResponseWriter, request *http.Request) {
+	user, ok := UserFromRequest(*request)
+	if !ok {
+		http.Error(writer, invalidSessionToken.String(), http.StatusUnauthorized)
+		return
+	}
+
+	var lessons []Lesson
+	UserLessonsGet(user, &lessons)
+	ret, _ := json.Marshal(lessons)
+	writer.Write(ret)
+}
+
 // GET /api/users/{id}/lessons/
 func GetOurLessons(writer http.ResponseWriter, request *http.Request) {
 	id, err := strconv.ParseUint(request.PathValue("id"), 10, 0)
@@ -83,66 +96,7 @@ func GetOurLessons(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	var lessons []Lesson
-	UserLessonsGet(user, other, &lessons)
+	OurLessonsGet(user, other, &lessons)
 	ret, _ := json.Marshal(lessons)
 	writer.Write(ret)
-}
-
-// PATCH /api/lessons/{id}
-func UpdateLesson(writer http.ResponseWriter, request *http.Request) {
-	id, _ := strconv.ParseUint(request.PathValue("id"), 10, 0)
-	lesson := Lesson{ID: uint(id)}
-
-	// Verify lesson exists
-	if err := lesson.Get(); err == gorm.ErrRecordNotFound {
-		http.Error(writer, resourceNotFound.String(), http.StatusNotFound)
-		return
-	}
-
-	// Verify user can modify this lesson
-	var user User
-	if user, ok := UserFromRequest(*request); !ok || (lesson.StudentID != user.ID && lesson.TutorID != user.ID) {
-		http.Error(writer, wrongSessionToken.String(), http.StatusUnauthorized)
-		return
-	}
-
-	var updated Lesson
-	if err := json.NewDecoder(request.Body).Decode(&updated); err != nil {
-		http.Error(writer, malformedJson.String(), http.StatusBadRequest)
-		return
-	}
-
-	if updated.Status == CANCELLED {
-		lesson.Status = updated.Status
-	} else if lesson.Status == ACCEPTED_STUDENT && lesson.TutorID == user.ID {
-		if updated.Status == ACCEPTED {
-			lesson.Status = updated.Status
-		} else if updated.Status == ACCEPTED_TUTOR {
-			lesson.Status = updated.Status
-			lesson.Datetime = updated.Datetime
-			lesson.Duration = updated.Duration
-		}
-	} else if lesson.Status == ACCEPTED_TUTOR && lesson.StudentID == user.ID {
-		if updated.Status == ACCEPTED {
-			lesson.Status = updated.Status
-		} else if updated.Status == ACCEPTED_STUDENT {
-			lesson.Status = updated.Status
-			lesson.Datetime = updated.Datetime
-			lesson.Duration = updated.Duration
-		}
-	} else if lesson.Status == COMPLETED && lesson.TutorID == user.ID {
-		if updated.Status == CONFIRMED {
-			lesson.Status = updated.Status
-		} else if updated.Status == CONFIRMED_TUTOR {
-			lesson.Status = updated.Status
-			lesson.Duration = updated.Duration
-		}
-	} else if lesson.Status == COMPLETED && lesson.StudentID == user.ID {
-		if updated.Status == CONFIRMED {
-			lesson.Status = updated.Status
-		} else if updated.Status == CONFIRMED_STUDENT {
-			lesson.Status = updated.Status
-			lesson.Duration = updated.Duration
-		}
-	}
 }

@@ -191,8 +191,8 @@ export default {
       const yourServices = await yourServicesResponse.json();
 
       for (let i = 0; i < myServices.length; i++) {
-        if (myServices[i].status == "active") {
-          this.services[myServices[i].ID] = service;
+        if (myServices[i].Status == "active") {
+          this.services[myServices[i].ID] = myServices[i];
         }
       }
       yourServices.forEach((service) => (this.services[service.ID] = service));

@@ -183,7 +183,11 @@ func UserServicesGet(user User, services *[]Service, all bool) {
 	}
 }
 
-func UserLessonsGet(user User, other User, lessons *[]Lesson) {
+func UserLessonsGet(user User, lessons *[]Lesson) {
+	db.Preload("Service").Where("tutor_id = ? OR student_id = ?", user.ID, user.ID).Order("datetime ASC").Find(&lessons)
+}
+
+func OurLessonsGet(user User, other User, lessons *[]Lesson) {
 	db.Where("tutor_id = ? AND student_id = ?", user.ID, other.ID).Or("tutor_id = ? AND student_id = ?", other.ID, user.ID).Find(&lessons)
 }
 

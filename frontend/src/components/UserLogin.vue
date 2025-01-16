@@ -33,6 +33,8 @@
 </template>
 
 <script>
+import { refreshUserID } from "../utils/auth";
+
 export default {
   data() {
     return {
@@ -60,6 +62,7 @@ export default {
       })
         .then((response) => {
           if (response.status == 200) {
+            refreshUserID();
             if (this.$route.query.redirect != null) {
               this.$router.push({ path: this.$route.query.redirect });
             } else {

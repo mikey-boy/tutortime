@@ -7,10 +7,14 @@
 
 <script>
 import NavBar from "./components/NavBar.vue";
+import { refreshUserID } from "./utils/auth";
 
 export default {
   components: {
     NavBar,
+  },
+  created() {
+    refreshUserID();
   },
 };
 

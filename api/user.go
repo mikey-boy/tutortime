@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -34,6 +35,14 @@ type ContextKey string
 
 const ContextUserKey ContextKey = "user"
 
+func addSession(userID uint, writer http.ResponseWriter) {
+	session := Session{UUID: uuid.NewString(), UserID: userID, Expiry: time.Now().Add(120 * time.Second)}
+	if err := session.Add(); err == nil {
+		http.SetCookie(writer, &http.Cookie{Name: "Token", Value: session.UUID, Path: "/"})
+		http.SetCookie(writer, &http.Cookie{Name: "UserID", Value: fmt.Sprintf("%d", userID), Path: "/"})
+	}
+}
+
 // GET /users/{id}
 func GetUser(writer http.ResponseWriter, request *http.Request) {
 	id, err := strconv.ParseUint(request.PathValue("id"), 10, 0)
@@ -64,11 +73,7 @@ func AddUser(writer http.ResponseWriter, request *http.Request) {
 		http.Error(writer, usernameTaken.String(), http.StatusBadRequest)
 		return
 	}
-
-	session := Session{UUID: uuid.NewString(), UserID: user.ID, Expiry: time.Now().Add(120 * time.Second)}
-	if err := session.Add(); err == nil {
-		http.SetCookie(writer, &http.Cookie{Name: "Token", Value: session.UUID, Path: "/"})
-	}
+	addSession(user.ID, writer)
 }
 
 func UpdateUser(writer http.ResponseWriter, request *http.Request) {
@@ -89,11 +94,7 @@ func AddSessionToken(writer http.ResponseWriter, request *http.Request) {
 		http.Error(writer, failedLogin.String(), http.StatusUnauthorized)
 		return
 	}
-
-	session := Session{UUID: uuid.NewString(), UserID: user.ID, Expiry: time.Now().Add(120 * time.Second)}
-	if err := session.Add(); err == nil {
-		http.SetCookie(writer, &http.Cookie{Name: "Token", Value: session.UUID, Path: "/"})
-	}
+	addSession(user.ID, writer)
 }
 
 func UserFromRequest(request http.Request) (User, bool) {

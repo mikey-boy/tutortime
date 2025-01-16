@@ -24,7 +24,7 @@
           </RouterLink>
         </li> -->
       </ul>
-      <ul v-if="!isLoggedIn()" class="user-buttons">
+      <ul v-if="!store.UserID" class="user-buttons">
         <li>
           <RouterLink to="/user/login">
             <h3>Login</h3>
@@ -55,18 +55,14 @@
 </template>
 
 <script>
-import { isLoggedIn } from "../utils/auth";
+import { store } from "../utils/store";
 
 export default {
   data() {
     return {
       modal: false,
+      store,
     };
-  },
-  methods: {
-    isLoggedIn() {
-      return isLoggedIn();
-    },
   },
 };
 </script>

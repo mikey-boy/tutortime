@@ -117,7 +117,7 @@ import Lesson from "./Lesson.vue";
 import { nextTick } from "vue";
 import dayjs from "dayjs";
 
-const socket = new WebSocket("ws://localhost:8080/ws");
+var socket;
 
 export default {
   data() {
@@ -139,6 +139,7 @@ export default {
   },
   created() {
     this.initChat();
+    socket = new WebSocket("ws://localhost:8080/ws");
     socket.onmessage = (event) => {
       const message = JSON.parse(event.data);
       if (message.Lesson != null) {

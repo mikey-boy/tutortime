@@ -57,6 +57,7 @@
 
 <script>
 import dayjs from "dayjs";
+import { store } from "../utils/store";
 
 export default {
   data() {
@@ -110,8 +111,10 @@ export default {
     lessonType(lesson) {
       if (lesson.Status.startsWith("accepted_")) {
         return "pending";
+      } else if (lesson.TutorID == store.UserID) {
+        return "tutor";
       }
-      return "tutor";
+      return "student";
     },
     modalPosition(i) {
       var modal_class;

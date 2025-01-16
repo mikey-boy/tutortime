@@ -1,6 +1,6 @@
 import App from "./App.vue"
 
-import { isLoggedIn } from "./utils/auth";
+import { store } from "./utils/store";
 import { createApp } from 'vue'
 import { createWebHashHistory, createRouter } from 'vue-router'
 
@@ -13,7 +13,7 @@ import Calendar from './components/Calendar.vue'
 import Chat from './components/Chat.vue'
 
 function authenticated(to) {
-  if (!isLoggedIn()) {
+  if (!store.UserID) {
     return { path: '/user/login', query: { redirect: to.path } }
   }
 }

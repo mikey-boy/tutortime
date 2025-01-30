@@ -21,4 +21,6 @@ function removeCookie(name) {
 
 export function logoutUser() {
   removeCookie('Token')
+  removeCookie('UserID')
+  refreshUserID()
 }

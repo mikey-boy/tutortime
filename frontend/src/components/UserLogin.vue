@@ -5,27 +5,27 @@
 
       <div v-show="socialView">
         <a class="login-button" href="">
-          <img src="@/assets/img/signin-assets/google.svg" />
+          <div><img src="@/assets/img/signin-assets/google.svg" /></div>
           Login with Google
         </a>
         <!-- <a class="login-button" href="">
           <img src="" />
           Login with Facebook
         </a> -->
-        <a class="login-button" @click="socialView = 0">
-          <div><i class="fa-solid fa-user fa-lg" /></div>
-          Use test credentials
+        <a class="login-button local-account" @click="socialView = 0">
+          <div><i class="fa-solid fa-user fa-xl" /></div>
+          Login with Local Account
         </a>
       </div>
 
-      <div v-show="!socialView">
-        <form id="local-account-form" @submit.prevent>
-          <label for="username">Username:</label>
-          <input type="text" name="username" required />
-          <label for="password">Password: </label>
-          <input type="password" name="password" required />
-          <button class="local-login-button" @click="localAccount(true)">Login</button>
-          <button class="local-signup-button" @click="localAccount(false)">Create account</button>
+      <div v-show="!socialView" @submit.prevent>
+        <form id="local-account-form">
+          <label>Username:</label>
+          <input v-model="user.username" type="text" required />
+          <label>Password: </label>
+          <input v-model="user.password" type="password" required />
+          <button class="local-login-button" @click="localAccountLogin()">Login</button>
+          <button class="local-signup-button" @click="localAccountCreate()">Create account</button>
         </form>
       </div>
     </div>
@@ -39,40 +39,43 @@ export default {
   data() {
     return {
       socialView: 1,
+      user: {},
     };
   },
   methods: {
-    localAccount(login) {
-      const form = new FormData(document.querySelector("#local-account-form"));
-      const jsonObject = {};
-      form.forEach((value, key) => {
-        jsonObject[key] = value;
-      });
-
-      if (!jsonObject["username"] || !jsonObject["password"]) {
+    localAccountLogin() {
+      if (!this.user.username || !this.user.password) {
         return;
       }
-
-      // Convert the object to JSON string
-      const json = JSON.stringify(jsonObject);
-      const path = login == true ? "/api/sessiontoken" : "/api/users";
-      fetch(path, {
+      const json = JSON.stringify(this.user);
+      fetch("/api/sessiontoken", {
         method: "POST",
         body: json,
-      })
-        .then((response) => {
-          if (response.status == 200) {
-            refreshUserID();
-            if (this.$route.query.redirect != null) {
-              this.$router.push({ path: this.$route.query.redirect });
-            } else {
-              this.$router.push({ path: "/" });
-            }
+      }).then((response) => {
+        if (response.status == 200) {
+          refreshUserID();
+          if (this.$route.query.redirect != null) {
+            this.$router.push({ path: this.$route.query.redirect });
+          } else {
+            this.$router.push({ path: "/" });
           }
-        })
-        .catch((error) => {
-          console.error("Error fetching data:", error);
-        });
+        }
+      });
+    },
+    localAccountCreate() {
+      if (!this.user.username || !this.user.password) {
+        return;
+      }
+      const json = JSON.stringify(this.user);
+      fetch("/api/users", {
+        method: "POST",
+        body: json,
+      }).then((response) => {
+        if (response.status == 200) {
+          refreshUserID();
+          this.$router.push({ path: "/user/profile" });
+        }
+      });
     },
   },
 };
@@ -121,9 +124,10 @@ export default {
       color: var(--text0);
     }
 
-    .login-button img,
     .login-button div {
-      text-align: center;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       padding: 7px;
       margin-right: 15px;
       width: 30px;

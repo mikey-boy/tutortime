@@ -13,10 +13,10 @@ import (
 
 type User struct {
 	ID           uint
+	Availability string
 	Username     string    `gorm:"unique,not null"`
 	Password     string    `gorm:"not null" json:"-"`
 	Description  string    `json:",omitempty"`
-	Availability uint      `gorm:"default:0" json:",omitempty"`
 	Minutes      uint      `gorm:"default:60" json:",omitempty"`
 	Image        Image     `json:",omitempty"`
 	Services     []Service `json:",omitempty"`
@@ -43,8 +43,8 @@ func addSession(userID uint, writer http.ResponseWriter) {
 	}
 }
 
-// GET /users/{id}
-func GetUser(writer http.ResponseWriter, request *http.Request) {
+// GET /api/users/{id}
+func GetUserProfile(writer http.ResponseWriter, request *http.Request) {
 	id, err := strconv.ParseUint(request.PathValue("id"), 10, 0)
 	if err != nil {
 		http.Error(writer, malformedRequest.String(), http.StatusBadRequest)
@@ -55,6 +55,52 @@ func GetUser(writer http.ResponseWriter, request *http.Request) {
 	if err := user.Get(); err != nil {
 		http.Error(writer, userNotFound.String(), http.StatusNotFound)
 		return
+	}
+
+	apiUser := User{ID: uint(id), Username: user.Username, Description: user.Description, Availability: user.Availability, Image: user.Image}
+	ret, _ := json.Marshal(apiUser)
+	writer.Write(ret)
+}
+
+// GET /api/users/me
+func GetMyProfile(writer http.ResponseWriter, request *http.Request) {
+	user, ok := UserFromRequest(*request)
+	if !ok {
+		http.Error(writer, invalidSessionToken.String(), http.StatusUnauthorized)
+		return
+	}
+	if err := user.Get(); err != nil {
+		http.Error(writer, userNotFound.String(), http.StatusNotFound)
+		return
+	}
+
+	ret, _ := json.Marshal(user)
+	writer.Write(ret)
+}
+
+// PUT /api/users/me
+func UpdateMyProfile(writer http.ResponseWriter, request *http.Request) {
+	user, ok := UserFromRequest(*request)
+	if !ok {
+		http.Error(writer, invalidSessionToken.String(), http.StatusUnauthorized)
+		return
+	}
+
+	if request.FormValue("username") != "" {
+		user.Username = request.FormValue("username")
+		user.Description = request.FormValue("description")
+		user.Availability = request.FormValue("availability")
+
+		file, file_header, formErr := request.FormFile("image")
+		if formErr == nil {
+			image := Image{}
+			image.Upload(file, file_header.Filename)
+			// Change image only if upload successful
+			if image.Name != "" {
+				user.Image = image
+			}
+		}
+		user.Update()
 	}
 
 	ret, _ := json.Marshal(user)
@@ -69,6 +115,8 @@ func AddUser(writer http.ResponseWriter, request *http.Request) {
 		http.Error(writer, malformedJson.String(), http.StatusBadRequest)
 		return
 	}
+
+	user.Image = Image{Name: "tux", Path: "/default/img/tux.png"}
 	if err := user.Add(); err != nil {
 		http.Error(writer, usernameTaken.String(), http.StatusBadRequest)
 		return

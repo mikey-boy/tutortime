@@ -1,11 +1,11 @@
 <template>
-  <div v-if="service" class="post-flex-container">
+  <div v-if="service && user" class="post-flex-container">
     <div class="post">
       <h2>{{ service.title }}</h2>
       <div class="profile">
-        <img :src="service.Image.Path" />
+        <img :src="user.Image.Path" />
         <div class="profile-info">
-          <a href="">{{ service.User.Username }}</a>
+          <a href="">{{ user.Username }}</a>
           <span>has taught this lesson: nil times<br />for a total of: {{ service.Minutes }} minutes</span>
         </div>
       </div>
@@ -15,7 +15,7 @@
       <p>{{ service.Description }}</p>
     </div>
     <div class="post availability">
-      <h2>{{ service.User.Username }}'s availability</h2>
+      <h2>{{ user.Username }}'s availability</h2>
       <table class="availability-table">
         <thead>
           <tr>
@@ -32,29 +32,29 @@
         <tbody>
           <tr>
             <td>morning</td>
-            <!-- {% for i in range(7) %} {% if i|string ~ "-0" in availability %}
-            <td><i class="fa-regular fa-square-check"></i></td>
-            {% else %} -->
-            <td v-for="i in 7"><i class="fa-regular fa-square"></i></td>
-            <!-- {% endif %} {% endfor %} -->
+            <td v-for="i in 7">
+              <i class="fa-regular" :class="isChecked(i + '-0')"></i>
+            </td>
           </tr>
           <tr>
             <td>afternoon</td>
-            <td v-for="i in 7"><i class="fa-regular fa-square"></i></td>
+            <td v-for="i in 7">
+              <i class="fa-regular" :class="isChecked(i + '-1')"></i>
+            </td>
           </tr>
           <tr>
             <td>evening</td>
-            <td v-for="i in 7"><i class="fa-regular fa-square"></i></td>
+            <td v-for="i in 7">
+              <i class="fa-regular" :class="isChecked(i + '-2')"></i>
+            </td>
           </tr>
         </tbody>
       </table>
       <div class="flex-container">
-        <button class="blue-button" @click="messageUser(service.User.ID)">
-          <i class="fa-regular fa-paper-plane"></i> Message {{ service.User.Username }}
+        <button class="blue-button" @click="messageUser(user.ID)">
+          <i class="fa-regular fa-paper-plane"></i> Message {{ user.Username }}
         </button>
-        <button class="green-button">
-          <i class="fa-regular fa-user"></i> View {{ service.User.Username }}'s profile
-        </button>
+        <button class="green-button"><i class="fa-regular fa-user"></i> View {{ user.Username }}'s profile</button>
       </div>
     </div>
   </div>
@@ -64,16 +64,25 @@
 export default {
   data() {
     return {
+      user: null,
       service: null,
     };
   },
   async created() {
-    const response = await fetch(`/api/services/${this.$route.params.id}`);
-    this.service = await response.json();
+    const serviceResponse = await fetch(`/api/services/${this.$route.params.id}`);
+    this.service = await serviceResponse.json();
+    const userResponse = await fetch(`/api/users/${this.service.UserID}`);
+    this.user = await userResponse.json();
   },
   methods: {
     messageUser(UserID) {
       this.$router.push({ path: "/chat/", query: { user: UserID } });
+    },
+    isChecked(value) {
+      if (this.user.Availability.includes(value)) {
+        return "fa-square-check";
+      }
+      return "fa-square";
     },
   },
 };

@@ -33,10 +33,10 @@
       </ul>
       <ul v-else class="user-buttons">
         <li>
-          <RouterLink :to="{ path: '/user/calendar' }"><i class="fa-regular fa-calendar-days fa-lg"></i></RouterLink>
+          <RouterLink to="/user/calendar"><i class="fa-regular fa-calendar-days fa-lg"></i></RouterLink>
         </li>
         <li>
-          <RouterLink :to="{ path: '/chat' }"><i class="fa-regular fa-paper-plane fa-lg"></i></RouterLink>
+          <RouterLink to="/chat"><i class="fa-regular fa-paper-plane fa-lg"></i></RouterLink>
         </li>
         <li>
           <span @click="modal = !modal"><i class="fa-regular fa-user fa-lg"></i></span>
@@ -44,8 +44,8 @@
         <div class="relative-container" v-if="modal">
           <div id="user-modal-popout">
             <div>
-              <RouterLink to="/"><div class="options">Profile</div></RouterLink>
-              <RouterLink to="/"><div class="options">Logout</div></RouterLink>
+              <div class="options" @click="navToProfile()">Profile</div>
+              <div class="options" @click="logout()">Logout</div>
             </div>
           </div>
         </div>
@@ -56,6 +56,7 @@
 
 <script>
 import { store } from "../utils/store";
+import { logoutUser } from "../utils/auth";
 
 export default {
   data() {
@@ -63,6 +64,17 @@ export default {
       modal: false,
       store,
     };
+  },
+  methods: {
+    navToProfile() {
+      this.modal = false;
+      this.$router.push({ path: "/user/profile" });
+    },
+    logout() {
+      logoutUser();
+      this.modal = false;
+      this.$router.push({ path: "/" });
+    },
   },
 };
 </script>

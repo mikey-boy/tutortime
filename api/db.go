@@ -37,7 +37,12 @@ func (status *ServiceCategory) UnmarshalJSON(b []byte) error {
 }
 
 func (user *User) Add() error {
-	result := db.Select("username", "password").Create(&user)
+	result := db.Omit("minutes").Create(user)
+	return result.Error
+}
+
+func (user *User) Update() error {
+	result := db.Save(user)
 	return result.Error
 }
 
@@ -47,7 +52,7 @@ func (user *User) Login() error {
 }
 
 func (user *User) Get() error {
-	result := db.First(&user)
+	result := db.Preload("Image").First(&user)
 	return result.Error
 }
 
@@ -71,11 +76,7 @@ func (service *Service) Add() error {
 }
 
 func (service *Service) Get() error {
-	preloadFunc := func(db *gorm.DB) *gorm.DB {
-		return db.Select("id", "username")
-	}
-
-	result := db.Preload("Image").Preload("User", preloadFunc).First(&service)
+	result := db.Preload("Image").First(&service)
 	return result.Error
 }
 
@@ -103,7 +104,12 @@ func (lesson *Lesson) Update() error {
 	return result.Error
 }
 
-func (image *Image) Add(category ServiceCategory) {
+func (image *Image) AddUserImage() error {
+	result := db.Save(image)
+	return result.Error
+}
+
+func (image *Image) AddServiceImage(category ServiceCategory) {
 	image.Name = fmt.Sprintf("%s.jpg", string(category))
 	image.Path = fmt.Sprintf("/default/img/%s", image.Name)
 }

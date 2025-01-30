@@ -65,10 +65,12 @@ func main() {
 
 	// All other requests to the API
 	mux.HandleFunc("POST /api/users", api.AddUser)
-	mux.HandleFunc("GET /api/users/{id}", api.GetUser)
+	mux.HandleFunc("GET /api/users/{id}", api.GetUserProfile)
 	mux.HandleFunc("GET /api/users/{id}/services", api.GetUserServices)
 	mux.HandleFunc("GET /api/users/{id}/messages", api.ValidateSessionToken(api.GetOurMessages))
 	mux.HandleFunc("GET /api/users/{id}/lessons", api.ValidateSessionToken(api.GetOurLessons))
+	mux.HandleFunc("GET /api/users/me", api.ValidateSessionToken(api.GetMyProfile))
+	mux.HandleFunc("PUT /api/users/me", api.ValidateSessionToken(api.UpdateMyProfile))
 	mux.HandleFunc("GET /api/users/me/services", api.ValidateSessionToken(api.GetMyServices))
 	mux.HandleFunc("GET /api/users/me/lessons", api.ValidateSessionToken(api.GetMyLessons))
 

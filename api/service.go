@@ -119,7 +119,7 @@ func AddService(writer http.ResponseWriter, request *http.Request) {
 		image.Upload(file, file_header.Filename)
 	}
 	if image.Name == "" {
-		image.Add(category) // Add default image if upload fails or user does not specify file
+		image.AddServiceImage(category) // Add default image if upload fails or user does not specify file
 	}
 	service.Image = image
 
@@ -160,7 +160,7 @@ func UpdateService(writer http.ResponseWriter, request *http.Request) {
 			service.Image.Upload(file, file_header.Filename)
 		}
 		if service.Image.Name == "" || file == nil {
-			service.Image.Add(service.Category) // Add default image if upload fails or user does not specify file
+			service.Image.AddServiceImage(service.Category) // Add default image if upload fails or user does not specify file
 		}
 	} else {
 		var edited Service

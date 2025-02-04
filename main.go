@@ -48,6 +48,7 @@ func main() {
 		config.Database.Dbname,
 		config.Database.Port,
 	)
+	api.RegisterCrons()
 	api.CreateHub()
 	go api.RunHub()
 

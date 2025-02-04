@@ -15,6 +15,7 @@ type Lesson struct {
 	MessageID uint
 	Duration  uint
 	Datetime  time.Time
+	CreatedAt time.Time // managed by gorm
 	Service   Service
 	Status    LessonStatus
 }

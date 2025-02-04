@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -34,7 +33,7 @@ type Client struct {
 	// The ID of the end user
 	userID uint
 
-	// Buffered channel of outbound messages.
+	// Unbuffered channel of outbound messages.
 	send chan Message
 }
 
@@ -49,7 +48,7 @@ const (
 	pingPeriod = (pongWait * 9) / 10
 
 	// Maximum message size allowed from peer.
-	maxMessageSize = 512
+	maxMessageSize = 2048
 )
 
 var (
@@ -63,12 +62,12 @@ var upgrader = websocket.Upgrader{
 
 var hub Hub
 
-// readMessage pumps messages from the websocket connection to the hub.
+// readMessageFromClient pumps messages from the websocket connection to the hub.
 //
-// The application runs readMessage in a per-connection goroutine. The application
+// The application runs readMessageFromClient in a per-connection goroutine. The application
 // ensures that there is at most one reader on a connection by executing all
 // reads from this goroutine.
-func (client *Client) readMessage() {
+func (client *Client) readMessageFromClient() {
 	defer func() {
 		client.hub.unregister <- client
 		client.conn.Close()
@@ -85,79 +84,20 @@ func (client *Client) readMessage() {
 			break
 		}
 
-		var message Message
 		var api_message Message
 		json.NewDecoder(reader).Decode(&api_message)
-
-		if api_message.Lesson != nil && api_message.Lesson.ID != 0 {
-			message = Message{ID: api_message.ID}
-			message.Get()
-
-			if client.userID != message.SenderID && client.userID != message.RecieverID {
-				continue
-			}
-			if api_message.Lesson.Status == ACCEPTED_TUTOR || api_message.Lesson.Status == ACCEPTED_STUDENT {
-				if client.userID == api_message.Lesson.TutorID {
-					api_message.Lesson.Status = ACCEPTED_TUTOR
-				} else {
-					api_message.Lesson.Status = ACCEPTED_STUDENT
-				}
-			}
-
-			sender := User{ID: client.userID}
-			service := Service{ID: api_message.Lesson.ServiceID}
-			service.Get()
-			sender.Get()
-
-			api_lesson := Lesson{ID: api_message.Lesson.ID, Status: api_message.Lesson.Status, Duration: api_message.Lesson.Duration, Datetime: api_message.Lesson.Datetime}
-			lesson := Lesson{ID: api_message.Lesson.ID}
-			lesson.Get()
-			lesson.merge(&api_lesson, client.userID)
-			lesson.Update()
-
-			system_message := Message{RoomID: message.RoomID}
-			if api_message.Lesson.Status == ACCEPTED || api_message.Lesson.Status == CANCELLED {
-				datetime := lesson.Datetime.UTC().Format(time.RFC3339)
-				system_message.Message = fmt.Sprintf("%s %s %s scheduled for %s", sender.Username, api_message.Lesson.Status, service.Title, datetime)
-			}
-			system_message.Add()
-
-			message.SenderID = client.userID
-			message.RecieverID = api_message.RecieverID
-			message.Lesson = &lesson
-			message.Update()
-		} else if api_message.Lesson != nil && api_message.Lesson.ServiceID != 0 {
-			service := Service{ID: api_message.Lesson.ServiceID}
-			service.Get()
-
-			message = Message{SenderID: client.userID, RecieverID: api_message.RecieverID}
-			lesson := Lesson{ServiceID: api_message.Lesson.ServiceID, TutorID: service.UserID, Duration: api_message.Lesson.Duration, Datetime: api_message.Lesson.Datetime}
-			if service.UserID == message.SenderID {
-				lesson.StudentID = message.RecieverID
-				lesson.Status = ACCEPTED_TUTOR
-			} else if service.UserID == message.RecieverID {
-				lesson.StudentID = message.SenderID
-				lesson.Status = ACCEPTED_STUDENT
-			} else {
-				continue
-			}
-			message.Lesson = &lesson
-			message.Add()
-		} else {
-			message = Message{SenderID: client.userID, RecieverID: api_message.RecieverID, Message: api_message.Message}
-			message.Add()
+		if ok, message := parseSocketMessage(client.userID, api_message); ok {
+			client.hub.message <- message
 		}
-
-		client.hub.message <- message
 	}
 }
 
-// writeMessage pumps messages from the hub to the websocket connection.
+// writeMessageToClient pumps messages from the hub to the websocket connection.
 //
-// A goroutine running writeMessage is started for each connection. The
+// A goroutine running writeMessageToClient is started for each connection. The
 // application ensures that there is at most one writer to a connection by
 // executing all writes from this goroutine.
-func (client *Client) writeMessage() {
+func (client *Client) writeMessageToClient() {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
@@ -220,8 +160,17 @@ func ServeWs(writer http.ResponseWriter, request *http.Request) {
 
 	// Allow collection of memory referenced by the caller by doing all work in
 	// new goroutines.
-	go client.writeMessage()
-	go client.readMessage()
+	go client.writeMessageToClient()
+	go client.readMessageFromClient()
+}
+
+func sendMessage(userID uint, otherID uint, message Message) {
+	if user, ok := hub.clients[userID]; ok {
+		user.send <- message
+	}
+	if other, ok := hub.clients[otherID]; ok {
+		other.send <- message
+	}
 }
 
 func CreateHub() {
@@ -244,22 +193,7 @@ func RunHub() {
 				close(client.send)
 			}
 		case message := <-hub.message:
-			if sender, ok := hub.clients[message.SenderID]; ok {
-				select {
-				case sender.send <- message:
-				default:
-					close(sender.send)
-					delete(hub.clients, sender.userID)
-				}
-			}
-			if reciever, ok := hub.clients[message.RecieverID]; ok {
-				select {
-				case reciever.send <- message:
-				default:
-					close(reciever.send)
-					delete(hub.clients, reciever.userID)
-				}
-			}
+			sendMessage(message.SenderID, message.RecieverID, message)
 		}
 	}
 }

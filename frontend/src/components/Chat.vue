@@ -125,7 +125,7 @@ export default {
       text: "",
       activeContact: null,
       contacts: [],
-      messages: [],
+      messages: {},
       lessons: {},
       services: {},
       lessonView: true,
@@ -134,6 +134,7 @@ export default {
       lessonRequest: {
         Date: dayjs().format("YYYY-MM-DD"),
         Time: dayjs().endOf("hour").add(1, "minute").format("HH:mm"),
+        Duration: 15,
       },
     };
   },
@@ -142,18 +143,8 @@ export default {
     socket = new WebSocket("ws://localhost:8080/ws");
     socket.onmessage = (event) => {
       const message = JSON.parse(event.data);
-      if (message.Lesson != null) {
-        if (this.messages.at(-1) == null || this.messages.at(-1).ID < message.ID) {
-          this.messages.push(message);
-          this.scrollToBottom();
-        } else {
-          this.getMessages();
-        }
-        this.lessons[message.Lesson.ID] = message.Lesson;
-      } else {
-        this.messages.push(message);
-        this.scrollToBottom();
-      }
+      this.messages[message.ID] = message;
+      this.scrollToBottom();
     };
   },
   components: {
@@ -205,7 +196,8 @@ export default {
     },
     async getMessages() {
       const response = await fetch(`/api/users/${this.activeContact.ID}/messages`);
-      this.messages = await response.json();
+      const messages = await response.json();
+      messages.forEach((message) => (this.messages[message.ID] = message));
       this.scrollToBottom();
     },
     async scrollToBottom() {

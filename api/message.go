@@ -36,54 +36,58 @@ func parseSocketMessage(client_id uint, api_message Message) (ok bool, message M
 		if client_id != message.SenderID && client_id != message.RecieverID {
 			return false, Message{}
 		}
-		if api_message.Lesson.Status == ACCEPTED_TUTOR || api_message.Lesson.Status == ACCEPTED_STUDENT {
-			if client_id == api_message.Lesson.TutorID {
-				api_message.Lesson.Status = ACCEPTED_TUTOR
-			} else {
-				api_message.Lesson.Status = ACCEPTED_STUDENT
-			}
-		}
 
-		sender := User{ID: client_id}
-		service := Service{ID: api_message.Lesson.ServiceID}
-		service.Get()
-		sender.Get()
-
-		api_lesson := Lesson{ID: api_message.Lesson.ID, Status: api_message.Lesson.Status, Duration: api_message.Lesson.Duration, Datetime: api_message.Lesson.Datetime}
+		datetime := api_message.Lesson.Datetime.UTC()
+		api_lesson := Lesson{ID: api_message.Lesson.ID, Status: api_message.Lesson.Status, Duration: api_message.Lesson.Duration, Datetime: datetime}
 		lesson := Lesson{ID: api_message.Lesson.ID}
 		lesson.Get()
-		lesson.merge(&api_lesson, client_id)
+		modified := lesson.merge(&api_lesson, client_id)
+		if !modified {
+			return false, Message{}
+		}
 		lesson.Update()
 
-		message.SenderID = client_id
-		message.RecieverID = api_message.RecieverID
+		// Reverse the sender/reciever if appropriate
+		if client_id == message.RecieverID {
+			message.RecieverID = message.SenderID
+			message.SenderID = client_id
+		}
+
 		message.Lesson = &lesson
 		message.Update()
 
-		if api_message.Lesson.Status == ACCEPTED || api_message.Lesson.Status == CANCELLED {
+		if message.Lesson.Status == LS_ACCEPTED || message.Lesson.Status == LS_CANCELLED || message.Lesson.Status == LS_CONFIRMED {
 			system_message := Message{RoomID: message.RoomID}
-			datetime := lesson.Datetime.UTC().Format(time.RFC3339)
-			system_message.Message = fmt.Sprintf("%s %s '%s' scheduled for %s", sender.Username, api_message.Lesson.Status, service.Title, datetime)
+			service := Service{ID: api_message.Lesson.ServiceID}
+			service.Get()
+			system_message.Message = fmt.Sprintf("'%s' scheduled for %s has been %s", service.Title, datetime.Format(time.RFC3339), message.Lesson.Status)
+			system_message.Add()
+			sendMessage(message.SenderID, message.RecieverID, system_message)
+		}
+		if message.Lesson.Status == LS_CONFIRMED {
+			tutor, student := User{ID: lesson.TutorID}, User{ID: lesson.StudentID}
+			tutor.Get()
+			student.Get()
+			var duration uint
+			if lesson.ModifiedDuration == 0 {
+				duration = lesson.Duration
+			} else {
+				duration = lesson.ModifiedDuration
+			}
+
+			transferMinutes(&tutor, &student, duration)
+			system_message := Message{RoomID: message.RoomID}
+			system_message.Message = fmt.Sprintf("%d minutes transferred from %s to %s", duration, student.Username, tutor.Username)
 			system_message.Add()
 			sendMessage(message.SenderID, message.RecieverID, system_message)
 		}
 	} else if api_message.Lesson != nil && api_message.Lesson.ServiceID != 0 {
-		service := Service{ID: api_message.Lesson.ServiceID}
-		service.Get()
-
-		message = Message{SenderID: client_id, RecieverID: api_message.RecieverID}
-		lesson := Lesson{ServiceID: api_message.Lesson.ServiceID, TutorID: service.UserID, Duration: api_message.Lesson.Duration, Datetime: api_message.Lesson.Datetime}
-		if service.UserID == message.SenderID {
-			lesson.StudentID = message.RecieverID
-			lesson.Status = ACCEPTED_TUTOR
-		} else if service.UserID == message.RecieverID {
-			lesson.StudentID = message.SenderID
-			lesson.Status = ACCEPTED_STUDENT
-		} else {
-			return false, Message{}
+		lesson, ok := createLesson(client_id, &api_message)
+		if ok {
+			message = Message{SenderID: client_id, RecieverID: api_message.RecieverID}
+			message.Lesson = &lesson
+			message.Add()
 		}
-		message.Lesson = &lesson
-		message.Add()
 	} else {
 		message = Message{SenderID: client_id, RecieverID: api_message.RecieverID, Message: api_message.Message}
 		message.Add()

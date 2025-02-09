@@ -24,31 +24,31 @@ type ServiceStatus string
 type ServiceCategory string
 
 const (
-	Active    ServiceStatus = "active"
-	Paused    ServiceStatus = "paused"
-	Cancelled ServiceStatus = "cancelled"
+	SS_ACTIVE    ServiceStatus = "active"
+	SS_PAUSED    ServiceStatus = "paused"
+	SS_CANCELLED ServiceStatus = "cancelled"
 )
 
 const (
-	Language ServiceCategory = "language"
-	Music    ServiceCategory = "music"
-	Software ServiceCategory = "software"
-	Wellness ServiceCategory = "wellness"
-	Other    ServiceCategory = "other"
+	SC_LANGUAGE ServiceCategory = "language"
+	SC_MUSIC    ServiceCategory = "music"
+	SC_SOFTWARE ServiceCategory = "software"
+	SC_WELLNESS ServiceCategory = "wellness"
+	SC_OTHER    ServiceCategory = "other"
 )
 
 var stringToStatus = map[string]ServiceStatus{
-	"active":    Active,
-	"paused":    Paused,
-	"cancelled": Cancelled,
+	"active":    SS_ACTIVE,
+	"paused":    SS_PAUSED,
+	"cancelled": SS_CANCELLED,
 }
 
 var stringToCategory = map[string]ServiceCategory{
-	"language": Language,
-	"music":    Music,
-	"software": Software,
-	"wellness": Wellness,
-	"other":    Other,
+	"language": SC_LANGUAGE,
+	"music":    SC_MUSIC,
+	"software": SC_SOFTWARE,
+	"wellness": SC_WELLNESS,
+	"other":    SC_OTHER,
 }
 
 // GET /api/services

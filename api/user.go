@@ -43,6 +43,13 @@ func addSession(userID uint, writer http.ResponseWriter) {
 	}
 }
 
+func transferMinutes(tutor *User, student *User, minutes uint) {
+	tutor.Minutes += minutes
+	student.Minutes -= minutes
+	tutor.Update()
+	student.Update()
+}
+
 // GET /api/users/{id}
 func GetUserProfile(writer http.ResponseWriter, request *http.Request) {
 	id, err := strconv.ParseUint(request.PathValue("id"), 10, 0)

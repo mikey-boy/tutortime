@@ -185,16 +185,16 @@ func UserServicesGet(user User, services *[]Service, all bool) {
 	if all {
 		db.Where("user_id = ?", user.ID).Find(&services)
 	} else {
-		db.Where("user_id = ? AND status = ?", user.ID, Active).Find(&services)
+		db.Where("user_id = ? AND status = ?", user.ID, SS_ACTIVE).Find(&services)
 	}
 }
 
 func UserLessonsGet(user User, lessons *[]Lesson) {
-	db.Preload("Service").Where("tutor_id = ? OR student_id = ?", user.ID, user.ID).Where("status != ? AND status != ?", CANCELLED, EXPIRED).Order("datetime ASC").Find(&lessons)
+	db.Preload("Service").Where("tutor_id = ? OR student_id = ?", user.ID, user.ID).Where("status != ? AND status != ?", LS_CANCELLED, LS_EXPIRED).Order("datetime ASC").Find(&lessons)
 }
 
 func OurLessonsGet(user User, other User, lessons *[]Lesson) {
-	db.Where("status != ? AND status != ?", CANCELLED, EXPIRED).Where("tutor_id = ? AND student_id = ?", user.ID, other.ID).Or("tutor_id = ? AND student_id = ?", other.ID, user.ID).Find(&lessons)
+	db.Where("(tutor_id = ? AND student_id = ?) OR (tutor_id = ? AND student_id = ?)", user.ID, other.ID, other.ID, user.ID).Where("status != ? AND status != ?", LS_CANCELLED, LS_EXPIRED).Find(&lessons)
 }
 
 func (room *Room) Get(user User, other User) {

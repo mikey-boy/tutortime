@@ -73,11 +73,25 @@
       </div>
       <div v-if="lessonView" class="lesson-container">
         <template v-for="lesson in lessons">
-          <div v-if="displayOnSide(lesson) && completedView && lesson.Status != 'accepted'" class="lesson">
-            <Lesson @modify-lesson="sendModifiedLesson" :lesson="lesson" :service="services[lesson.ServiceID]" />
+          <div
+            v-if="completedView && lessonCompleted(lesson) && lessonActive(lesson)"
+            class="lesson"
+            :class="{ warning: lesson.ModifiedDuration && lesson.Status != 'confirmed' }"
+          >
+            <Lesson
+              @modify-lesson="sendModifiedLesson"
+              :lesson="lesson"
+              :service="services[lesson.ServiceID]"
+              :sender="messages[lesson.MessageID].RecieverID == activeContact.ID"
+            />
           </div>
-          <div v-else-if="displayOnSide(lesson) && !completedView" class="lesson">
-            <Lesson @modify-lesson="sendModifiedLesson" :lesson="lesson" :service="services[lesson.ServiceID]" />
+          <div v-else-if="!completedView && !lessonCompleted(lesson) && lessonActive(lesson)" class="lesson">
+            <Lesson
+              @modify-lesson="sendModifiedLesson"
+              :lesson="lesson"
+              :service="services[lesson.ServiceID]"
+              :sender="messages[lesson.MessageID].RecieverID == activeContact.ID"
+            />
           </div>
         </template>
       </div>
@@ -144,6 +158,9 @@ export default {
     socket.onmessage = (event) => {
       const message = JSON.parse(event.data);
       this.messages[message.ID] = message;
+      if (message.Lesson) {
+        this.lessons[message.Lesson.ID] = message.Lesson;
+      }
       this.scrollToBottom();
     };
   },
@@ -226,6 +243,7 @@ export default {
         Lesson: this.lessonRequest,
       };
       socket.send(JSON.stringify(message));
+      this.lessonView = true;
       this.resetLessonRequest();
     },
     sendModifiedLesson(lesson) {
@@ -240,8 +258,6 @@ export default {
     },
     resetLessonRequest() {
       this.lessonRequest.Title = "";
-      this.lessonRequest.ServiceID = 0;
-
       let radios = document.getElementsByName("service");
       for (let i = 0; i < radios.length; i++) {
         radios[i].checked = false;
@@ -250,19 +266,21 @@ export default {
     parseSystemMessage(message) {
       // Original: mike cancelled yoga practice scheduled for 2025-01-13T14:00:00Z
       // Parsed: mike cancelled yoga practice scheduled for 2025-01-13 @ 09:00AM
-      return message.slice(0, -20) + dayjs(message.slice(-20)).format("YYYY-MM-DD @ hh:mmA");
+      let index = message.indexOf("scheduled for ");
+      if (index != -1) {
+        let datetime = dayjs(message.slice(index + 14, index + 34)).format("YYYY-MM-DD @ hh:mmA");
+        return message.slice(0, index + 14) + datetime + message.slice(index + 34);
+      }
+      return message;
     },
     displayInChat(lesson) {
-      if (["accepted_student", "accepted_tutor"].includes(lesson.Status)) {
-        return true;
-      }
-      return false;
+      return lesson.Status.startsWith("accepted_");
     },
-    displayOnSide(lesson) {
-      if (["accepted", "completed", "confirmed", "comfirmed_student", "confirmed_tutor"].includes(lesson.Status)) {
-        return true;
-      }
-      return false;
+    lessonActive(lesson) {
+      return lesson.Status != "cancelled" && lesson.Status != "expired";
+    },
+    lessonCompleted(lesson) {
+      return dayjs().isAfter(dayjs(lesson.Datetime));
     },
   },
 };
@@ -494,10 +512,6 @@ export default {
     border: 1px dashed var(--green0);
     background-color: var(--base1);
     padding: 20px;
-  }
-  .warning-text {
-    color: var(--orange);
-    font-weight: bolder;
   }
   .lesson-view-switch {
     padding: 8px;

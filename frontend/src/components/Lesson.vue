@@ -4,20 +4,32 @@
   </RouterLink>
   <div>
     Date:
-    <span v-if="modify">
+    <span v-if="modify && !lessonCompleted">
       <input v-model="modifiedLesson.Date" type="date" :min="today" required />
     </span>
-    <span v-else>{{ this.parseDate(this.lesson.Datetime) }}</span>
+    <span v-else>{{ parseDate(lesson.Datetime) }}</span>
   </div>
   <div>
     Time:
-    <span v-if="modify">
+    <span v-if="modify && !lessonCompleted">
       <input v-model="modifiedLesson.Time" type="time" required />
     </span>
-    <span v-else>{{ this.parseTime(this.lesson.Datetime) }}</span>
+    <span v-else>{{ parseTime(lesson.Datetime) }}</span>
   </div>
   <div>
-    Duration:
+    <span v-if="lesson.ModifiedDuration && lesson.Status != 'confirmed'">
+      <div>Scheduled for: {{ lesson.Duration }} minutes</div>
+      <span class="warning-text">Modified to: </span>
+      <span class="warning-text" v-if="!modify">{{ lesson.ModifiedDuration }} minutes</span>
+    </span>
+    <span v-else-if="lesson.ModifiedDuration && lesson.Status == 'confirmed'">
+      <span>Duration: {{ lesson.ModifiedDuration }} minutes</span>
+    </span>
+    <span v-else>
+      <span>Duration: </span>
+      <span v-if="!modify">{{ lesson.Duration }} minutes</span>
+    </span>
+
     <span v-if="modify">
       <select v-model="modifiedLesson.Duration">
         <option v-for="i in 17" :value="i * 15">
@@ -26,27 +38,33 @@
         </option>
       </select>
     </span>
-    <span v-else>{{ this.lesson.Duration }} minutes</span>
   </div>
-  <template v-if="statusPending">
+  <template v-if="lessonCompleted && lesson.Status != 'confirmed'">
     <div>Status: pending confirmation</div>
   </template>
-
-  <template v-if="statusPending && !sender && !modify">
-    <button class="accept-button" @click="modifyLessonStatus('accepted')">Confirm</button>
-  </template>
-
-  <template v-if="statusPending && !modify">
-    <button class="modify-button" @click="modify = true">Modify</button>
-  </template>
-  <template v-else-if="statusPending && modify">
-    <button class="accept-button" @click="modifyLesson()">Confirm</button>
-  </template>
-
-  <template v-if="!modify">
-    <button class="cancel-button" @click="modifyLessonStatus('cancelled')">Cancel</button>
+  <template v-else-if="pendingAcceptance">
+    <div>Status: pending acceptance</div>
   </template>
   <template v-else>
+    <div>Status: {{ lesson.Status }}</div>
+  </template>
+
+  <template v-if="pendingAcceptance && !sender && !modify">
+    <button class="confirm-button" @click="modifyLesson('confirmed')">Confirm</button>
+  </template>
+  <template v-if="pendingConfirmation && !modify">
+    <button class="confirm-button" @click="modifyLesson('confirmed')">Confirm</button>
+  </template>
+  <template v-if="modify">
+    <button class="confirm-button" @click="modifyLesson('modified')">Confirm</button>
+  </template>
+  <template v-if="(pendingAcceptance || pendingConfirmation) && !modify">
+    <button class="modify-button" @click="modify = true">Modify</button>
+  </template>
+  <template v-if="!modify && !lessonCompleted">
+    <button class="cancel-button" @click="modifyLesson('cancelled')">Cancel</button>
+  </template>
+  <template v-else-if="modify">
     <button class="cancel-button" @click="modify = false">Cancel</button>
   </template>
 </template>
@@ -62,7 +80,7 @@ export default {
   },
   data() {
     return {
-      today: new Date().toISOString().split("T")[0],
+      today: dayjs().format("YYYY-MM-DD"),
       modify: false,
       modifiedLesson: Object.assign({}, this.lesson),
     };
@@ -82,21 +100,24 @@ export default {
         return dayjs(datetime).format("hh:mm A");
       }
     },
-    modifyLesson() {
+    modifyLesson(status) {
+      this.modifiedLesson.Status = status;
       this.$emit("modify-lesson", this.modifiedLesson);
       this.modify = false;
     },
-    modifyLessonStatus(status) {
-      this.modifiedLesson.Status = status;
-      this.$emit("modify-lesson", this.modifiedLesson);
-    },
   },
   computed: {
-    statusPending() {
-      if (this.lesson.Status.startsWith("accepted_")) {
-        return true;
-      }
-      return false;
+    pendingAcceptance() {
+      return this.lesson.Status.startsWith("accepted_");
+    },
+    pendingConfirmation() {
+      return (
+        dayjs().isAfter(dayjs(this.lesson.Datetime)) &&
+        (this.lesson.Status == "accepted" || (this.lesson.Status.startsWith("confirmed_") && !this.sender))
+      );
+    },
+    lessonCompleted() {
+      return dayjs().isAfter(dayjs(this.lesson.Datetime));
     },
   },
 };
@@ -112,7 +133,7 @@ button {
     color: var(--text1);
   }
 }
-.accept-button {
+.confirm-button {
   background-color: var(--green1);
 }
 .cancel-button {

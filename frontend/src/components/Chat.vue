@@ -1,5 +1,5 @@
 <template>
-  <div id="chat-container">
+  <div v-if="contacts.length > 0" id="chat-container">
     <div id="contacts">
       <h2>Contacts</h2>
       <ul v-for="contact in contacts">
@@ -9,7 +9,7 @@
       </ul>
     </div>
     <div id="chat">
-      <h2 v-if="contacts.length > 0">{{ activeContact.Username }}</h2>
+      <h2>{{ activeContact.Username }}</h2>
       <div id="message-container">
         <div
           v-for="message in messages"
@@ -105,6 +105,11 @@
               </label>
             </div>
           </template>
+          <div v-if="servicesEmpty(activeContact.ID)" class="empty-item">
+            <span>
+              <b>{{ activeContact.Username }}</b> is currently not offering any lessons
+            </span>
+          </div>
           <h3>As a tutor:</h3>
           <template v-for="service in services">
             <div v-if="service.UserID != activeContact.ID">
@@ -113,6 +118,9 @@
               </label>
             </div>
           </template>
+          <div v-if="servicesEmpty()" class="empty-item">
+            <span>You are currently not offering any lessons</span>
+          </div>
         </div>
       </div>
 
@@ -124,10 +132,19 @@
       </button>
     </div>
   </div>
+  <div v-else>
+    <div class="empty-container empty-service">
+      <div><p>Check out the lesson offerings and message a tutor to start chatting</p></div>
+      <RouterLink to="/">
+        <button>Browse lessons</button>
+      </RouterLink>
+    </div>
+  </div>
 </template>
 
 <script>
 import Lesson from "./Lesson.vue";
+import { store } from "../utils/store";
 import { nextTick } from "vue";
 import dayjs from "dayjs";
 
@@ -282,11 +299,20 @@ export default {
     lessonCompleted(lesson) {
       return dayjs().isAfter(dayjs(lesson.Datetime));
     },
+    servicesEmpty(userID = store.UserID) {
+      for (const service of Object.values(this.services)) {
+        if (service.UserID == userID) {
+          return false;
+        }
+      }
+      return true;
+    },
   },
 };
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
+@import "@/assets/styles/mixins.scss";
 #chat-container {
   display: flex;
   margin: 0 auto;
@@ -508,11 +534,6 @@ export default {
   .warning {
     border: 1px solid var(--red);
   }
-  .lesson-empty-item {
-    border: 1px dashed var(--green0);
-    background-color: var(--base1);
-    padding: 20px;
-  }
   .lesson-view-switch {
     padding: 8px;
     margin-top: 15px;
@@ -525,6 +546,25 @@ export default {
     &.request-lessons {
       background-color: var(--blue0);
     }
+  }
+}
+.empty-item {
+  border: 1px dashed var(--green0);
+  border-radius: 3px;
+  padding: 13px;
+}
+.empty-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 250px;
+  border: 1px dashed var(--green0);
+  margin-top: 25px;
+
+  button {
+    @include common-button;
+    background-color: var(--green1);
   }
 }
 </style>

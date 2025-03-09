@@ -52,9 +52,9 @@
       </table>
       <div class="flex-container">
         <button class="blue-button" @click="messageUser(user.ID)">
-          <i class="fa-regular fa-paper-plane"></i> Message {{ user.Username }}
+          <i class="fa-regular fa-paper-plane"></i> Send message
         </button>
-        <button class="green-button"><i class="fa-regular fa-user"></i> View {{ user.Username }}'s profile</button>
+        <button class="green-button"><i class="fa-regular fa-user"></i> View profile</button>
       </div>
     </div>
   </div>
@@ -89,6 +89,7 @@ export default {
 </script>
 
 <style>
+@import "@/assets/styles/mixins.scss";
 .post-flex-container {
   display: flex;
   margin: 30px auto;

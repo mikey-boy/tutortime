@@ -3,3 +3,11 @@
   padding: 10px;
   color: var(--text1)
 }
+.green-button {
+    @include common-button;
+    background-color: var(--green1);
+}
+.blue-button {
+    @include common-button;
+    background-color: var(--blue0);
+}

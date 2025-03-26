@@ -20,6 +20,15 @@ type Service struct {
 	User        User `gorm:"foreignKey:UserID"`
 }
 
+type ServicesSearch struct {
+	Services   []Service
+	Query      string
+	Category   ServiceCategory
+	Page       int
+	PageSize   int
+	TotalPages int
+}
+
 type ServiceStatus string
 type ServiceCategory string
 
@@ -53,11 +62,16 @@ var stringToCategory = map[string]ServiceCategory{
 
 // GET /api/services
 func GetServices(writer http.ResponseWriter, request *http.Request) {
-	var services []Service
-	query := request.URL.Query().Get("query")
-	category := request.URL.Query().Get("category")
-	ServicesGet(&services, query, stringToCategory[category])
-	ret, _ := json.Marshal(services)
+	var search ServicesSearch
+	search.Query = request.URL.Query().Get("query")
+	search.Category = stringToCategory[request.URL.Query().Get("category")]
+	if page, err := strconv.Atoi(request.URL.Query().Get("page")); err != nil {
+		search.Page = 1
+	} else {
+		search.Page = page
+	}
+	search.ServicesGet()
+	ret, _ := json.Marshal(search)
 	writer.Write(ret)
 }
 

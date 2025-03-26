@@ -24,7 +24,27 @@
         <p>{{ service.User.Username }}</p>
       </div>
     </div>
-    <div id="service-page-control"></div>
+    <div id="service-page-control">
+      <template v-if="page > 1">
+        <button @click="getServices(page - 1)"><i class="fa-solid fa-chevron-left"></i> Previous</button>
+      </template>
+
+      <template v-for="i in total_pages">
+        <template v-if="page == i">
+          <button class="active-page">{{ i }}</button>
+        </template>
+        <template v-else-if="[1, page - 1, page, page + 1, total_pages].includes(i)">
+          <button @click="getServices(i)">{{ i }}</button>
+        </template>
+        <template v-else-if="[2, total_pages - 1].includes(i)">
+          <i class="fa-solid fa-ellipsis"></i>
+        </template>
+      </template>
+
+      <template v-if="page < total_pages">
+        <button @click="getServices(page + 1)">Next<i class="fa-solid fa-chevron-right"></i></button>
+      </template>
+    </div>
   </div>
 </template>
 
@@ -32,6 +52,8 @@
 export default {
   data() {
     return {
+      page: 1,
+      total_pages: 1,
       services: [],
       category: "",
       query: "",
@@ -41,12 +63,16 @@ export default {
     this.getServices();
   },
   methods: {
-    getServices() {
+    getServices(page = 1) {
       const url = new URL("/api/services", window.location.origin);
-      url.search = new URLSearchParams({ category: this.category, query: this.query }).toString();
+      url.search = new URLSearchParams({ category: this.category, query: this.query, page: page }).toString();
       fetch(url)
         .then((response) => response.json())
-        .then((data) => (this.services = data));
+        .then((json) => {
+          this.services = json.Services;
+          this.page = json.Page;
+          this.total_pages = json.TotalPages;
+        });
     },
   },
 };
@@ -100,6 +126,32 @@ export default {
     padding: 7px 10px;
     background-color: var(--green1);
     color: var(--text1);
+  }
+}
+#service-page-control {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: larger;
+  margin-bottom: 50px;
+
+  button {
+    margin: 5px;
+    padding: 3px 10px;
+    font-size: large;
+    background-color: var(--base1);
+    color: var(--text0);
+    border: 1px solid var(--green0);
+  }
+  button:hover {
+    background-color: var(--base1);
+  }
+  button.active-page {
+    border-radius: 3px;
+    background-color: var(--green1);
+  }
+  .fa-ellipsis {
+    color: var(--base2);
   }
 }
 </style>

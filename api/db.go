@@ -164,20 +164,43 @@ func (message *Message) Update() error {
 	return result.Error
 }
 
-func ServicesGet(services *[]Service, query string, category ServiceCategory) {
+func Paginate(page int, page_size int) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		offset := (page - 1) * page_size
+		return db.Offset(offset).Limit(page_size)
+	}
+}
+
+func (search *ServicesSearch) ServicesGet() {
 	preloadFunc := func(db *gorm.DB) *gorm.DB {
 		return db.Select("id", "username")
 	}
+	if search.Page < 0 {
+		search.Page = 1
+	}
+	if search.PageSize <= 0 || search.PageSize > 100 {
+		search.PageSize = 24
+	}
 
+	var records int64
 	// TODO: Probably really inefficient to Preload like this
-	if query != "" && category != "" {
-		db.Preload("Image").Preload("User", preloadFunc).Where("title ILIKE @query OR description ILIKE @query", sql.Named("query", fmt.Sprint("%", query, "%"))).Where("category = ?", category).Find(&services)
-	} else if query != "" {
-		db.Preload("Image").Preload("User", preloadFunc).Where("title ILIKE @query OR description ILIKE @query", sql.Named("query", fmt.Sprint("%", query, "%"))).Find(&services)
-	} else if category != "" {
-		db.Preload("Image").Preload("User", preloadFunc).Where("category = ?", category).Find(&services)
+	query := db.Preload("Image").Preload("User", preloadFunc).Scopes(Paginate(search.Page, search.PageSize))
+	if search.Query != "" && search.Category != "" {
+		query.Where("title ILIKE @query OR description ILIKE @query", sql.Named("query", fmt.Sprint("%", search.Query, "%"))).Where("search.Category = ?", search.Category).Find(&search.Services)
+		db.Model(&Service{}).Where("title ILIKE @query OR description ILIKE @query", sql.Named("query", fmt.Sprint("%", search.Query, "%"))).Where("search.Category = ?", search.Category).Count(&records)
+	} else if search.Query != "" {
+		query.Where("title ILIKE @query OR description ILIKE @query", sql.Named("query", fmt.Sprint("%", search.Query, "%"))).Find(&search.Services)
+		db.Model(&Service{}).Where("title ILIKE @query OR description ILIKE @query", sql.Named("query", fmt.Sprint("%", search.Query, "%"))).Count(&records)
+	} else if search.Category != "" {
+		query.Where("category = ?", search.Category).Find(&search.Services)
+		db.Model(&Service{}).Where("category = ?", search.Category).Count(&records)
 	} else {
-		db.Preload("Image").Preload("User", preloadFunc).Find(&services)
+		query.Find(&search.Services)
+		db.Model(&Service{}).Count(&records)
+	}
+	search.TotalPages = int(records) / search.PageSize
+	if int(records)%search.PageSize > 0 {
+		search.TotalPages += 1
 	}
 }
 

@@ -57,7 +57,7 @@
 
 <script>
 import dayjs from "dayjs";
-import { store } from "../utils/store";
+import { store } from "@/utils/store";
 
 export default {
   data() {

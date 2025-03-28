@@ -6,7 +6,7 @@
         <img :src="user.Image.Path" />
         <div class="profile-info">
           <a href="">{{ user.Username }}</a>
-          <span>has taught this lesson: nil times<br />for a total of: {{ service.Minutes }} minutes</span>
+          <span>taught this lesson {{ service.Lessons }} times<br />for a total of {{ service.Minutes }} minutes</span>
         </div>
       </div>
       <div class="image-container">

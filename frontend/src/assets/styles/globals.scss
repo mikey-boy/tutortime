@@ -1,3 +1,5 @@
+@import "@/assets/styles/mixins.scss";
+
 [data-theme="dark"] {
   --base0: #2e3436;
   --base1: #3e4648;
@@ -108,4 +110,19 @@ pre {
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.empty-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 250px;
+  border: 1px dashed var(--green0);
+  margin-top: 25px;
+
+  button {
+    @include common-button;
+    background-color: var(--green1);
+  }
 }

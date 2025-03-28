@@ -1,6 +1,9 @@
 <template>
   <div v-if="user.Availability">
-    <h2>Account details</h2>
+    <div id="account-details">
+      <h2>Account details</h2>
+      <h3>Balance: {{ user.Minutes }} minutes</h3>
+    </div>
     <div id="user-account-list">
       <form @submit.prevent="updateProfile" enctype="multipart/form-data">
         <div class="label flex-container">
@@ -121,31 +124,135 @@
       </form>
     </div>
   </div>
+
+  <div id="completed-lessons">
+    <h2>Completed lessons</h2>
+    <div v-if="lessons.length > 10" id="page-control">
+      <button @click="prevPage">
+        <i class="fa-solid fa-chevron-left fa-xl"></i>
+      </button>
+      <span>Page {{ page }}</span>
+      <button @click="nextPage">
+        <i class="fa-solid fa-chevron-right fa-xl"></i>
+      </button>
+    </div>
+  </div>
+
+  <div v-if="lessons.length > 0">
+    <table class="transaction-table">
+      <thead>
+        <tr>
+          <td>Date</td>
+          <td>Time</td>
+          <td>Lesson title</td>
+          <td>Tutor</td>
+          <td>Student</td>
+          <td>Minutes</td>
+          <td>Balance</td>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="(lesson, index) in lessons" :key="lesson.ID">
+          <template v-if="0 <= index - (page - 1) * 10">
+            <td>{{ parseDate(lesson.Datetime) }}</td>
+            <td>{{ parseTime(lesson.Datetime) }}</td>
+            <td>{{ lesson.Service.Title }}</td>
+            <td>{{ lesson.Tutor.Username }}</td>
+            <td>{{ lesson.Student.Username }}</td>
+            <td v-if="lesson.TutorID == store.UserID" class="tutor-transaction">+{{ lesson.Duration }}</td>
+            <td v-else class="student-transaction">-{{ lesson.Duration }}</td>
+            <td>{{ getBalance(index) }}</td>
+          </template>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>{{ getBalance(lessons.length) }}</td>
+        </tr>
+
+        <tr></tr>
+      </tbody>
+    </table>
+  </div>
+  <div v-else>
+    <div class="empty-container">
+      <div><p>You haven't completed any lessons yet!</p></div>
+    </div>
+  </div>
+
+  <h2>Service history</h2>
+  <div v-if="services.length > 0">
+    <table class="transaction-table">
+      <thead>
+        <tr>
+          <td>Service</td>
+          <td>Description</td>
+          <td>Lessons taught</td>
+          <td>Minutes taught</td>
+          <td>Status</td>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="(service, index) in services" :key="service.ID">
+          <td>{{ service.Title }}</td>
+          <td>{{ service.Description }}</td>
+          <td>{{ service.Lessons }}</td>
+          <td>{{ service.Minutes }}</td>
+          <td>{{ service.Status }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div v-else>
+    <div class="empty-container">
+      <div><p>You haven't offered any services!</p></div>
+    </div>
+  </div>
 </template>
 
 <script>
+import { store } from "@/utils/store";
+import { parseDate, parseTime } from "@/utils/utils";
+
 export default {
   data() {
     return {
+      store,
+      page: 1,
       user: {},
       lessons: [],
+      services: [],
       modify: false,
       imageUrl: "",
     };
   },
-  created() {
+  mounted() {
     this.getProfile();
     this.getLessons();
+    this.getServices();
   },
   methods: {
+    parseDate,
+    parseTime,
     async getProfile() {
       const response = await fetch("/api/users/me");
       this.user = await response.json();
       this.user.Availability = this.user.Availability.split(",");
     },
     async getLessons() {
-      const response = await fetch("/api/users/me/lessons");
-      this.lessons = await response.json();
+      const url = new URL("/api/users/me/lessons", window.location.origin);
+      url.search = new URLSearchParams({ status: "confirmed" }).toString();
+      const response = await fetch(url);
+      let lst = await response.json();
+      this.lessons = lst.reverse();
+    },
+    async getServices() {
+      const response = await fetch("/api/users/me/services");
+      this.services = await response.json();
     },
     async updateProfile() {
       let form = new FormData(event.target);
@@ -163,7 +270,6 @@ export default {
       const response = await fetch("/api/users/me", { method: "PUT", body: form });
       this.user = await response.json();
       this.user.Availability = this.user.Availability.split(",");
-      this.modify = false;
     },
     updateImage() {
       const file = event.target.files[0];
@@ -175,11 +281,61 @@ export default {
       }
       return false;
     },
+    getBalance(index) {
+      if (index == 0) {
+        this.balance = this.user.Minutes;
+      } else {
+        if (this.lessons[index - 1].TutorID == store.UserID) {
+          this.balance -= this.lessons[index - 1].Duration;
+        } else {
+          this.balance += this.lessons[index - 1].Duration;
+        }
+      }
+      return this.balance;
+    },
+    prevPage() {
+      if (this.page > 1) {
+        this.page--;
+      }
+    },
+    nextPage() {
+      if (this.page * 10 < this.lessons.length) {
+        this.page++;
+      }
+    },
   },
 };
 </script>
 
 <style>
+.transaction-table {
+  width: 100%;
+  padding: 10px;
+  border: 1px dashed var(--green0);
+  border-spacing: 0;
+
+  thead {
+    font-weight: bold;
+  }
+  tbody tr:hover {
+    background-color: var(--base1);
+  }
+  .tutor-transaction {
+    color: var(--green1);
+  }
+  .student-transaction {
+    color: var(--red);
+  }
+}
+#account-details {
+  max-width: 840px;
+  display: flex;
+  align-items: center;
+  h3 {
+    margin-left: auto;
+    color: var(--text0);
+  }
+}
 #user-account-list {
   max-width: 800px;
   border: 1px dashed var(--green0);
@@ -237,6 +393,20 @@ export default {
   #profile-pic-label {
     cursor: pointer;
     margin-left: 10px;
+  }
+}
+#completed-lessons {
+  display: flex;
+  align-items: center;
+
+  #page-control {
+    margin-left: auto;
+
+    button {
+      margin: 5px;
+      background: none;
+      color: var(--green1);
+    }
   }
 }
 </style>

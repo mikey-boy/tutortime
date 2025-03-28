@@ -55,8 +55,8 @@
 </template>
 
 <script>
-import { store } from "../utils/store";
-import { logoutUser } from "../utils/auth";
+import { store } from "@/utils/store";
+import { logoutUser } from "@/utils/auth";
 
 export default {
   data() {

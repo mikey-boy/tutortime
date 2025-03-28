@@ -14,6 +14,7 @@ type Service struct {
 	Description string          `gorm:"not null"`
 	Category    ServiceCategory `gorm:"default:'other'"`
 	Status      ServiceStatus   `gorm:"default:'active'"`
+	Lessons     uint            `gorm:"default:0"`
 	Minutes     uint            `gorm:"default:0"`
 	Image       Image
 	UserID      uint

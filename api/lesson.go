@@ -18,6 +18,8 @@ type Lesson struct {
 	Datetime         time.Time
 	CreatedAt        time.Time // managed by gorm
 	Service          Service
+	Student          User
+	Tutor            User
 	Status           LessonStatus
 }
 
@@ -34,6 +36,18 @@ const (
 	LS_CONFIRMED_TUTOR   LessonStatus = "confirmed_tutor"
 	LS_MODIFIED          LessonStatus = "modified"
 )
+
+var stringToLessonStatus = map[string]LessonStatus{
+	"cancelled":         LS_CANCELLED,
+	"expired":           LS_EXPIRED,
+	"accepted":          LS_ACCEPTED,
+	"accepted_student":  LS_ACCEPTED_STUDENT,
+	"accepted_tutor":    LS_ACCEPTED_TUTOR,
+	"confirmed":         LS_CONFIRMED,
+	"confirmed_student": LS_CONFIRMED_STUDENT,
+	"confirmed_tutor":   LS_CONFIRMED_TUTOR,
+	"modified":          LS_MODIFIED,
+}
 
 func createLesson(sender_id uint, api_message *Message) (Lesson, bool) {
 	service := Service{ID: api_message.Lesson.ServiceID}
@@ -114,7 +128,8 @@ func GetMyLessons(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	var lessons []Lesson
-	UserLessonsGet(user, &lessons)
+	status := request.URL.Query().Get("status")
+	UserLessonsGet(user, &lessons, stringToLessonStatus[status])
 	ret, _ := json.Marshal(lessons)
 	writer.Write(ret)
 }

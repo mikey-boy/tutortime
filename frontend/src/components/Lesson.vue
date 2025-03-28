@@ -71,6 +71,7 @@
 
 <script>
 import dayjs from "dayjs";
+import { parseDate, parseTime } from "@/utils/utils";
 
 export default {
   props: {
@@ -90,16 +91,8 @@ export default {
     this.modifiedLesson.Time = dayjs(this.lesson.Datetime).format("HH:mm");
   },
   methods: {
-    parseDate(datetime) {
-      if (datetime) {
-        return dayjs(datetime).format("YYYY-MM-DD");
-      }
-    },
-    parseTime(datetime) {
-      if (datetime) {
-        return dayjs(datetime).format("hh:mm A");
-      }
-    },
+    parseDate,
+    parseTime,
     modifyLesson(status) {
       this.modifiedLesson.Status = status;
       this.$emit("modify-lesson", this.modifiedLesson);

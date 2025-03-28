@@ -66,8 +66,10 @@ func parseSocketMessage(client_id uint, api_message Message) (ok bool, message M
 		}
 		if message.Lesson.Status == LS_CONFIRMED {
 			tutor, student := User{ID: lesson.TutorID}, User{ID: lesson.StudentID}
+			service := Service{ID: api_message.Lesson.ServiceID}
 			tutor.Get()
 			student.Get()
+			service.Get()
 			var duration uint
 			if lesson.ModifiedDuration == 0 {
 				duration = lesson.Duration
@@ -75,7 +77,7 @@ func parseSocketMessage(client_id uint, api_message Message) (ok bool, message M
 				duration = lesson.ModifiedDuration
 			}
 
-			transferMinutes(&tutor, &student, duration)
+			transferMinutes(&tutor, &student, &service, duration)
 			system_message := Message{RoomID: message.RoomID}
 			system_message.Message = fmt.Sprintf("%d minutes transferred from %s to %s", duration, student.Username, tutor.Username)
 			system_message.Add()

@@ -33,7 +33,7 @@
 </template>
 
 <script>
-import { refreshUserID } from "../utils/auth";
+import { refreshUserID } from "@/utils/auth";
 
 export default {
   data() {

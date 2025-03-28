@@ -144,7 +144,7 @@
 
 <script>
 import Lesson from "./Lesson.vue";
-import { store } from "../utils/store";
+import { store } from "@/utils/store";
 import { nextTick } from "vue";
 import dayjs from "dayjs";
 
@@ -552,19 +552,5 @@ export default {
   border: 1px dashed var(--green0);
   border-radius: 3px;
   padding: 13px;
-}
-.empty-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 250px;
-  border: 1px dashed var(--green0);
-  margin-top: 25px;
-
-  button {
-    @include common-button;
-    background-color: var(--green1);
-  }
 }
 </style>

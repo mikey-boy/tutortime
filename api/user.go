@@ -13,11 +13,11 @@ import (
 
 type User struct {
 	ID           uint
+	Username     string `gorm:"unique,not null"`
+	Password     string `gorm:"not null" json:"-"`
 	Availability string
-	Username     string    `gorm:"unique,not null"`
-	Password     string    `gorm:"not null" json:"-"`
-	Description  string    `json:",omitempty"`
-	Minutes      uint      `gorm:"default:60" json:",omitempty"`
+	Description  string
+	Minutes      uint      `gorm:"default:60"`
 	Image        Image     `json:",omitempty"`
 	Services     []Service `json:",omitempty"`
 	Sessions     []Session `json:",omitempty"`
@@ -43,11 +43,14 @@ func addSession(userID uint, writer http.ResponseWriter) {
 	}
 }
 
-func transferMinutes(tutor *User, student *User, minutes uint) {
+func transferMinutes(tutor *User, student *User, service *Service, minutes uint) {
 	tutor.Minutes += minutes
 	student.Minutes -= minutes
+	service.Minutes += minutes
+	service.Lessons += 1
 	tutor.Update()
 	student.Update()
+	service.Update()
 }
 
 // GET /api/users/{id}

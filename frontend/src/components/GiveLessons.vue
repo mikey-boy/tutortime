@@ -168,20 +168,7 @@ export default {
   }
 }
 
-.empty-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 250px;
-  border: 1px dashed var(--green0);
-
-  button {
-    @include common-button;
-    background-color: var(--green1);
-  }
-  &.empty-service {
-    margin-top: 25px;
-  }
+.empty-service {
+  margin-top: 25px;
 }
 </style>

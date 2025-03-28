@@ -212,8 +212,15 @@ func UserServicesGet(user User, services *[]Service, all bool) {
 	}
 }
 
-func UserLessonsGet(user User, lessons *[]Lesson) {
-	db.Preload("Service").Where("tutor_id = ? OR student_id = ?", user.ID, user.ID).Where("status != ? AND status != ?", LS_CANCELLED, LS_EXPIRED).Order("datetime ASC").Find(&lessons)
+func UserLessonsGet(user User, lessons *[]Lesson, status LessonStatus) {
+	preloadFunc := func(db *gorm.DB) *gorm.DB {
+		return db.Select("id", "username")
+	}
+	if status != "" {
+		db.Preload("Student", preloadFunc).Preload("Tutor", preloadFunc).Preload("Service").Where("tutor_id = ? OR student_id = ?", user.ID, user.ID).Where("status = ?", status).Order("datetime ASC").Find(&lessons)
+	} else {
+		db.Preload("Student", preloadFunc).Preload("Tutor", preloadFunc).Preload("Service").Where("tutor_id = ? OR student_id = ?", user.ID, user.ID).Where("status != ? AND status != ?", LS_CANCELLED, LS_EXPIRED).Order("datetime ASC").Find(&lessons)
+	}
 }
 
 func OurLessonsGet(user User, other User, lessons *[]Lesson) {

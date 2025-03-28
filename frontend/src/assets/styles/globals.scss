@@ -126,3 +126,41 @@ pre {
     background-color: var(--green1);
   }
 }
+
+.standard-table {
+  width: 100%;
+  border: 1px dashed var(--green0);
+  border-spacing: 0;
+
+  thead {
+    font-weight: bold;
+    background-color: var(--base1);
+  }
+  td {
+    padding: 8px 8px;
+  }
+  tbody tr:hover {
+    background-color: var(--base1);
+  }
+}
+
+.availability-table {
+  table-layout: fixed;
+  border-collapse: collapse;
+  width: 100%;
+
+  tr {
+    text-align: center;
+
+    td:first-child {
+      text-align: left;
+      width: 70px;
+    }
+    .fa-square-check {
+      color: var(--green0);
+    }
+  }
+  tbody tr:hover {
+    background-color: var(--base1);
+  }
+}

@@ -1,11 +1,13 @@
 <template>
   <div v-if="service && user" class="post-flex-container">
     <div class="post">
-      <h2>{{ service.title }}</h2>
+      <h2>{{ service.Title }}</h2>
       <div class="profile">
         <img :src="user.Image.Path" />
         <div class="profile-info">
-          <a href="">{{ user.Username }}</a>
+          <RouterLink :to="{ path: `/users/${user.ID}` }">
+            {{ user.Username }}
+          </RouterLink>
           <span>taught this lesson {{ service.Lessons }} times<br />for a total of {{ service.Minutes }} minutes</span>
         </div>
       </div>
@@ -51,10 +53,12 @@
         </tbody>
       </table>
       <div class="flex-container">
-        <button class="blue-button" @click="messageUser(user.ID)">
-          <i class="fa-regular fa-paper-plane"></i> Send message
-        </button>
-        <button class="green-button"><i class="fa-regular fa-user"></i> View profile</button>
+        <RouterLink :to="{ path: `/chat/${user.ID}` }">
+          <button class="blue-button"><i class="fa-regular fa-paper-plane"></i> Send message</button>
+        </RouterLink>
+        <RouterLink :to="{ path: `/users/${user.ID}` }">
+          <button class="green-button"><i class="fa-regular fa-user"></i> View profile</button>
+        </RouterLink>
       </div>
     </div>
   </div>
@@ -75,9 +79,6 @@ export default {
     this.user = await userResponse.json();
   },
   methods: {
-    messageUser(UserID) {
-      this.$router.push({ path: "/chat/", query: { user: UserID } });
-    },
     isChecked(value) {
       if (this.user.Availability.includes(value)) {
         return "fa-square-check";
@@ -88,7 +89,7 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
 @import "@/assets/styles/mixins.scss";
 .post-flex-container {
   display: flex;
@@ -105,9 +106,11 @@ export default {
     flex: 3;
   }
   .flex-container {
-    button {
+    a {
       flex: 1;
       margin: 15px 10px 0px 10px;
+    }
+    button {
       padding: 8px;
     }
   }
@@ -145,27 +148,6 @@ export default {
   img {
     width: 300px;
     height: 170px;
-  }
-}
-.availability-table {
-  table-layout: fixed;
-  border-collapse: collapse;
-  width: 100%;
-  margin-bottom: 10px;
-
-  tr {
-    text-align: center;
-
-    td:first-child {
-      text-align: left;
-      width: 70px;
-    }
-    .fa-square-check {
-      color: var(--green0);
-    }
-  }
-  tbody tr:hover {
-    background-color: var(--base1);
   }
 }
 </style>

@@ -4,7 +4,7 @@
       <h2>Account details</h2>
       <h3>Balance: {{ user.Minutes }} minutes</h3>
     </div>
-    <div id="user-account-list">
+    <div id="user-account-list" :class="modify ? 'editing' : ''">
       <form @submit.prevent="updateProfile" enctype="multipart/form-data">
         <div class="label flex-container">
           Profile Picture
@@ -139,7 +139,7 @@
   </div>
 
   <div v-if="lessons.length > 0">
-    <table class="transaction-table">
+    <table class="standard-table">
       <thead>
         <tr>
           <td>Date</td>
@@ -186,7 +186,7 @@
 
   <h2>Service history</h2>
   <div v-if="services.length > 0">
-    <table class="transaction-table">
+    <table class="standard-table">
       <thead>
         <tr>
           <td>Service</td>
@@ -198,7 +198,11 @@
       </thead>
       <tbody>
         <tr v-for="(service, index) in services" :key="service.ID">
-          <td>{{ service.Title }}</td>
+          <RouterLink :to="{ path: `/services/${service.ID}` }">
+            <td>
+              <b>{{ service.Title }}</b>
+            </td>
+          </RouterLink>
           <td>{{ service.Description }}</td>
           <td>{{ service.Lessons }}</td>
           <td>{{ service.Minutes }}</td>
@@ -307,25 +311,12 @@ export default {
 };
 </script>
 
-<style>
-.transaction-table {
-  width: 100%;
-  padding: 10px;
-  border: 1px dashed var(--green0);
-  border-spacing: 0;
-
-  thead {
-    font-weight: bold;
-  }
-  tbody tr:hover {
-    background-color: var(--base1);
-  }
-  .tutor-transaction {
-    color: var(--green1);
-  }
-  .student-transaction {
-    color: var(--red);
-  }
+<style scoped>
+.tutor-transaction {
+  color: var(--green1);
+}
+.student-transaction {
+  color: var(--red);
 }
 #account-details {
   max-width: 840px;

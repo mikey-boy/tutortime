@@ -17,12 +17,13 @@
         </tr>
       </thead>
     </table>
-    <table class="user-service-table">
+
+    <table class="standard-table">
       <thead>
         <tr>
-          <th class="title">Title</th>
-          <th class="description">Description</th>
-          <th>Actions</th>
+          <td>Title</td>
+          <td>Description</td>
+          <td>Actions</td>
         </tr>
       </thead>
       <tbody>
@@ -133,28 +134,19 @@ export default {
   }
 }
 
-.user-service-table {
+.standard-table {
   table-layout: fixed;
-  width: 100%;
-  border: 1px dashed var(--green0);
-  border-spacing: 0;
-  padding: 10px;
 
-  td,
-  th {
-    padding: 3px;
-  }
-  tbody tr:hover {
-    background-color: var(--base1);
-  }
-  th {
-    width: 70px;
-  }
-  th.description {
-    width: 450px;
-  }
-  th.title {
-    width: 150px;
+  thead tr {
+    td:nth-child(1) {
+      width: 150px;
+    }
+    td:nth-child(2) {
+      width: auto;
+    }
+    td:nth-child(3) {
+      width: 100px;
+    }
   }
   .truncated {
     white-space: nowrap; /* Prevent text from wrapping */

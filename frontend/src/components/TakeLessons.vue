@@ -13,16 +13,18 @@
       <button><i class="fa-solid fa-magnifying-glass fa-lg"></i></button>
     </form>
     <div class="post-grid-container">
-      <div class="post" v-for="service in services" :key="service.ID">
-        <div class="image-container">
-          <img :src="service.Image.Path" :alt="service.Image.Name" />
-        </div>
+      <template v-for="service in services" :key="service.ID">
         <RouterLink :to="{ path: `/services/${service.ID}` }">
-          <h3 class="truncated-text">{{ service.Title }}</h3>
+          <div class="post clickable">
+            <div class="image-container">
+              <img :src="service.Image.Path" :alt="service.Image.Name" />
+            </div>
+            <h3 class="truncated-text">{{ service.Title }}</h3>
+            <p class="truncated-text">{{ service.Description }}</p>
+            <p>{{ service.User.Username }}</p>
+          </div>
         </RouterLink>
-        <p class="truncated-text">{{ service.Description }}</p>
-        <p>{{ service.User.Username }}</p>
-      </div>
+      </template>
     </div>
     <div id="service-page-control">
       <template v-if="page > 1">
@@ -88,6 +90,12 @@ export default {
   h2 {
     margin-top: 0px;
     margin-bottom: 15px;
+  }
+  p {
+    color: var(--text0);
+  }
+  &.clickable:hover {
+    background-color: var(--base0);
   }
 }
 .post-grid-container {

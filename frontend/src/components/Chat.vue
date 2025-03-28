@@ -186,7 +186,7 @@ export default {
   },
   methods: {
     async initChat() {
-      const contactID = Number(this.$route.query.user);
+      const contactID = Number(this.$route.params.id);
       const response = await fetch("/api/contacts");
       this.contacts = await response.json();
 
@@ -241,7 +241,7 @@ export default {
     },
 
     changeContact(userID) {
-      this.$router.push({ path: "/chat/", query: { user: userID } });
+      this.$router.push({ path: `/chat/${userID}` });
       this.activeContact = this.contacts.find((contact) => contact.ID === userID);
       this.getServices(userID);
       this.getLessons(userID);

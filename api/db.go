@@ -184,7 +184,7 @@ func (search *ServicesSearch) ServicesGet() {
 
 	var records int64
 	// TODO: Probably really inefficient to Preload like this
-	query := db.Preload("Image").Preload("User", preloadFunc).Scopes(Paginate(search.Page, search.PageSize))
+	query := db.Preload("Image").Preload("User", preloadFunc).Where("status = ?", SS_ACTIVE).Scopes(Paginate(search.Page, search.PageSize))
 	if search.Query != "" && search.Category != "" {
 		query.Where("title ILIKE @query OR description ILIKE @query", sql.Named("query", fmt.Sprint("%", search.Query, "%"))).Where("search.Category = ?", search.Category).Find(&search.Services)
 		db.Model(&Service{}).Where("title ILIKE @query OR description ILIKE @query", sql.Named("query", fmt.Sprint("%", search.Query, "%"))).Where("search.Category = ?", search.Category).Count(&records)

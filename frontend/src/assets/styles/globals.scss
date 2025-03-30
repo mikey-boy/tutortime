@@ -87,6 +87,12 @@ pre {
   display: flex;
 }
 
+.centered {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .fa-pen-to-square {
   color: var(--blue1);
 }

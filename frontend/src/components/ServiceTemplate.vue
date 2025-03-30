@@ -10,8 +10,11 @@
                 Title:
               </label>
             </td>
-            <td>
+            <td class="flex-container">
               <input type="text" v-model="service.title" name="title" required />
+              <div class="centered cancel-button">
+                <i @click="$router.back()" class="fa-regular fa-rectangle-xmark fa-2xl"></i>
+              </div>
             </td>
           </tr>
           <tr>
@@ -22,7 +25,7 @@
               </label>
             </td>
             <td>
-              <textarea v-model="service.description" rows="7" cols="120" name="description" required></textarea>
+              <textarea v-model="service.description" rows="7" name="description" required></textarea>
             </td>
           </tr>
           <tr>
@@ -127,8 +130,12 @@ export default {
   table {
     width: 100%;
   }
-  textarea,
   input {
+    padding: 3px;
+    width: 350px;
+    font-size: 15px;
+  }
+  textarea {
     width: 100%;
     box-sizing: border-box;
   }
@@ -146,13 +153,18 @@ export default {
     justify-content: center;
     margin-top: 15px;
   }
+  .cancel-button {
+    cursor: pointer;
+    color: var(--red);
+    margin-left: auto;
+  }
   #service-creation-table > tbody > tr > td {
     padding-bottom: 30px;
 
     &:first-child {
       vertical-align: top;
       padding-right: 10px;
-      min-width: 140px;
+      width: 140px;
       font-weight: bold;
     }
   }

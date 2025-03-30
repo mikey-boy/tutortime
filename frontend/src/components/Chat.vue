@@ -64,7 +64,13 @@
           <form @submit.prevent="sendLessonRequest()">
             <div class="flex-container">
               <h3 id="service-title">{{ lessonRequest.Title }}</h3>
-              <i id="cancel-request-button" @click="resetLessonRequest" class="fa-regular fa-circle-xmark fa-lg"></i>
+              <div class="centered">
+                <i
+                  id="cancel-request-button"
+                  @click="resetLessonRequest"
+                  class="fa-regular fa-rectangle-xmark fa-xl"
+                ></i>
+              </div>
             </div>
             <label>Datetime: </label>
             <input v-model="lessonRequest.Date" type="date" class="date" required :min="today" />
@@ -87,6 +93,7 @@
           v-model="text"
           placeholder="Type your message..."
           @keydown.enter="sendMessage()"
+          required
         />
         <button id="send-message-button" @click="sendMessage()">Send</button>
       </div>
@@ -338,9 +345,11 @@ export default {
     },
 
     sendMessage() {
-      let message = { Message: this.text, RecieverID: this.activeRoom.User.ID };
-      socket.send(JSON.stringify(message));
-      this.text = "";
+      if (this.text != "") {
+        let message = { Message: this.text, RecieverID: this.activeRoom.User.ID };
+        socket.send(JSON.stringify(message));
+        this.text = "";
+      }
     },
     sendLessonRequest() {
       this.lessonRequest.Datetime = dayjs(`${this.lessonRequest.Date} ${this.lessonRequest.Time}`).format();
@@ -508,11 +517,11 @@ export default {
     justify-content: right;
 
     h3 {
-      margin: 0px 0px 15px;
+      margin: 8px 0px;
       justify-content: left;
     }
     > form {
-      padding: 8px;
+      padding: 0px 8px 12px;
       border: 1px dashed var(--green0);
       border-radius: 3px;
       width: 315px;
@@ -551,9 +560,8 @@ export default {
       padding: 6px 21px;
     }
     #cancel-request-button {
-      background-color: var(--base1);
-      color: var(--base2);
-      margin-top: 10px;
+      margin-right: 3px;
+      color: var(--red);
       cursor: pointer;
     }
     #lesson-request-error {

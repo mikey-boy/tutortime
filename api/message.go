@@ -94,9 +94,11 @@ func parseSocketMessage(client_id uint, api_message Message) (ok bool, message M
 			message.Lesson = &lesson
 			message.Add()
 		}
-	} else {
+	} else if api_message.Message != "" {
 		message = Message{SenderID: client_id, RecieverID: api_message.RecieverID, Message: api_message.Message}
 		message.Add()
+	} else {
+		return false, Message{}
 	}
 	return true, message
 }

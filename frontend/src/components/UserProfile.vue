@@ -11,10 +11,9 @@
           <label for="profile-pic-input" id="profile-pic-label" v-show="modify">
             <i class="fa-solid fa-pen-to-square fa-lg"></i>
           </label>
-          <button class="cancel-button" v-show="modify" @click.prevent="modify = false">
-            <i class="fa-solid fa-circle-xmark fa-lg"></i>
-            Cancel
-          </button>
+          <div class="cancel-button centered" v-show="modify" @click.prevent="modify = false">
+            <i class="fa-solid fa-rectangle-xmark fa-2xl"></i>
+          </div>
           <button class="edit-button" v-show="!modify" @click.prevent="modify = true">
             <i class="fa-solid fa-pen-to-square fa-lg"></i>
             Edit profile
@@ -111,7 +110,7 @@
 
         <div class="label">About Me</div>
         <div v-show="modify">
-          <textarea type="text" name="description" rows="5" :value="user.Description"></textarea>
+          <textarea type="text" name="description" rows="3" :value="user.Description"></textarea>
         </div>
         <div v-show="!modify">
           <p v-if="user.Description">{{ user.Description }}</p>
@@ -260,10 +259,9 @@ export default {
     },
     async updateProfile() {
       let form = new FormData(event.target);
-
       let availability = [];
       for (let i = 0; i < 21; i++) {
-        let index = `${Math.floor(i / 7)}-${i % 7}`;
+        let index = `${i % 7}-${Math.floor(i / 7)}`;
         if (form.has(index)) {
           availability.push(index);
           form.delete(index);
@@ -274,6 +272,7 @@ export default {
       const response = await fetch("/api/users/me", { method: "PUT", body: form });
       this.user = await response.json();
       this.user.Availability = this.user.Availability.split(",");
+      this.modify = false;
     },
     updateImage() {
       const file = event.target.files[0];
@@ -339,16 +338,16 @@ export default {
     width: calc(100% - 8px);
   }
 
-  button.edit-button,
-  button.cancel-button {
+  .edit-button {
     width: 110px;
     margin-left: auto;
     padding: 6px 8px;
     font-weight: bold;
   }
-  button.cancel-button {
-    color: var(--text1);
-    background-color: var(--red);
+  .cancel-button {
+    cursor: pointer;
+    margin-left: auto;
+    color: var(--red);
   }
   button.edit-button {
     color: var(--text1);

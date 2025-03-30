@@ -20,7 +20,7 @@ func expireLessons() {
 	for _, lesson := range append(scheduledEarly, scheduledLate...) {
 		db.Model(&lesson).Update("status", LS_EXPIRED)
 		room := Room{}
-		room.Get(User{ID: lesson.TutorID}, User{ID: lesson.StudentID})
+		room.Get(lesson.TutorID, lesson.StudentID)
 
 		system_message := Message{RoomID: room.ID}
 		system_message.Message = fmt.Sprintf("'%s' scheduled for %s has expired", lesson.Service.Title, lesson.Datetime.UTC().Format(time.RFC3339))

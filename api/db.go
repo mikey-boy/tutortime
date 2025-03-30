@@ -148,14 +148,15 @@ func (message *Message) Get() error {
 	return result.Error
 }
 func (message *Message) Add() error {
-	var room Room
-	if message.SenderID < message.RecieverID {
-		db.FirstOrCreate(&room, Room{User1ID: message.SenderID, User2ID: message.RecieverID})
-	} else {
-		db.FirstOrCreate(&room, Room{User1ID: message.RecieverID, User2ID: message.SenderID})
+	if message.RoomID == 0 {
+		var room Room
+		if message.SenderID < message.RecieverID {
+			db.FirstOrCreate(&room, Room{User1ID: message.SenderID, User2ID: message.RecieverID})
+		} else {
+			db.FirstOrCreate(&room, Room{User1ID: message.RecieverID, User2ID: message.SenderID})
+		}
+		message.RoomID = room.ID
 	}
-
-	message.RoomID = room.ID
 	result := db.Create(message)
 	return result.Error
 }
@@ -227,21 +228,21 @@ func OurLessonsGet(user User, other User, lessons *[]Lesson) {
 	db.Where("(tutor_id = ? AND student_id = ?) OR (tutor_id = ? AND student_id = ?)", user.ID, other.ID, other.ID, user.ID).Where("status != ? AND status != ?", LS_CANCELLED, LS_EXPIRED).Find(&lessons)
 }
 
-func (room *Room) Get(user User, other User) {
-	if user.ID < other.ID {
-		db.Where("user1_id = ? AND user2_id = ?", user.ID, other.ID).First(&room)
+func (room *Room) Get(userID uint, otherID uint) {
+	if userID < otherID {
+		db.Where("user1_id = ? AND user2_id = ?", userID, otherID).First(&room)
 	} else {
-		db.Where("user1_id = ? AND user2_id = ?", other.ID, user.ID).First(&room)
+		db.Where("user1_id = ? AND user2_id = ?", otherID, userID).First(&room)
 	}
 }
 
 func MessagesGet(messages *[]Message, user User, other User) {
 	var room Room
-	room.Get(user, other)
+	room.Get(user.ID, other.ID)
 	db.Model(Message{}).Joins("Lesson").Where("room_id = ?", room.ID).Order("ID asc").Find(&messages)
 }
 
-func ContactsGet(contacts *[]User, user User) {
+func RoomsGet(rooms *[]Room, user User) {
 	preloadFunc := func(db *gorm.DB) *gorm.DB {
 		return db.Select("id", "username")
 	}
@@ -250,13 +251,7 @@ func ContactsGet(contacts *[]User, user User) {
 	var rooms2 []Room
 	db.Model(&Room{}).Preload("User2", preloadFunc).Where("user1_id = ?", user.ID).Find(&rooms1)
 	db.Model(&Room{}).Preload("User1", preloadFunc).Where("user2_id = ?", user.ID).Find(&rooms2)
-
-	for _, room := range rooms1 {
-		*contacts = append(*contacts, room.User2)
-	}
-	for _, room := range rooms2 {
-		*contacts = append(*contacts, room.User1)
-	}
+	*rooms = append(rooms1, rooms2...)
 }
 
 func createTables() {

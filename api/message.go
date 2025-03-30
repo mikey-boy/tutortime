@@ -57,9 +57,11 @@ func parseSocketMessage(client_id uint, api_message Message) (ok bool, message M
 		message.Update()
 
 		if message.Lesson.Status == LS_ACCEPTED || message.Lesson.Status == LS_CANCELLED || message.Lesson.Status == LS_CONFIRMED {
-			system_message := Message{RoomID: message.RoomID}
+			var room Room
+			room.Get(message.SenderID, message.RecieverID)
 			service := Service{ID: api_message.Lesson.ServiceID}
 			service.Get()
+			system_message := Message{RoomID: room.ID, SenderID: 0, RecieverID: 0}
 			system_message.Message = fmt.Sprintf("'%s' scheduled for %s has been %s", service.Title, datetime.Format(time.RFC3339), message.Lesson.Status)
 			system_message.Add()
 			sendMessage(message.SenderID, message.RecieverID, system_message)
@@ -78,7 +80,9 @@ func parseSocketMessage(client_id uint, api_message Message) (ok bool, message M
 			}
 
 			transferMinutes(&tutor, &student, &service, duration)
-			system_message := Message{RoomID: message.RoomID}
+			var room Room
+			room.Get(message.SenderID, message.RecieverID)
+			system_message := Message{RoomID: room.ID, SenderID: 0, RecieverID: 0}
 			system_message.Message = fmt.Sprintf("%d minutes transferred from %s to %s", duration, student.Username, tutor.Username)
 			system_message.Add()
 			sendMessage(message.SenderID, message.RecieverID, system_message)
@@ -123,16 +127,16 @@ func GetOurMessages(writer http.ResponseWriter, request *http.Request) {
 	writer.Write(ret)
 }
 
-// GET /api/contacts
-func GetContacts(writer http.ResponseWriter, request *http.Request) {
+// GET /api/rooms
+func GetRooms(writer http.ResponseWriter, request *http.Request) {
 	user, ok := UserFromRequest(*request)
 	if !ok {
 		http.Error(writer, invalidSessionToken.String(), http.StatusUnauthorized)
 		return
 	}
 
-	contacts := []User{}
-	ContactsGet(&contacts, user)
-	ret, _ := json.Marshal(contacts)
+	rooms := []Room{}
+	RoomsGet(&rooms, user)
+	ret, _ := json.Marshal(rooms)
 	writer.Write(ret)
 }

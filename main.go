@@ -76,7 +76,7 @@ func main() {
 	mux.HandleFunc("GET /api/users/me/lessons", api.ValidateSessionToken(api.GetMyLessons))
 
 	mux.HandleFunc("POST /api/sessiontoken", api.AddSessionToken)
-	mux.HandleFunc("GET /api/contacts", api.ValidateSessionToken(api.GetContacts))
+	mux.HandleFunc("GET /api/rooms", api.ValidateSessionToken(api.GetRooms))
 
 	mux.HandleFunc("GET /api/services", api.GetServices)
 	mux.HandleFunc("POST /api/services", api.ValidateSessionToken(api.AddService))

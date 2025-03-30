@@ -1,39 +1,65 @@
 <template>
-  <div v-if="contacts.length > 0" id="chat-container">
+  <div v-if="activeRoom == null || activeRoom.Fetched == false" id="chat-container">
+    <div id="contacts"><h2>Contacts</h2></div>
+    <div id="chat">
+      <div id="message-container"></div>
+    </div>
+    <div id="lessons"><h2>Lessons</h2></div>
+  </div>
+  <div v-else-if="activeRoom.Fetched && contacts.length == 0">
+    <div class="empty-container empty-service">
+      <div><p>Check out the lesson offerings and message a tutor to start chatting</p></div>
+      <RouterLink to="/">
+        <button>Browse lessons</button>
+      </RouterLink>
+    </div>
+  </div>
+  <div v-else id="chat-container">
     <div id="contacts">
       <h2>Contacts</h2>
       <ul v-for="contact in contacts">
-        <li :class="{ active: contact.ID === activeContact.ID }" @click="changeContact(contact.ID)">
+        <li :class="{ active: contact.ID === activeRoom.User.ID }" @click="changeContact(contact.ID)">
           <span>{{ contact.Username }}</span>
         </li>
       </ul>
     </div>
     <div id="chat">
-      <h2>{{ activeContact.Username }}</h2>
+      <h2>{{ activeRoom.User.Username }}</h2>
       <div id="message-container">
-        <div
-          v-for="message in messages"
-          :class="{
-            'flex-container-system': message.SenderID == 0,
-            'flex-container-user': message.RecieverID == activeContact.ID,
-            'flex-container-peer': message.RecieverID != activeContact.ID && message.SenderID != 0,
-          }"
-        >
-          <span v-if="message.Lesson && displayInChat(message.Lesson)" class="message-item lesson">
-            <Lesson
-              @modify-lesson="sendModifiedLesson"
-              :lesson="message.Lesson"
-              :service="services[message.Lesson.ServiceID]"
-              :sender="message.RecieverID == activeContact.ID"
-            />
-          </span>
-          <span v-else-if="message.Message && message.SenderID == 0" class="message-item-system">
-            {{ parseSystemMessage(message.Message) }}
-          </span>
-          <span v-else-if="message.Message" class="message-item">
-            {{ message.Message }}
-          </span>
-        </div>
+        <template v-for="message in messages">
+          <div v-if="message.RecieverID == activeRoom.User.ID" class="flex-container-user">
+            <span v-if="message.Lesson && displayInChat(message.Lesson)" class="message-item lesson">
+              <Lesson
+                @modify-lesson="sendModifiedLesson"
+                :lesson="message.Lesson"
+                :service="findService(message.Lesson.ServiceID)"
+                :sender="message.RecieverID == activeRoom.User.ID"
+              />
+            </span>
+            <span v-else-if="message.Message" class="message-item">
+              {{ message.Message }}
+            </span>
+          </div>
+          <div v-else-if="message.RecieverID != 0" class="flex-container-peer">
+            <span v-if="message.Lesson && displayInChat(message.Lesson)" class="message-item lesson">
+              <Lesson
+                @modify-lesson="sendModifiedLesson"
+                :lesson="message.Lesson"
+                :service="findService(message.Lesson.ServiceID)"
+                :sender="message.RecieverID == activeRoom.User.ID"
+              />
+            </span>
+            <span v-else-if="message.Message" class="message-item">
+              {{ message.Message }}
+            </span>
+          </div>
+          <div v-else class="flex-container-system">
+            <span class="message-item-system">
+              {{ parseSystemMessage(message.Message) }}
+            </span>
+          </div>
+        </template>
+
         <div v-if="lessonRequest.Title" id="chat-lesson-request">
           <form @submit.prevent="sendLessonRequest()">
             <div class="flex-container">
@@ -81,16 +107,16 @@
             <Lesson
               @modify-lesson="sendModifiedLesson"
               :lesson="lesson"
-              :service="services[lesson.ServiceID]"
-              :sender="messages[lesson.MessageID].RecieverID == activeContact.ID"
+              :service="findService(lesson.ServiceID)"
+              :sender="messages[lesson.MessageID].RecieverID == activeRoom.User.ID"
             />
           </div>
           <div v-else-if="!completedView && !lessonCompleted(lesson) && lessonActive(lesson)" class="lesson">
             <Lesson
               @modify-lesson="sendModifiedLesson"
               :lesson="lesson"
-              :service="services[lesson.ServiceID]"
-              :sender="messages[lesson.MessageID].RecieverID == activeContact.ID"
+              :service="findService(lesson.ServiceID)"
+              :sender="messages[lesson.MessageID].RecieverID == activeRoom.User.ID"
             />
           </div>
         </template>
@@ -99,26 +125,26 @@
         <div class="lesson-container without-subnav">
           <h3>As a student:</h3>
           <template v-for="service in services">
-            <div v-if="service.UserID == activeContact.ID">
+            <div>
               <label class="lesson-request-item" @click="newLessonRequest(service)">
                 <input type="radio" name="service" id="service-{{ service.id }}" /> {{ service.Title }}
               </label>
             </div>
           </template>
-          <div v-if="servicesEmpty(activeContact.ID)" class="empty-item">
+          <div v-if="Object.keys(services).length == 0" class="empty-item">
             <span>
-              <b>{{ activeContact.Username }}</b> is currently not offering any lessons
+              <b>{{ activeRoom.User.Username }}</b> is currently not offering any lessons
             </span>
           </div>
           <h3>As a tutor:</h3>
-          <template v-for="service in services">
-            <div v-if="service.UserID != activeContact.ID">
+          <template v-for="service in myServices">
+            <div>
               <label class="lesson-request-item" @click="newLessonRequest(service)">
                 <input type="radio" name="service" id="service-{{ service.id }}" /> {{ service.Title }}
               </label>
             </div>
           </template>
-          <div v-if="servicesEmpty()" class="empty-item">
+          <div v-if="Object.keys(myServices).length == 0" class="empty-item">
             <span>You are currently not offering any lessons</span>
           </div>
         </div>
@@ -130,14 +156,6 @@
       <button v-show="!lessonView" class="lesson-view-switch view-lessons" @click="lessonView = !lessonView">
         <i class="fa-regular fa-calendar-days fa-lg"></i> View lessons
       </button>
-    </div>
-  </div>
-  <div v-else>
-    <div class="empty-container empty-service">
-      <div><p>Check out the lesson offerings and message a tutor to start chatting</p></div>
-      <RouterLink to="/">
-        <button>Browse lessons</button>
-      </RouterLink>
     </div>
   </div>
 </template>
@@ -154,11 +172,13 @@ export default {
   data() {
     return {
       text: "",
-      activeContact: null,
+      rooms: {},
+      activeRoom: null,
       contacts: [],
       messages: {},
       lessons: {},
       services: {},
+      myServices: {},
       lessonView: true,
       completedView: false,
       today: dayjs().format("YYYY-MM-DD"),
@@ -170,85 +190,155 @@ export default {
     };
   },
   created() {
-    this.initChat();
+    this.fetchContacts();
+    this.getMyServices();
     socket = new WebSocket("ws://localhost:8080/ws");
     socket.onmessage = (event) => {
       const message = JSON.parse(event.data);
-      this.messages[message.ID] = message;
-      if (message.Lesson) {
-        this.lessons[message.Lesson.ID] = message.Lesson;
+      const roomID = message.RoomID.toString();
+      const contactID = Number(this.$route.params.id);
+
+      let mc = document.getElementById("message-container");
+      const atBottom = mc.scrollHeight - mc.clientHeight == mc.scrollTop;
+
+      // System message
+      if (message.SenderID == 0) {
+        this.rooms[roomID].Messages[message.ID] = message;
       }
-      this.scrollToBottom();
+      // Normal message
+      else if (Object.keys(this.rooms).includes(roomID)) {
+        this.rooms[roomID].Messages[message.ID] = message;
+        if (message.Lesson) {
+          this.rooms[roomID].Lessons[message.Lesson.ID] = message.Lesson;
+        }
+      }
+      // I am messaging a new person
+      else if (contactID == message.RecieverID) {
+        this.rooms[roomID] = this.rooms[0];
+        this.rooms[roomID].Messages[message.ID] = message;
+        if (message.Lesson) {
+          this.rooms[roomID].Lessons[message.Lesson.ID] = message.Lesson;
+        }
+      }
+      // A new person is  messaging me
+      else if (store.UserID == message.RecieverID) {
+        fetch(`/api/users/${message.SenderID}`)
+          .then((response) => response.json())
+          .then((contact) => {
+            this.rooms[roomID] = {};
+            this.rooms[roomID]["User"] = contact;
+            this.rooms[roomID]["Lessons"] = {};
+            this.rooms[roomID]["Messages"] = {};
+            this.contacts.push(contact);
+          });
+      }
+
+      if (store.UserID == message.SenderID || atBottom) {
+        this.scrollToBottom();
+      }
     };
   },
   components: {
     Lesson,
   },
   methods: {
-    async initChat() {
-      const contactID = Number(this.$route.params.id);
-      const response = await fetch("/api/contacts");
-      this.contacts = await response.json();
-
-      const contact = this.contacts.find((contact) => contact.ID === contactID);
-      if (contact) {
-        this.activeContact = contact;
-      } else if (contactID) {
-        const response2 = await fetch(`/api/users/${contactID}`);
-        this.contacts.unshift(await response2.json());
-        this.activeContact = this.contacts[0];
-      } else if (this.contacts.length > 0) {
-        this.activeContact = this.contacts[0];
-      } else {
-        return;
+    async initChat(userID, roomID) {
+      if (Object.keys(this.rooms[roomID]).includes("Fetched") == false) {
+        this.rooms[roomID]["Fetched"] = false;
+        this.rooms[roomID]["Services"] = {};
+        this.rooms[roomID]["Lessons"] = {};
+        this.rooms[roomID]["Messages"] = {};
       }
 
-      await this.getServices(this.activeContact.ID);
-      this.getLessons(this.activeContact.ID);
-      this.getMessages();
-    },
-    async getServices(userID) {
-      let myServicesUrl = "/api/users/me/services";
-      let yourServicesUrl = `/api/users/${userID}/services`;
-
-      const myServicesResponse = await fetch(myServicesUrl);
-      const yourServicesResponse = await fetch(yourServicesUrl);
-      const myServices = await myServicesResponse.json();
-      const yourServices = await yourServicesResponse.json();
-
-      for (let i = 0; i < myServices.length; i++) {
-        if (myServices[i].Status == "active") {
-          this.services[myServices[i].ID] = myServices[i];
-        }
+      if (this.rooms[roomID].Fetched == false) {
+        this.getServices(userID, roomID);
+        this.getLessons(userID, roomID);
+        await this.getMessages(userID, roomID);
+        this.rooms[roomID].Fetched = true;
       }
-      yourServices.forEach((service) => (this.services[service.ID] = service));
-    },
-    async getLessons(userID) {
-      const response = await fetch(`/api/users/${userID}/lessons`);
-      const ourLessons = await response.json();
-      ourLessons.forEach((lesson) => (this.lessons[lesson.ID] = lesson));
-    },
-    async getMessages() {
-      const response = await fetch(`/api/users/${this.activeContact.ID}/messages`);
-      const messages = await response.json();
-      messages.forEach((message) => (this.messages[message.ID] = message));
+      this.activeRoom = this.rooms[roomID];
+      this.services = this.activeRoom.Services;
+      this.lessons = this.activeRoom.Lessons;
+      this.messages = this.activeRoom.Messages;
       this.scrollToBottom();
+    },
+    async fetchContacts() {
+      let found = false;
+      const contactID = Number(this.$route.params.id);
+      const response = await fetch("/api/rooms");
+      const tmp = await response.json();
+
+      tmp.forEach((room) => {
+        this.rooms[room.ID] = {};
+        if (room.User1ID == store.UserID) {
+          this.contacts.push(room.User2);
+          this.rooms[room.ID]["User"] = room.User2;
+        } else {
+          this.contacts.push(room.User1);
+          this.rooms[room.ID]["User"] = room.User1;
+        }
+
+        if (this.rooms[room.ID].User.ID == contactID) {
+          found = true;
+          this.initChat(this.rooms[room.ID].User.ID, room.ID);
+        }
+      });
+
+      if (!found && contactID) {
+        const response = await fetch(`/api/users/${contactID}`);
+        const contact = await response.json();
+        this.rooms[0] = {};
+        this.rooms[0]["User"] = contact;
+        this.contacts.push(contact);
+        this.initChat(contactID, 0);
+      } else if (!found && Object.keys(this.rooms).length > 0) {
+        const roomID = Object.keys(this.rooms)[0];
+        this.initChat(this.rooms[roomID].User.ID, roomID);
+      } else if (!found) {
+        this.activeRoom = { Fetched: true };
+      }
+    },
+    async getMyServices() {
+      const response = await fetch("/api/users/me/services");
+      const services = await response.json();
+      services.forEach((service) => {
+        if (service.Status == "active") {
+          this.myServices[service.ID] = service;
+        }
+      });
+    },
+    async getServices(userID, roomID) {
+      const response = await fetch(`/api/users/${userID}/services`);
+      const services = await response.json();
+      services.forEach((service) => (this.rooms[roomID].Services[service.ID] = service));
+    },
+    async getLessons(userID, roomID) {
+      const response = await fetch(`/api/users/${userID}/lessons`);
+      const lessons = await response.json();
+      lessons.forEach((lesson) => (this.rooms[roomID].Lessons[lesson.ID] = lesson));
+    },
+    async getMessages(userID, roomID) {
+      const response = await fetch(`/api/users/${userID}/messages`);
+      const messages = await response.json();
+      messages.forEach((message) => (this.rooms[roomID].Messages[message.ID] = message));
     },
     async scrollToBottom() {
       await nextTick();
       let messageContainer = document.getElementById("message-container");
       messageContainer.scrollTop = messageContainer.scrollHeight;
     },
-
-    changeContact(userID) {
+    async changeContact(userID) {
       this.$router.push({ path: `/chat/${userID}` });
-      this.activeContact = this.contacts.find((contact) => contact.ID === userID);
-      this.getServices(userID);
-      this.getLessons(userID);
-      this.getMessages();
+      for (const [roomID, room] of Object.entries(this.rooms)) {
+        if (room.User.ID == userID) {
+          this.initChat(userID, roomID);
+          break;
+        }
+      }
     },
+
     sendMessage() {
-      let message = { Message: this.text, RecieverID: this.activeContact.ID };
+      let message = { Message: this.text, RecieverID: this.activeRoom.User.ID };
       socket.send(JSON.stringify(message));
       this.text = "";
     },
@@ -256,7 +346,7 @@ export default {
       this.lessonRequest.Datetime = dayjs(`${this.lessonRequest.Date} ${this.lessonRequest.Time}`).format();
       let message = {
         Message: "",
-        RecieverID: this.activeContact.ID,
+        RecieverID: this.activeRoom.User.ID,
         Lesson: this.lessonRequest,
       };
       socket.send(JSON.stringify(message));
@@ -265,7 +355,7 @@ export default {
     },
     sendModifiedLesson(lesson) {
       lesson.Datetime = dayjs(`${lesson.Date} ${lesson.Time}`).format();
-      message = { ID: lesson.MessageID, Message: "", RecieverID: this.activeContact.ID, Lesson: lesson };
+      message = { ID: lesson.MessageID, Message: "", RecieverID: this.activeRoom.User.ID, Lesson: lesson };
       socket.send(JSON.stringify(message));
     },
     newLessonRequest(service) {
@@ -290,6 +380,13 @@ export default {
       }
       return message;
     },
+    findService(serviceID) {
+      let ID = serviceID.toString();
+      if (Object.keys(this.services).includes(ID)) {
+        return this.services[ID];
+      }
+      return this.myServices[ID];
+    },
     displayInChat(lesson) {
       return lesson.Status.startsWith("accepted_");
     },
@@ -299,19 +396,11 @@ export default {
     lessonCompleted(lesson) {
       return dayjs().isAfter(dayjs(lesson.Datetime));
     },
-    servicesEmpty(userID = store.UserID) {
-      for (const service of Object.values(this.services)) {
-        if (service.UserID == userID) {
-          return false;
-        }
-      }
-      return true;
-    },
   },
 };
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 @import "@/assets/styles/mixins.scss";
 #chat-container {
   display: flex;
@@ -413,11 +502,6 @@ export default {
     .message-item-system {
       margin: 5px 0px;
     }
-    .lesson {
-      h3 {
-        margin: 0px;
-      }
-    }
   }
   #chat-lesson-request {
     display: flex;
@@ -510,14 +594,6 @@ export default {
 
     .lesson {
       background-color: var(--base1);
-      padding: 10px;
-      margin-bottom: 10px;
-      h3 {
-        margin: 0px;
-      }
-      p {
-        margin-bottom: 0px;
-      }
     }
   }
   .lesson-container.without-subnav {
@@ -546,6 +622,13 @@ export default {
     &.request-lessons {
       background-color: var(--blue0);
     }
+  }
+}
+.lesson {
+  padding: 5px 10px 10px 10px;
+  margin-bottom: 10px;
+  h3 {
+    margin: 6px 0px;
   }
 }
 .empty-item {

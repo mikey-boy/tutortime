@@ -37,15 +37,48 @@ func parseSocketMessage(client_id uint, api_message Message) (ok bool, message M
 			return false, Message{}
 		}
 
-		datetime := api_message.Lesson.Datetime.UTC()
-		api_lesson := Lesson{ID: api_message.Lesson.ID, Status: api_message.Lesson.Status, Duration: api_message.Lesson.Duration, Datetime: datetime}
 		lesson := Lesson{ID: api_message.Lesson.ID}
 		lesson.Get()
+		var mins_transfered bool = lesson.Status == LS_ACCEPTED
+		datetime := api_message.Lesson.Datetime.UTC()
+		api_lesson := Lesson{ID: api_message.Lesson.ID, Status: api_message.Lesson.Status, Duration: api_message.Lesson.Duration, ModifiedDuration: api_message.Lesson.ModifiedDuration, Datetime: datetime}
 		modified := lesson.merge(&api_lesson, client_id)
 		if !modified {
 			return false, Message{}
 		}
-		lesson.Update()
+
+		message.Lesson = &lesson
+		if message.Lesson.Status == LS_ACCEPTED || message.Lesson.Status == LS_CANCELLED || message.Lesson.Status == LS_CONFIRMED {
+			tutor, student := User{ID: lesson.TutorID}, User{ID: lesson.StudentID}
+			tutor.Get()
+			student.Get()
+
+			if lesson.Status == LS_CONFIRMED && int(lesson.ModifiedDuration)-int(lesson.Duration) > student.Minutes+60 {
+				return false, Message{}
+			}
+
+			var room Room
+			room.Get(message.SenderID, message.RecieverID)
+			service := Service{ID: lesson.ServiceID}
+			service.Get()
+			system_message := Message{RoomID: room.ID, SenderID: 0, RecieverID: 0}
+			system_message.Message = fmt.Sprintf("'%s' scheduled for %s has been %s", service.Title, datetime.Format(time.RFC3339), message.Lesson.Status)
+			system_message.Add()
+			sendMessage(message.SenderID, message.RecieverID, system_message)
+
+			transferMinutes(&tutor, &student, &service, &lesson, mins_transfered)
+			if message.Lesson.Status == LS_CONFIRMED {
+				duration := lesson.Duration
+				if lesson.ModifiedDuration != 0 {
+					duration = lesson.ModifiedDuration
+				}
+
+				system_message := Message{RoomID: room.ID, SenderID: 0, RecieverID: 0}
+				system_message.Message = fmt.Sprintf("%d minutes transferred from %s to %s", duration, student.Username, tutor.Username)
+				system_message.Add()
+				sendMessage(message.SenderID, message.RecieverID, system_message)
+			}
+		}
 
 		// Reverse the sender/reciever if appropriate
 		if client_id == message.RecieverID {
@@ -53,40 +86,9 @@ func parseSocketMessage(client_id uint, api_message Message) (ok bool, message M
 			message.SenderID = client_id
 		}
 
-		message.Lesson = &lesson
+		lesson.Update()
 		message.Update()
 
-		if message.Lesson.Status == LS_ACCEPTED || message.Lesson.Status == LS_CANCELLED || message.Lesson.Status == LS_CONFIRMED {
-			var room Room
-			room.Get(message.SenderID, message.RecieverID)
-			service := Service{ID: api_message.Lesson.ServiceID}
-			service.Get()
-			system_message := Message{RoomID: room.ID, SenderID: 0, RecieverID: 0}
-			system_message.Message = fmt.Sprintf("'%s' scheduled for %s has been %s", service.Title, datetime.Format(time.RFC3339), message.Lesson.Status)
-			system_message.Add()
-			sendMessage(message.SenderID, message.RecieverID, system_message)
-		}
-		if message.Lesson.Status == LS_CONFIRMED {
-			tutor, student := User{ID: lesson.TutorID}, User{ID: lesson.StudentID}
-			service := Service{ID: api_message.Lesson.ServiceID}
-			tutor.Get()
-			student.Get()
-			service.Get()
-			var duration uint
-			if lesson.ModifiedDuration == 0 {
-				duration = lesson.Duration
-			} else {
-				duration = lesson.ModifiedDuration
-			}
-
-			transferMinutes(&tutor, &student, &service, duration)
-			var room Room
-			room.Get(message.SenderID, message.RecieverID)
-			system_message := Message{RoomID: room.ID, SenderID: 0, RecieverID: 0}
-			system_message.Message = fmt.Sprintf("%d minutes transferred from %s to %s", duration, student.Username, tutor.Username)
-			system_message.Add()
-			sendMessage(message.SenderID, message.RecieverID, system_message)
-		}
 	} else if api_message.Lesson != nil && api_message.Lesson.ServiceID != 0 {
 		lesson, ok := createLesson(client_id, &api_message)
 		if ok {

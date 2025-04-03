@@ -65,11 +65,9 @@
             <div class="flex-container">
               <h3 id="service-title">{{ lessonRequest.Title }}</h3>
               <div class="centered">
-                <i
-                  id="cancel-request-button"
-                  @click="resetLessonRequest"
-                  class="fa-regular fa-rectangle-xmark fa-xl"
-                ></i>
+                <div class="centered cancel-circle-button">
+                  <i @click="resetLessonRequest" class="fa-solid fa-xmark fa-xl"></i>
+                </div>
               </div>
             </div>
             <label>Datetime: </label>
@@ -87,6 +85,16 @@
         </div>
       </div>
       <div id="chat-input">
+        <div id="modal" v-show="modalText">
+          <div>
+            <p>{{ modalText }}</p>
+          </div>
+          <div class="centered">
+            <div class="centered cancel-circle-button">
+              <i @click="modalText = ''" class="fa-solid fa-xmark fa-lg"></i>
+            </div>
+          </div>
+        </div>
         <input
           id="message"
           type="text"
@@ -100,10 +108,23 @@
     </div>
     <div id="lessons">
       <h2>Lessons</h2>
-      <div class="flex-container subnav" v-show="lessonView">
-        <button :class="{ active: !completedView }" @click="completedView = false">Scheduled</button>
-        <button :class="{ active: completedView }" @click="completedView = true">Completed</button>
+      <div class="lesson-tabs">
+        <button class="request-lessons left-button" :class="{ inactive: lessonView }" @click="lessonView = !lessonView">
+          <i class="fa-solid fa-handshake fa-lg"></i> Request a lesson
+        </button>
+        <button class="view-lessons right-button" :class="{ inactive: !lessonView }" @click="lessonView = !lessonView">
+          <i class="fa-regular fa-calendar-days fa-lg"></i> Lessons booked
+        </button>
       </div>
+      <div class="lesson-tabs sub-tabs" v-show="lessonView">
+        <button class="left-button" :class="{ inactive: completedView }" @click="completedView = false">
+          Scheduled
+        </button>
+        <button class="right-button" :class="{ inactive: !completedView }" @click="completedView = true">
+          Completed
+        </button>
+      </div>
+
       <div v-if="lessonView" class="lesson-container">
         <template v-for="lesson in lessons">
           <div
@@ -130,7 +151,8 @@
       </div>
       <div v-else>
         <div class="lesson-container without-subnav">
-          <h3>As a student:</h3>
+          <h3>{{ activeRoom.User.Username }} offers these services</h3>
+          <p>You have {{ self.Minutes }} minutes available</p>
           <template v-for="service in services">
             <div>
               <label class="lesson-request-item" @click="newLessonRequest(service)">
@@ -143,26 +165,8 @@
               <b>{{ activeRoom.User.Username }}</b> is currently not offering any lessons
             </span>
           </div>
-          <h3>As a tutor:</h3>
-          <template v-for="service in myServices">
-            <div>
-              <label class="lesson-request-item" @click="newLessonRequest(service)">
-                <input type="radio" name="service" id="service-{{ service.id }}" /> {{ service.Title }}
-              </label>
-            </div>
-          </template>
-          <div v-if="Object.keys(myServices).length == 0" class="empty-item">
-            <span>You are currently not offering any lessons</span>
-          </div>
         </div>
       </div>
-
-      <button v-show="lessonView" class="lesson-view-switch request-lessons" @click="lessonView = !lessonView">
-        <i class="fa-solid fa-handshake fa-lg"></i> Send lesson request
-      </button>
-      <button v-show="!lessonView" class="lesson-view-switch view-lessons" @click="lessonView = !lessonView">
-        <i class="fa-regular fa-calendar-days fa-lg"></i> View lessons
-      </button>
     </div>
   </div>
 </template>
@@ -179,6 +183,8 @@ export default {
   data() {
     return {
       text: "",
+      modalText: "",
+      self: {},
       rooms: {},
       activeRoom: null,
       contacts: [],
@@ -186,7 +192,7 @@ export default {
       lessons: {},
       services: {},
       myServices: {},
-      lessonView: true,
+      lessonView: false,
       completedView: false,
       today: dayjs().format("YYYY-MM-DD"),
       lessonRequest: {
@@ -197,6 +203,7 @@ export default {
     };
   },
   created() {
+    this.fetchSelf();
     this.fetchContacts();
     this.getMyServices();
     socket = new WebSocket("ws://localhost:8080/ws");
@@ -217,6 +224,7 @@ export default {
         this.rooms[roomID].Messages[message.ID] = message;
         if (message.Lesson) {
           this.rooms[roomID].Lessons[message.Lesson.ID] = message.Lesson;
+          this.fetchSelf();
         }
       }
       // I am messaging a new person
@@ -267,7 +275,14 @@ export default {
       this.services = this.activeRoom.Services;
       this.lessons = this.activeRoom.Lessons;
       this.messages = this.activeRoom.Messages;
+
+      this.modalText = "";
+      this.resetLessonRequest();
       this.scrollToBottom();
+    },
+    async fetchSelf() {
+      const response = await fetch(`/api/users/me`);
+      this.self = await response.json();
     },
     async fetchContacts() {
       let found = false;
@@ -352,6 +367,16 @@ export default {
       }
     },
     sendLessonRequest() {
+      if (this.lessonRequest.Duration > this.self.Minutes) {
+        this.modalText = "You do not have enough minutes for this lesson";
+        return;
+      }
+      if (dayjs().isAfter(`${this.lessonRequest.Date} ${this.lessonRequest.Time}`)) {
+        this.modalText = "You cannot schedule lessons in the past";
+        return;
+      }
+
+      this.modalText = "";
       this.lessonRequest.Datetime = dayjs(`${this.lessonRequest.Date} ${this.lessonRequest.Time}`).format();
       let message = {
         Message: "",
@@ -363,8 +388,12 @@ export default {
       this.resetLessonRequest();
     },
     sendModifiedLesson(lesson) {
+      if (lesson.StudentID == this.self.ID && lesson.ModifiedDuration - lesson.Duration > this.self.Minutes + 60) {
+        this.modalText = "You do not have enough minutes to accomodate the modified duration";
+        return;
+      }
       lesson.Datetime = dayjs(`${lesson.Date} ${lesson.Time}`).format();
-      message = { ID: lesson.MessageID, Message: "", RecieverID: this.activeRoom.User.ID, Lesson: lesson };
+      let message = { ID: lesson.MessageID, Message: "", RecieverID: this.activeRoom.User.ID, Lesson: lesson };
       socket.send(JSON.stringify(message));
     },
     newLessonRequest(service) {
@@ -415,6 +444,7 @@ export default {
   display: flex;
   margin: 0 auto;
   padding: 20px;
+  height: 890px;
 }
 #contacts {
   flex: 1;
@@ -454,7 +484,8 @@ export default {
 
   #chat-input {
     display: flex;
-    margin: 20px 0px;
+    margin-top: 36px;
+    position: relative;
 
     input {
       flex: 1;
@@ -463,6 +494,23 @@ export default {
       border-radius: 3px;
       margin-right: 10px;
     }
+    #modal {
+      display: flex;
+      position: absolute;
+      z-index: 1;
+      bottom: 40px;
+      width: 100%;
+      background-color: var(--base0);
+      border: 1px solid var(--red);
+      border-radius: 3px;
+
+      p {
+        margin: 3px 10px;
+      }
+      .centered {
+        margin-left: auto;
+      }
+    }
     #send-message-button {
       color: var(--text1);
       padding: 7px 25px;
@@ -470,10 +518,9 @@ export default {
     }
   }
   #message-container {
-    height: 527px;
+    height: 725px;
     min-width: 330px;
     overflow-y: scroll;
-    padding: 0px 10px;
 
     &.minimized {
       height: 388px;
@@ -515,6 +562,7 @@ export default {
   #chat-lesson-request {
     display: flex;
     justify-content: right;
+    margin-bottom: 10px;
 
     h3 {
       margin: 8px 0px;
@@ -559,11 +607,6 @@ export default {
       color: var(--text1);
       padding: 6px 21px;
     }
-    #cancel-request-button {
-      margin-right: 3px;
-      color: var(--red);
-      cursor: pointer;
-    }
     #lesson-request-error {
       margin: 0px;
       color: var(--red);
@@ -573,39 +616,59 @@ export default {
 }
 #lessons {
   flex: 2;
-  margin: 0px 20px;
-  height: 670px;
+  margin: 0px 10px;
 
-  h2 {
-    margin-bottom: 0px;
-  }
-  .subnav {
-    margin: 10px 0px;
+  .lesson-tabs {
+    display: flex;
 
     button {
       flex: 1;
-      font-size: medium;
-      padding: 5px 10px;
-      background-color: var(--base0);
-      color: var(--text0);
-      width: 100%;
-
-      &.active {
-        border: 1px solid var(--green0);
-      }
+      padding: 8px;
+      color: var(--text1);
+      font-weight: bold;
+      border: 1px solid var(--green0);
+      background-color: var(--green1);
+    }
+    button.inactive {
+      background: var(--base1);
+    }
+    &.sub-tabs {
+      margin-top: 10px;
+      margin-bottom: 15px;
+    }
+    .view-lessons {
+      background-color: var(--orange);
+    }
+    .request-lessons {
+      background-color: var(--blue0);
+    }
+    .right-button {
+      border-radius: 0 3px 3px 0;
+    }
+    .left-button {
+      border-radius: 3px 0 0 3px;
+      border-right: none;
     }
   }
   .lesson-container {
     min-width: 180px;
-    height: 521px;
+    height: 710px;
     overflow-y: scroll;
 
+    h3 {
+      margin-bottom: 0px;
+    }
+    p {
+      color: var(--text0);
+      font-size: medium;
+      margin-top: 5px;
+    }
     .lesson {
       background-color: var(--base1);
     }
   }
   .lesson-container.without-subnav {
-    height: 575px;
+    height: 760px;
   }
   .lesson-request-item {
     display: block;
@@ -618,18 +681,21 @@ export default {
   .warning {
     border: 1px solid var(--red);
   }
-  .lesson-view-switch {
-    padding: 8px;
-    margin-top: 15px;
-    width: 100%;
-    color: var(--text1);
+}
 
-    &.view-lessons {
-      background-color: var(--orange);
-    }
-    &.request-lessons {
-      background-color: var(--blue0);
-    }
+.cancel-circle-button {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  margin-right: 3px;
+
+  cursor: pointer;
+
+  &:hover {
+    background-color: var(--red);
+  }
+  i {
+    color: var(--text0);
   }
 }
 .lesson {

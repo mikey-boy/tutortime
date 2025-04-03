@@ -69,6 +69,13 @@ func createLesson(sender_id uint, api_message *Message) (Lesson, bool) {
 	} else {
 		return Lesson{}, false
 	}
+
+	student := User{ID: lesson.StudentID}
+	student.Get()
+	if student.Minutes < int(lesson.Duration) {
+		return Lesson{}, false
+	}
+
 	return lesson, true
 }
 
@@ -96,14 +103,14 @@ func (current *Lesson) merge(updated *Lesson, user_id uint) bool {
 		}
 		current.Datetime = updated.Datetime
 		current.Duration = updated.Duration
-	} else if (current.Status == LS_ACCEPTED || current.Status == LS_CONFIRMED_STUDENT || current.Status == LS_CONFIRMED_TUTOR) && updated.Duration != current.Duration && updated.Status == LS_MODIFIED {
+	} else if (current.Status == LS_ACCEPTED || current.Status == LS_CONFIRMED_STUDENT || current.Status == LS_CONFIRMED_TUTOR) && updated.ModifiedDuration != current.ModifiedDuration && updated.Status == LS_MODIFIED {
 		// After lesson acceptance, participants can only modify duration
 		if user_id == current.TutorID && current.Status != LS_CONFIRMED_TUTOR {
 			current.Status = LS_CONFIRMED_TUTOR
-			current.ModifiedDuration = updated.Duration
+			current.ModifiedDuration = updated.ModifiedDuration
 		} else if user_id == current.StudentID && current.Status != LS_CONFIRMED_STUDENT {
 			current.Status = LS_CONFIRMED_STUDENT
-			current.ModifiedDuration = updated.Duration
+			current.ModifiedDuration = updated.ModifiedDuration
 		}
 	} else if current.Status == LS_ACCEPTED && updated.Status == LS_CONFIRMED {
 		if user_id == current.TutorID {

@@ -17,7 +17,7 @@ type User struct {
 	Password     string `gorm:"not null" json:"-"`
 	Availability string
 	Description  string
-	Minutes      uint      `gorm:"default:60"`
+	Minutes      int       `gorm:"default:60"`
 	Image        Image     `json:",omitempty"`
 	Services     []Service `json:",omitempty"`
 	Sessions     []Session `json:",omitempty"`
@@ -43,14 +43,28 @@ func addSession(userID uint, writer http.ResponseWriter) {
 	}
 }
 
-func transferMinutes(tutor *User, student *User, service *Service, minutes uint) {
-	tutor.Minutes += minutes
-	student.Minutes -= minutes
-	service.Minutes += minutes
-	service.Lessons += 1
-	tutor.Update()
-	student.Update()
-	service.Update()
+func transferMinutes(tutor *User, student *User, service *Service, lesson *Lesson, mins_transfered bool) {
+	if lesson.Status == LS_ACCEPTED {
+		student.Minutes -= int(lesson.Duration)
+		student.Update()
+	} else if lesson.Status == LS_CANCELLED && mins_transfered {
+		student.Minutes += int(lesson.Duration)
+		student.Update()
+	} else if lesson.Status == LS_CONFIRMED {
+		if lesson.ModifiedDuration != 0 {
+			student.Minutes -= int(lesson.ModifiedDuration) - int(lesson.Duration)
+			student.Update()
+
+			tutor.Minutes += int(lesson.ModifiedDuration)
+			service.Minutes += lesson.ModifiedDuration
+		} else {
+			tutor.Minutes += int(lesson.Duration)
+			service.Minutes += lesson.Duration
+		}
+		tutor.Update()
+		service.Lessons += 1
+		service.Update()
+	}
 }
 
 // GET /api/users/{id}

@@ -31,7 +31,13 @@
     </span>
 
     <span v-if="modify">
-      <select v-model="modifiedLesson.Duration">
+      <select v-if="pendingConfirmation" v-model="modifiedLesson.ModifiedDuration">
+        <option v-for="(n, i) in 17" :value="i * 15">
+          <span v-if="i <= 4">{{ i * 15 }} minutes</span>
+          <span v-else>{{ i / 4 - (i % 4) * 0.25 }} hours {{ (i % 4) * 15 }} minutes </span>
+        </option>
+      </select>
+      <select v-else v-model="modifiedLesson.Duration">
         <option v-for="i in 17" :value="i * 15">
           <span v-if="i <= 4">{{ i * 15 }} minutes</span>
           <span v-else>{{ i / 4 - (i % 4) * 0.25 }} hours {{ (i % 4) * 15 }} minutes </span>

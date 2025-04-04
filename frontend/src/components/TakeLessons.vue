@@ -54,27 +54,45 @@
 export default {
   data() {
     return {
-      page: 1,
-      total_pages: 1,
       services: [],
-      category: "",
-      query: "",
+      page: null,
+      category: null,
+      query: null,
+      total_pages: null,
     };
   },
   mounted() {
+    this.fetchServiceParams();
     this.getServices();
   },
   methods: {
-    getServices(page = 1) {
+    fetchServiceParams() {
+      this.page = this.$route.query.page || 1;
+      this.category = this.$route.query.category || "";
+      this.query = this.$route.query.query || "";
+    },
+    getServices() {
       const url = new URL("/api/services", window.location.origin);
-      url.search = new URLSearchParams({ category: this.category, query: this.query, page: page }).toString();
+      const params = { category: this.category, query: this.query, page: this.page };
+      url.search = new URLSearchParams(params).toString();
       fetch(url)
         .then((response) => response.json())
         .then((json) => {
           this.services = json.Services;
           this.page = json.Page;
           this.total_pages = json.TotalPages;
+          if (params.category != "" || params.query != "" || params.page != 1) {
+            this.$router.push({ path: "/", query: params });
+          }
         });
+    },
+  },
+  watch: {
+    $route: function (val, oldVal) {
+      if (val.fullPath == "/") {
+        this.fetchServiceParams();
+        this.getServices();
+      }
     },
   },
 };

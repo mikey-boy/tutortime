@@ -1,7 +1,9 @@
 <template>
   <div id="nav-container">
     <div id="nav">
-      <h1>Tutortime</h1>
+      <RouterLink to="/">
+        <h1>Tutortime</h1>
+      </RouterLink>
       <ul>
         <li>
           <RouterLink to="/">

@@ -136,13 +136,13 @@ button {
   background-color: var(--green1);
 }
 .cancel-button {
-  background-color: var(--red);
+  background-color: var(--red1);
 }
 .modify-button {
   background-color: var(--orange);
 }
 .warning {
-  border: 1px solid var(--red);
+  border: 1px solid var(--red1);
 }
 .warning-text {
   color: var(--orange);

@@ -165,8 +165,7 @@ export default {
     margin: 5px;
     padding: 3px 10px;
     font-size: large;
-    background-color: var(--base1);
-    color: var(--text0);
+    color: var(--text1);
     border: 1px solid var(--green0);
   }
   button:hover {

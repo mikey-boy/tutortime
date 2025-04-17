@@ -12,7 +12,8 @@
   --blue0: #5095e9;
   --blue1: #99C1F1;
   --orange: #fc9b10;
-  --red: #b85757;
+  --red0: #b85757;
+  --red1: #b85757;
 }
 
 [data-theme="light"] {
@@ -27,7 +28,8 @@
   --blue0: #268bd2;
   --blue1: #268bd2;
   --orange: #fc9b10;
-  --red: #b85757;
+  --red0: #cd8989;
+  --red1: #b85757;
 }
 
 * {
@@ -76,7 +78,7 @@ pre {
 }
 
 .error-text {
-  color: var(--red);
+  color: var(--red1);
 }
 
 .relative-container {
@@ -85,6 +87,7 @@ pre {
 
 .flex-container {
   display: flex;
+  justify-content: space-between;
 }
 
 .centered {
@@ -106,7 +109,7 @@ pre {
 }
 
 .fa-trash-can {
-  color: var(--red);
+  color: var(--red1);
 }
 
 .truncated-text {
@@ -130,6 +133,20 @@ pre {
   button {
     @include common-button;
     background-color: var(--green1);
+  }
+}
+
+.cancel-circle-button {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+
+  &:hover {
+    background-color: var(--red0);
+  }
+  i {
+    color: var(--text0);
   }
 }
 

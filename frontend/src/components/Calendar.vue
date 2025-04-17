@@ -40,7 +40,9 @@
               <template v-else>{{ lesson.Service.Title }}</template>
             </button>
             <span class="lesson-modal" :class="modalPosition(i)" v-show="display_modal == lesson.ID">
-              <button @click="display_modal = -1"><i class="fa-regular fa-circle-xmark fa-xl"></i></button>
+              <button class="cancel-circle-button" @click="display_modal = -1">
+                <i class="fa-solid fa-xmark fa-lg"></i>
+              </button>
               <RouterLink :to="{ path: `/services/${lesson.Service.ID}` }">
                 <h3 class="truncated-text">{{ lesson.Service.Title }}</h3>
               </RouterLink>

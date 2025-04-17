@@ -35,29 +35,29 @@
           <tr>
             <td>morning</td>
             <td v-for="i in 7">
-              <i class="fa-regular" :class="isChecked(i + '-0')"></i>
+              <i :class="isChecked(i + '-0')"></i>
             </td>
           </tr>
           <tr>
             <td>afternoon</td>
             <td v-for="i in 7">
-              <i class="fa-regular" :class="isChecked(i + '-1')"></i>
+              <i :class="isChecked(i + '-1')"></i>
             </td>
           </tr>
           <tr>
             <td>evening</td>
             <td v-for="i in 7">
-              <i class="fa-regular" :class="isChecked(i + '-2')"></i>
+              <i :class="isChecked(i + '-2')"></i>
             </td>
           </tr>
         </tbody>
       </table>
       <div class="flex-container">
         <RouterLink :to="{ path: `/chat/${user.ID}` }">
-          <button class="blue-button"><i class="fa-regular fa-paper-plane"></i> Send message</button>
+          <button class="blue-button"><i class="fa-solid fa-paper-plane"></i> Send message</button>
         </RouterLink>
         <RouterLink :to="{ path: `/users/${user.ID}` }">
-          <button class="green-button"><i class="fa-regular fa-user"></i> View profile</button>
+          <button class="green-button"><i class="fa-solid fa-user"></i> View profile</button>
         </RouterLink>
       </div>
     </div>
@@ -81,9 +81,9 @@ export default {
   methods: {
     isChecked(value) {
       if (this.user.Availability.includes(value)) {
-        return "fa-square-check";
+        return "fa-solid fa-square-check";
       }
-      return "fa-square";
+      return "fa-regular fa-square";
     },
   },
 };

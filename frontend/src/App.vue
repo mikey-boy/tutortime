@@ -3,53 +3,72 @@
   <main class="body-content">
     <RouterView />
   </main>
+  <button id="theme-switch" @click="themeToggle">
+    <i class="fa-solid fa-moon fa-2xl"></i>
+  </button>
 </template>
 
 <script>
 import NavBar from "./components/NavBar.vue";
 import { refreshUserID } from "./utils/auth";
 
+var theme = null;
+
+function setTheme() {
+  document.querySelector("html").setAttribute("data-theme", theme);
+}
+function saveTheme() {
+  localStorage.setItem("theme", theme);
+}
+
 export default {
+  created() {
+    refreshUserID();
+
+    let localStorageTheme = localStorage.getItem("theme");
+    let systemSettingDark = window.matchMedia("(prefers-color-scheme: dark)");
+    if (localStorageTheme !== null) {
+      theme = localStorageTheme;
+    } else if (systemSettingDark.matches) {
+      theme = "dark";
+    } else {
+      theme = "light";
+    }
+    setTheme();
+  },
   components: {
     NavBar,
   },
-  created() {
-    refreshUserID();
+  methods: {
+    themeToggle() {
+      theme = theme === "dark" ? "light" : "dark";
+      setTheme();
+      saveTheme();
+    },
   },
 };
-
-function calculateSettingAsThemeString(localStorageTheme, systemSettingDark) {
-  if (localStorageTheme !== null) {
-    return localStorageTheme;
-  }
-
-  if (systemSettingDark.matches) {
-    return "dark";
-  }
-
-  return "light";
-}
-
-function updateThemeOnHtmlEl(theme) {
-  document.querySelector("html").setAttribute("data-theme", theme);
-}
-
-function themeToggle() {
-  currentThemeSetting = currentThemeSetting === "dark" ? "light" : "dark";
-  localStorage.setItem("theme", currentThemeSetting);
-  updateThemeOnHtmlEl(currentThemeSetting);
-}
-
-// const localStorageTheme = localStorage.getItem("theme");
-// const systemSettingDark = window.matchMedia("(prefers-color-scheme: dark)");
-
-// let currentThemeSetting = calculateSettingAsThemeString(localStorageTheme, systemSettingDark);
-// updateThemeOnHtmlEl(currentThemeSetting);
 </script>
 
 <style lang="scss">
 @import "@/assets/styles/globals.scss";
 
+#theme-switch {
+  position: fixed;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  right: 40px;
+  bottom: 40px;
+  border-radius: 50%;
+  color: var(--base0);
+  background: var(--base2);
+  width: 45px;
+  height: 45px;
+
+  &:hover {
+    background: var(--text0);
+  }
+}
 .body-content {
   width: 90%;
   min-width: 720px;

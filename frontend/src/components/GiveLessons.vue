@@ -123,7 +123,9 @@ export default {
     font-weight: bold;
   }
   .service-status {
-    @include common-button();
+    padding: 10px;
+    width: 100%;
+    color: var(--text0);
     background-color: var(--base0);
     font-size: inherit;
   }

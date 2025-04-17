@@ -1,31 +1,37 @@
 <template>
   <div class="login-container">
     <div class="login-box">
-      <h2>Login</h2>
+      <h2 v-show="loginOptions != 2">Login</h2>
+      <h2 v-show="loginOptions == 2">Create account</h2>
 
-      <div v-show="socialView">
-        <a class="login-button" href="">
+      <div v-show="loginOptions == -1">
+        <button class="login-button" href="">
           <div><img src="@/assets/img/signin-assets/google.svg" /></div>
           Login with Google
-        </a>
-        <!-- <a class="login-button" href="">
-          <img src="" />
-          Login with Facebook
-        </a> -->
-        <a class="login-button local-account" @click="socialView = 0">
+        </button>
+        <button class="login-button local-account" @click="localAccount(0)">
           <div><i class="fa-solid fa-user fa-xl" /></div>
           Login with Local Account
-        </a>
+        </button>
+
+        <p>or</p>
+
+        <button class="login-button local-account" @click="localAccount(1)">
+          <div><i class="fa-solid fa-user fa-xl" /></div>
+          Create a Local Account
+        </button>
       </div>
 
-      <div v-show="!socialView" @submit.prevent>
+      <div v-show="loginOptions != -1" @submit.prevent>
         <form id="local-account-form">
           <label>Username:</label>
           <input v-model="user.username" type="text" required />
           <label>Password: </label>
           <input v-model="user.password" type="password" required />
-          <button class="local-login-button" @click="localAccountLogin()">Login</button>
-          <button class="local-signup-button" @click="localAccountCreate()">Create account</button>
+          <button v-show="loginOptions == 1" class="local-login-button" @click="localAccountLogin()">Login</button>
+          <button v-show="loginOptions == 2" class="local-signup-button" @click="localAccountCreate()">
+            Create account
+          </button>
         </form>
       </div>
     </div>
@@ -38,11 +44,18 @@ import { refreshUserID } from "@/utils/auth";
 export default {
   data() {
     return {
-      socialView: 1,
+      loginOptions: -1,
       user: {},
     };
   },
   methods: {
+    localAccount(loginOrCreate) {
+      if (loginOrCreate) {
+        this.$router.push({ path: "/user/login", query: { ...this.$route.query, view: "localAccountCreation" } });
+      } else {
+        this.$router.push({ path: "/user/login", query: { ...this.$route.query, view: "localAccountLogin" } });
+      }
+    },
     localAccountLogin() {
       if (!this.user.username || !this.user.password) {
         return;
@@ -78,6 +91,17 @@ export default {
       });
     },
   },
+  watch: {
+    $route: function (val, oldVal) {
+      if (val.query.view == "localAccountLogin") {
+        this.loginOptions = 1;
+      } else if (val.query.view == "localAccountCreation") {
+        this.loginOptions = 2;
+      } else {
+        this.loginOptions = -1;
+      }
+    },
+  },
 };
 </script>
 
@@ -98,7 +122,7 @@ export default {
     padding: 30px;
     padding-top: 0px;
     border-radius: 5px;
-    border: 3px solid var(--blue1);
+    border: 3px solid var(--text0);
 
     input {
       width: 100%;
@@ -110,11 +134,12 @@ export default {
     }
 
     button {
-      @include common-button;
+      width: 100%;
       margin-top: 10px;
     }
 
     .login-button {
+      font-size: medium;
       display: flex;
       align-items: center;
       border: 2px solid var(--text0);
@@ -122,6 +147,11 @@ export default {
       margin-top: 10px;
       font-weight: bold;
       color: var(--text0);
+      background-color: var(--base0);
+
+      &:hover {
+        background-color: var(--base1);
+      }
     }
 
     .login-button div {
@@ -135,10 +165,12 @@ export default {
     }
 
     .local-login-button {
+      @include common-button;
       background-color: var(--blue0);
     }
 
     .local-signup-button {
+      @include common-button;
       background-color: var(--green1);
     }
   }

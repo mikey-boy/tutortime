@@ -35,13 +35,13 @@
       </ul>
       <ul v-else class="user-buttons">
         <li>
-          <RouterLink to="/user/calendar"><i class="fa-regular fa-calendar-days fa-lg"></i></RouterLink>
+          <RouterLink to="/user/calendar"><i class="fa-solid fa-calendar-days fa-lg"></i></RouterLink>
         </li>
         <li>
-          <RouterLink to="/chat"><i class="fa-regular fa-paper-plane fa-lg"></i></RouterLink>
+          <RouterLink to="/chat"><i class="fa-solid fa-paper-plane fa-lg"></i></RouterLink>
         </li>
         <li>
-          <span @click="modal = !modal"><i class="fa-regular fa-user fa-lg"></i></span>
+          <span @click="modal = !modal"><i class="fa-solid fa-user fa-lg"></i></span>
         </li>
         <div class="relative-container" v-if="modal">
           <div id="user-modal-popout">
@@ -125,7 +125,7 @@ export default {
         color: var(--text0);
       }
       i:hover {
-        color: var(--text1);
+        color: var(--green0);
       }
     }
   }
@@ -142,7 +142,7 @@ export default {
   font-weight: 600;
 
   .options {
-    color: var(--text1);
+    color: var(--text0);
     padding: 5px 15px;
   }
   .options:hover {

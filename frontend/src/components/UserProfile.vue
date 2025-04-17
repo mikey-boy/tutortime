@@ -315,7 +315,7 @@ export default {
   color: var(--green1);
 }
 .student-transaction {
-  color: var(--red);
+  color: var(--red1);
 }
 #account-details {
   max-width: 840px;
@@ -347,7 +347,7 @@ export default {
   .cancel-button {
     cursor: pointer;
     margin-left: auto;
-    color: var(--red);
+    color: var(--red1);
   }
   button.edit-button {
     color: var(--text1);

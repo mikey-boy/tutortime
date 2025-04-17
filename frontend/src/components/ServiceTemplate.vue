@@ -12,8 +12,10 @@
             </td>
             <td class="flex-container">
               <input type="text" v-model="service.title" name="title" required />
-              <div class="centered cancel-button">
-                <i @click="$router.back()" class="fa-regular fa-rectangle-xmark fa-2xl"></i>
+              <div class="centered">
+                <div class="centered cancel-circle-button">
+                  <i @click="$router.back()" class="fa-solid fa-xmark fa-xl"></i>
+                </div>
               </div>
             </td>
           </tr>
@@ -153,9 +155,7 @@ export default {
     justify-content: center;
     margin-top: 15px;
   }
-  .cancel-button {
-    cursor: pointer;
-    color: var(--red);
+  .cancel-circle-button {
     margin-left: auto;
   }
   #service-creation-table > tbody > tr > td {

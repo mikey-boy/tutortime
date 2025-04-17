@@ -501,7 +501,7 @@ export default {
       bottom: 40px;
       width: 100%;
       background-color: var(--base0);
-      border: 1px solid var(--red);
+      border: 1px solid var(--red1);
       border-radius: 3px;
 
       p {
@@ -566,7 +566,6 @@ export default {
 
     h3 {
       margin: 8px 0px;
-      justify-content: left;
     }
     > form {
       padding: 0px 8px 12px;
@@ -593,10 +592,6 @@ export default {
     .truncated-text {
       -webkit-line-clamp: 1;
     }
-    .flex-container {
-      display: flex;
-      justify-content: space-between;
-    }
     #send-request-button {
       background-color: var(--blue0);
       color: var(--text1);
@@ -609,7 +604,7 @@ export default {
     }
     #lesson-request-error {
       margin: 0px;
-      color: var(--red);
+      color: var(--red1);
       font-weight: bold;
     }
   }
@@ -630,6 +625,7 @@ export default {
       background-color: var(--green1);
     }
     button.inactive {
+      color: var(--text0);
       background: var(--base1);
     }
     &.sub-tabs {
@@ -679,25 +675,10 @@ export default {
     cursor: pointer;
   }
   .warning {
-    border: 1px solid var(--red);
+    border: 1px solid var(--red1);
   }
 }
 
-.cancel-circle-button {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  margin-right: 3px;
-
-  cursor: pointer;
-
-  &:hover {
-    background-color: var(--red);
-  }
-  i {
-    color: var(--text0);
-  }
-}
 .lesson {
   padding: 5px 10px 10px 10px;
   margin-bottom: 10px;

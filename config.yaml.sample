@@ -8,3 +8,8 @@ database:
   user: "tutortime"
   password: "tutortime"
   dbname: "db"
+
+oauth:
+  google:
+    client_id: ""
+    client_secret: ""

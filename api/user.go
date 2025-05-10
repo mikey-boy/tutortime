@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -9,12 +8,14 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type User struct {
 	ID           uint
 	Username     string `gorm:"unique,not null"`
-	Password     string `gorm:"not null" json:"-"`
+	OAuthLogin   string `gorm:"unique,default:null"`
+	Password     string `json:"-"`
 	Availability string
 	Description  string
 	Minutes      int       `gorm:"default:60"`
@@ -22,6 +23,10 @@ type User struct {
 	Services     []Service `json:",omitempty"`
 	Sessions     []Session `json:",omitempty"`
 	Lessons      []Session `json:",omitempty"`
+}
+type APIUser struct {
+	Username string
+	Password string
 }
 
 type Session struct {
@@ -81,8 +86,8 @@ func GetUserProfile(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	apiUser := User{ID: uint(id), Username: user.Username, Description: user.Description, Availability: user.Availability, Image: user.Image}
-	ret, _ := json.Marshal(apiUser)
+	api_user := User{ID: uint(id), Username: user.Username, Description: user.Description, Availability: user.Availability, Image: user.Image}
+	ret, _ := json.Marshal(api_user)
 	writer.Write(ret)
 }
 
@@ -133,13 +138,18 @@ func UpdateMyProfile(writer http.ResponseWriter, request *http.Request) {
 
 // POST /api/users
 func AddUser(writer http.ResponseWriter, request *http.Request) {
-	var user User
-
-	if err := json.NewDecoder(request.Body).Decode(&user); err != nil {
+	var api_user APIUser
+	if err := json.NewDecoder(request.Body).Decode(&api_user); err != nil {
 		http.Error(writer, malformedJson.String(), http.StatusBadRequest)
 		return
 	}
+	if api_user.Username == "" || api_user.Password == "" {
+		http.Error(writer, insufficientRequest.String(), http.StatusBadRequest)
+		return
+	}
 
+	hashed, _ := bcrypt.GenerateFromPassword([]byte(api_user.Password), bcrypt.DefaultCost)
+	user := User{Username: api_user.Username, Password: string(hashed)}
 	user.Image = Image{Name: "tux", Path: "/default/img/tux.png"}
 	if err := user.Add(); err != nil {
 		http.Error(writer, usernameTaken.String(), http.StatusBadRequest)
@@ -148,57 +158,15 @@ func AddUser(writer http.ResponseWriter, request *http.Request) {
 	addSession(user.ID, writer)
 }
 
-func UpdateUser(writer http.ResponseWriter, request *http.Request) {
-}
-
-func DeleteUser(writer http.ResponseWriter, request *http.Request) {
-}
-
-// POST /api/sessiontoken
-func AddSessionToken(writer http.ResponseWriter, request *http.Request) {
-	var user User
-
-	if err := json.NewDecoder(request.Body).Decode(&user); err != nil {
-		http.Error(writer, malformedJson.String(), http.StatusBadRequest)
+func (user *User) addOrGetOAuthUser() {
+	if err := user.Login(); err == nil {
 		return
 	}
-	if err := user.Login(); err != nil {
-		http.Error(writer, failedLogin.String(), http.StatusUnauthorized)
-		return
-	}
-	addSession(user.ID, writer)
-}
 
-func UserFromRequest(request http.Request) (User, bool) {
-	user, ok := request.Context().Value(ContextUserKey).(User)
-	return user, ok
-}
+	user.Username = uuid.NewString()
+	user.Image = Image{Name: "tux", Path: "/default/img/tux.png"}
+	user.Add()
 
-func ValidateSessionToken(endpointHandler func(writer http.ResponseWriter, request *http.Request)) http.HandlerFunc {
-	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		cookies := request.CookiesNamed("Token")
-		if len(cookies) > 0 {
-			session := Session{UUID: cookies[0].Value}
-			if err := session.Get(); err != nil {
-				http.Error(writer, invalidSessionToken.String(), http.StatusUnauthorized)
-				return
-			}
-
-			if session.Valid() {
-				// Add user to request context for later use
-				user := User{ID: session.UserID}
-				if err := user.Get(); err == nil {
-					ctx := context.WithValue(request.Context(), ContextUserKey, user)
-					request = request.WithContext(ctx)
-					endpointHandler(writer, request)
-				}
-			} else {
-				http.Error(writer, expiredSessionToken.String(), http.StatusUnauthorized)
-				return
-			}
-		} else {
-			http.Error(writer, missingSessionToken.String(), http.StatusUnauthorized)
-			return
-		}
-	})
+	user.Username = fmt.Sprintf("User_%d", user.ID)
+	user.Update()
 }

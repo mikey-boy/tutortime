@@ -10,6 +10,6 @@ database:
   dbname: "db"
 
 oauth:
-  google:
-    client_id: ""
-    client_secret: ""
+  google_client_id: ""
+  google_client_secret: ""
+  google_redirect_url: "http://localhost:8080/api/user/callback/google"

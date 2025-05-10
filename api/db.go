@@ -10,6 +10,7 @@ import (
 	"os"
 
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -37,7 +38,7 @@ func (status *ServiceCategory) UnmarshalJSON(b []byte) error {
 }
 
 func (user *User) Add() error {
-	result := db.Omit("minutes").Create(user)
+	result := db.Create(user)
 	return result.Error
 }
 
@@ -47,7 +48,18 @@ func (user *User) Update() error {
 }
 
 func (user *User) Login() error {
-	result := db.Where(&user, "username", "password").First(&user)
+	var result *gorm.DB
+	if user.OAuthLogin != "" {
+		result = db.Where(&user, "o_auth_login").First(&user)
+	} else {
+		var tmp User
+		result = db.Where(&user, "username").First(&tmp)
+		if bcrypt.CompareHashAndPassword([]byte(tmp.Password), []byte(user.Password)) == nil {
+			user.ID = tmp.ID
+		} else {
+			result.Error = fmt.Errorf("InvalidCredentials")
+		}
+	}
 	return result.Error
 }
 

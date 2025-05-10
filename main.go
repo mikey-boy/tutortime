@@ -7,24 +7,9 @@ import (
 	"os"
 
 	"github.com/mikey-boy/tutortime/api"
+	"github.com/mikey-boy/tutortime/config"
 	"gopkg.in/yaml.v3"
 )
-
-type Config struct {
-	Webserver Webserver `yaml:"webserver"`
-	Database  Database  `yaml:"database"`
-}
-type Webserver struct {
-	Host string `yaml:"host"`
-	Port uint   `yaml:"port"`
-}
-type Database struct {
-	Host     string `yaml:"host"`
-	Port     uint16 `yaml:"port"`
-	User     string `yaml:"user"`
-	Password string `yaml:"password"`
-	Dbname   string `yaml:"dbname"`
-}
 
 func main() {
 	var err error
@@ -35,7 +20,7 @@ func main() {
 		log.Fatalf("Error reading the config file: %v", err)
 	}
 	// And parse it's fields
-	var config Config
+	var config config.Config
 	err = yaml.Unmarshal(data, &config)
 	if err != nil {
 		log.Fatalf("Error parsing the config file: %v", err)
@@ -49,6 +34,7 @@ func main() {
 		config.Database.Port,
 	)
 	api.RegisterCrons()
+	api.RegisterOAuthClients(config.OAuth)
 	api.CreateHub()
 	go api.RunHub()
 
@@ -75,6 +61,8 @@ func main() {
 	mux.HandleFunc("GET /api/users/me/services", api.ValidateSessionToken(api.GetMyServices))
 	mux.HandleFunc("GET /api/users/me/lessons", api.ValidateSessionToken(api.GetMyLessons))
 
+	mux.HandleFunc("GET /api/user/authorize/google", api.UserAuthorizeGoogle)
+	mux.HandleFunc("GET /api/user/callback/google", api.UserCallbackGoogle)
 	mux.HandleFunc("POST /api/sessiontoken", api.AddSessionToken)
 	mux.HandleFunc("GET /api/rooms", api.ValidateSessionToken(api.GetRooms))
 

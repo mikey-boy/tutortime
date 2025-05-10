@@ -5,25 +5,25 @@
       <h2 v-show="loginOptions == 2">Create account</h2>
 
       <div v-show="loginOptions == -1">
-        <button class="login-button" href="">
+        <button class="login-button" @click="googleAccount">
           <div><img src="@/assets/img/signin-assets/google.svg" /></div>
           Login with Google
         </button>
-        <button class="login-button local-account" @click="localAccount(0)">
+        <button class="login-button" @click="localAccount(0)">
           <div><i class="fa-solid fa-user fa-xl" /></div>
           Login with Local Account
         </button>
 
         <p>or</p>
 
-        <button class="login-button local-account" @click="localAccount(1)">
+        <button class="login-button" @click="localAccount(1)">
           <div><i class="fa-solid fa-user fa-xl" /></div>
           Create a Local Account
         </button>
       </div>
 
       <div v-show="loginOptions != -1" @submit.prevent>
-        <form id="local-account-form">
+        <form>
           <label>Username:</label>
           <input v-model="user.username" type="text" required />
           <label>Password: </label>
@@ -32,6 +32,7 @@
           <button v-show="loginOptions == 2" class="local-signup-button" @click="localAccountCreate()">
             Create account
           </button>
+          <p class="error-text" v-show="error">{{ error }}</p>
         </form>
       </div>
     </div>
@@ -44,11 +45,33 @@ import { refreshUserID } from "@/utils/auth";
 export default {
   data() {
     return {
-      loginOptions: -1,
       user: {},
+      error: "",
+      loginOptions: -1,
     };
   },
+  created() {
+    this.navigateView();
+  },
   methods: {
+    navigateView() {
+      if (this.$route.query.view == "localAccountLogin") {
+        this.loginOptions = 1;
+      } else if (this.$route.query.view == "localAccountCreation") {
+        this.loginOptions = 2;
+      } else {
+        this.loginOptions = -1;
+      }
+      this.user = {};
+      this.error = "";
+    },
+    googleAccount() {
+      if (this.$route.query.redirect) {
+        window.location.href = `/api/user/authorize/google?redirect=${this.$route.query.redirect}`;
+      } else {
+        window.location.href = "/api/user/authorize/google";
+      }
+    },
     localAccount(loginOrCreate) {
       if (loginOrCreate) {
         this.$router.push({ path: "/user/login", query: { ...this.$route.query, view: "localAccountCreation" } });
@@ -64,16 +87,19 @@ export default {
       fetch("/api/sessiontoken", {
         method: "POST",
         body: json,
-      }).then((response) => {
-        if (response.status == 200) {
-          refreshUserID();
-          if (this.$route.query.redirect != null) {
-            this.$router.push({ path: this.$route.query.redirect });
-          } else {
-            this.$router.push({ path: "/" });
+      })
+        .then((response) => {
+          if (response.status == 200) {
+            refreshUserID();
+            if (this.$route.query.redirect != null) {
+              this.$router.push({ path: this.$route.query.redirect });
+            } else {
+              this.$router.push({ path: "/" });
+            }
           }
-        }
-      });
+          return response.json();
+        })
+        .then((data) => (this.error = data.details));
     },
     localAccountCreate() {
       if (!this.user.username || !this.user.password) {
@@ -93,13 +119,7 @@ export default {
   },
   watch: {
     $route: function (val, oldVal) {
-      if (val.query.view == "localAccountLogin") {
-        this.loginOptions = 1;
-      } else if (val.query.view == "localAccountCreation") {
-        this.loginOptions = 2;
-      } else {
-        this.loginOptions = -1;
-      }
+      this.navigateView();
     },
   },
 };
@@ -108,6 +128,9 @@ export default {
 <style lang="scss">
 @import "@/assets/styles/mixins.scss";
 
+.error-text {
+  margin: 10px 0px 0px;
+}
 .login-container {
   position: absolute;
   top: 40%;
@@ -119,8 +142,7 @@ export default {
     flex-direction: column;
     width: 300px;
     background-color: var(--base0);
-    padding: 30px;
-    padding-top: 0px;
+    padding: 0px 30px 20px;
     border-radius: 5px;
     border: 3px solid var(--text0);
 

@@ -21,6 +21,10 @@ var malformedRequest = ApiError{
 	Error:   "Malformed request",
 	Details: "The request to the server contained malformed data",
 }
+var insufficientRequest = ApiError{
+	Error:   "Insufficient request",
+	Details: "The request to the server did not contain enough information",
+}
 
 // User errors
 
@@ -55,6 +59,17 @@ var expiredSessionToken = ApiError{
 var wrongSessionToken = ApiError{
 	Error:   "Action not permitted",
 	Details: "You are unauthorized due to using the wrong session token",
+}
+
+// OAuth errors
+
+var unableToFetchAccessToken = ApiError{
+	Error:   "OAuth2 error",
+	Details: "Unable to fetch OAuth Access token using code supplied by user",
+}
+var unableToFetchUserDetails = ApiError{
+	Error:   "OAuth2 error",
+	Details: "Unable to fetch user details from identity provider using access token",
 }
 
 // Server errors

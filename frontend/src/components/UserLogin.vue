@@ -28,10 +28,8 @@
           <input v-model="user.username" type="text" required />
           <label>Password: </label>
           <input v-model="user.password" type="password" required />
-          <button v-show="loginOptions == 1" class="local-login-button" @click="localAccountLogin()">Login</button>
-          <button v-show="loginOptions == 2" class="local-signup-button" @click="localAccountCreate()">
-            Create account
-          </button>
+          <button v-if="loginOptions == 1" class="local-login-button" @click="localAccountLogin()">Login</button>
+          <button v-else class="local-signup-button" @click="localAccountCreate()">Create account</button>
           <p class="error-text" v-show="error">{{ error }}</p>
         </form>
       </div>

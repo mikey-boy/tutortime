@@ -4,9 +4,10 @@
   --base0: #2e3436;
   --base1: #3e4648;
   --base2: #808080;
-  --base3: #fef0db;
+  --base3: #fdf6e3;
   --text0: #E0E0E0;
   --text1: #fff;
+  --text2: #808080;
   --green0: #a3be8c;
   --green1: #85b75c;
   --blue0: #5095e9;
@@ -20,9 +21,10 @@
   --base0: #fdf6e3;
   --base1: #eee8d5;
   --base2: #93a1a1;
-  --base3: #fef0db;
+  --base3: #fdf6e3;
   --text0: #586e75;
   --text1: #fff;
+  --text2: #586e75;
   --green0: #68be76;
   --green1: #68be76;
   --blue0: #268bd2;
@@ -148,6 +150,42 @@ pre {
   i {
     color: var(--text0);
   }
+}
+
+/* Tooltip container */
+.tooltip {
+  margin-left: 8px;
+  position: relative;
+  display: inline-block;
+}
+
+@mixin tooltiptext {
+  visibility: hidden;
+  width: 230px;
+  text-align: center;
+  padding: 10px 5px;
+  border-radius: 3px;
+  border: 1px solid var(--green0);
+  background-color: var(--green1);
+  background: var(--base0);
+
+  /* Position the tooltip text */
+  position: absolute;
+  z-index: 1;
+  /* Fade in tooltip */
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.tooltip .bottomleft {
+  @include tooltiptext;
+  margin-top: 23px;
+  margin-left: -220px;
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
 }
 
 .standard-table {

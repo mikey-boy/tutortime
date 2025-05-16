@@ -28,7 +28,11 @@
       </thead>
       <tbody>
         <tr v-for="service in services" v-show="service.Status == status" :key="service.ID">
-          <td class="truncated">{{ service.Title }}</td>
+          <RouterLink :to="{ path: `/services/${service.ID}` }">
+            <td class="truncated">
+              <b>{{ service.Title }}</b>
+            </td>
+          </RouterLink>
           <td class="truncated">{{ service.Description }}</td>
           <td class="actions">
             <button @click="editService(service.ID)">

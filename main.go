@@ -68,7 +68,7 @@ func main() {
 
 	mux.HandleFunc("GET /api/services", api.GetServices)
 	mux.HandleFunc("POST /api/services", api.ValidateSessionToken(api.AddService))
-	mux.HandleFunc("GET /api/services/{id}", api.GetService)
+	mux.HandleFunc("GET /api/services/{id}", api.FetchSessionToken(api.GetService))
 	mux.HandleFunc("PUT /api/services/{id}", api.ValidateSessionToken(api.UpdateService))
 
 	addr := fmt.Sprintf("%s:%d", config.Webserver.Host, config.Webserver.Port)

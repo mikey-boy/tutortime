@@ -85,6 +85,13 @@ func GetService(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
+	// Users can view their paused services
+	user, logged_in := UserFromRequest(*request)
+	if service.Status != SS_ACTIVE && (!logged_in || user.ID != service.UserID || service.Status != SS_PAUSED) {
+		http.Error(writer, resourceNotFound.String(), http.StatusNotFound)
+		return
+	}
+
 	ret, _ := json.Marshal(service)
 	writer.Write(ret)
 }

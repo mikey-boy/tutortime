@@ -30,19 +30,19 @@
           <tr>
             <td>morning</td>
             <td v-for="i in 7">
-              <i class="fa-regular" :class="isChecked(i + '-0') ? 'fa-square-check' : 'fa-square'"></i>
+              <i :class="isChecked(i + '-0') ? 'fa-solid fa-square-check' : 'fa-regular fa-square'"></i>
             </td>
           </tr>
           <tr>
             <td>afternoon</td>
             <td v-for="i in 7">
-              <i class="fa-regular" :class="isChecked(i + '-1') ? 'fa-square-check' : 'fa-square'"></i>
+              <i :class="isChecked(i + '-1') ? 'fa-solid fa-square-check' : 'fa-regular fa-square'"></i>
             </td>
           </tr>
           <tr>
             <td>evening</td>
             <td v-for="i in 7">
-              <i class="fa-regular" :class="isChecked(i + '-2') ? 'fa-square-check' : 'fa-square'"></i>
+              <i :class="isChecked(i + '-2') ? 'fa-solid fa-square-check' : 'fa-regular fa-square'"></i>
             </td>
           </tr>
         </tbody>

@@ -90,19 +90,19 @@
             <tr>
               <td>morning</td>
               <td v-for="i in 7">
-                <i class="fa-regular" :class="isChecked(i + '-0') ? 'fa-square-check' : 'fa-square'"></i>
+                <i :class="isChecked(i + '-0') ? 'fa-solid fa-square-check' : 'fa-regular fa-square'"></i>
               </td>
             </tr>
             <tr>
               <td>afternoon</td>
               <td v-for="i in 7">
-                <i class="fa-regular" :class="isChecked(i + '-1') ? 'fa-square-check' : 'fa-square'"></i>
+                <i :class="isChecked(i + '-1') ? 'fa-solid fa-square-check' : 'fa-regular fa-square'"></i>
               </td>
             </tr>
             <tr>
               <td>evening</td>
               <td v-for="i in 7">
-                <i class="fa-regular" :class="isChecked(i + '-2') ? 'fa-square-check' : 'fa-square'"></i>
+                <i :class="isChecked(i + '-2') ? 'fa-solid fa-square-check' : 'fa-regular fa-square'"></i>
               </td>
             </tr>
           </tbody>
@@ -178,8 +178,11 @@
     </table>
   </div>
   <div v-else>
-    <div class="empty-container">
-      <div><p>You haven't completed any lessons yet!</p></div>
+    <div class="empty-container empty-service">
+      <div><p>You haven't completed any lessons yet</p></div>
+      <RouterLink to="/">
+        <button>Browse lessons</button>
+      </RouterLink>
     </div>
   </div>
 
@@ -212,7 +215,10 @@
   </div>
   <div v-else>
     <div class="empty-container">
-      <div><p>You haven't offered any services!</p></div>
+      <div><p>You haven't created any services yet</p></div>
+      <RouterLink to="/user/services">
+        <button>Create a service</button>
+      </RouterLink>
     </div>
   </div>
 </template>
@@ -261,7 +267,7 @@ export default {
       let form = new FormData(event.target);
       let availability = [];
       for (let i = 0; i < 21; i++) {
-        let index = `${i % 7}-${Math.floor(i / 7)}`;
+        let index = `${(i % 7) + 1}-${Math.floor(i / 7)}`;
         if (form.has(index)) {
           availability.push(index);
           form.delete(index);

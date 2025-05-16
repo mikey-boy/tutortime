@@ -16,49 +16,54 @@
       </div>
       <p>{{ service.Description }}</p>
     </div>
-    <div class="post availability">
-      <h2>{{ user.Username }}'s availability</h2>
-      <table class="availability-table">
-        <thead>
-          <tr>
-            <td></td>
-            <td>Mon</td>
-            <td>Tue</td>
-            <td>Wed</td>
-            <td>Thu</td>
-            <td>Fri</td>
-            <td>Sat</td>
-            <td>Sun</td>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>morning</td>
-            <td v-for="i in 7">
-              <i :class="isChecked(i + '-0')"></i>
-            </td>
-          </tr>
-          <tr>
-            <td>afternoon</td>
-            <td v-for="i in 7">
-              <i :class="isChecked(i + '-1')"></i>
-            </td>
-          </tr>
-          <tr>
-            <td>evening</td>
-            <td v-for="i in 7">
-              <i :class="isChecked(i + '-2')"></i>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <div class="flex-container">
-        <RouterLink :to="{ path: `/chat/${user.ID}` }">
-          <button class="blue-button"><i class="fa-solid fa-paper-plane"></i> Send message</button>
-        </RouterLink>
-        <RouterLink :to="{ path: `/users/${user.ID}` }">
-          <button class="green-button"><i class="fa-solid fa-user"></i> View profile</button>
-        </RouterLink>
+    <div class="availability">
+      <div class="post">
+        * If you would like to book a lesson with {{ user.Username }} start by sending them a message
+      </div>
+      <div class="post">
+        <h2>{{ user.Username }}'s availability</h2>
+        <table class="availability-table">
+          <thead>
+            <tr>
+              <td></td>
+              <td>Mon</td>
+              <td>Tue</td>
+              <td>Wed</td>
+              <td>Thu</td>
+              <td>Fri</td>
+              <td>Sat</td>
+              <td>Sun</td>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>morning</td>
+              <td v-for="i in 7">
+                <i :class="isChecked(i + '-0')"></i>
+              </td>
+            </tr>
+            <tr>
+              <td>afternoon</td>
+              <td v-for="i in 7">
+                <i :class="isChecked(i + '-1')"></i>
+              </td>
+            </tr>
+            <tr>
+              <td>evening</td>
+              <td v-for="i in 7">
+                <i :class="isChecked(i + '-2')"></i>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="flex-container">
+          <RouterLink :to="{ path: `/chat/${user.ID}` }">
+            <button class="blue-button"><i class="fa-solid fa-paper-plane"></i> Send message</button>
+          </RouterLink>
+          <RouterLink :to="{ path: `/users/${user.ID}` }">
+            <button class="green-button"><i class="fa-solid fa-user"></i> View profile</button>
+          </RouterLink>
+        </div>
       </div>
     </div>
   </div>
@@ -91,6 +96,9 @@ export default {
 
 <style scoped>
 @import "@/assets/styles/mixins.scss";
+.fa-circle-info {
+  margin-right: 5px;
+}
 .post-flex-container {
   display: flex;
   margin: 30px auto;
@@ -99,7 +107,7 @@ export default {
 
   .post {
     flex: 4;
-    margin-right: 10px;
+    margin: 0px 10px 10px 0px;
   }
   .availability {
     align-self: flex-start;

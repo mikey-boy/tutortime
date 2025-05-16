@@ -15,16 +15,11 @@
             <h3>Give lessons</h3>
           </RouterLink>
         </li>
-        <!-- <li>
-          <RouterLink to="/">
-            <h3>How it works</h3>
+        <li>
+          <RouterLink :to="{ path: '/discover' }">
+            <h3>Discover</h3>
           </RouterLink>
         </li>
-        <li>
-          <RouterLink to="/">
-            <h3>Learning hub</h3>
-          </RouterLink>
-        </li> -->
       </ul>
       <ul v-if="!store.UserID" class="user-buttons">
         <li>

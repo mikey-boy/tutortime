@@ -37,6 +37,24 @@ func UserFromRequest(request http.Request) (User, bool) {
 	return user, ok
 }
 
+func FetchSessionToken(endpointHandler func(writer http.ResponseWriter, request *http.Request)) http.HandlerFunc {
+	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		cookies := request.CookiesNamed("Token")
+		if len(cookies) > 0 {
+			session := Session{UUID: cookies[0].Value}
+			if err := session.Get(); err == nil && session.Valid() {
+				// Add user to request context for later use
+				user := User{ID: session.UserID}
+				if err := user.Get(); err == nil {
+					ctx := context.WithValue(request.Context(), ContextUserKey, user)
+					request = request.WithContext(ctx)
+				}
+			}
+		}
+		endpointHandler(writer, request)
+	})
+}
+
 func ValidateSessionToken(endpointHandler func(writer http.ResponseWriter, request *http.Request)) http.HandlerFunc {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		cookies := request.CookiesNamed("Token")

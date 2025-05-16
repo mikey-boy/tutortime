@@ -25,7 +25,20 @@
     </div>
     <div id="chat">
       <h2>{{ activeRoom.User.Username }}</h2>
-      <div id="message-container">
+
+      <div v-if="Object.keys(messages).length == 0" id="message-container">
+        <div class="flex-container-system">
+          <span class="message-item-system">
+            This is your chat with {{ activeRoom.User.Username }}! You can begin by:
+            <ul>
+              <li>Introducing yourself</li>
+              <li>Explaining why you are interested in the subject they teach</li>
+              <li>Describing your current skill level, and any learning objectives you may have</li>
+            </ul>
+          </span>
+        </div>
+      </div>
+      <div v-else id="message-container">
         <template v-for="message in messages">
           <div v-if="message.RecieverID == activeRoom.User.ID" class="flex-container-user">
             <span v-if="message.Lesson && displayInChat(message.Lesson)" class="message-item lesson">
@@ -107,8 +120,18 @@
       </div>
     </div>
     <div id="lessons">
-      <h2>Lessons</h2>
-      <div class="lesson-tabs">
+      <h2 id="lessons-title">Lessons</h2>
+      <div id="minutes-bubble">
+        You have <b>{{ self.Minutes }} minutes</b>
+        <div class="tooltip">
+          <i class="fa-solid fa-circle-info"></i>
+          <span class="tooltiptext bottomleft">
+            To earn more, you can <b><RouterLink to="/user/services">offer lessons to other students</RouterLink></b>
+          </span>
+        </div>
+      </div>
+
+      <div v-if="Object.keys(messages).length != 0" class="lesson-tabs">
         <button class="request-lessons left-button" :class="{ inactive: lessonView }" @click="lessonView = !lessonView">
           <i class="fa-solid fa-handshake fa-lg"></i> Request a lesson
         </button>
@@ -125,7 +148,15 @@
         </button>
       </div>
 
-      <div v-if="lessonView" class="lesson-container">
+      <div v-if="Object.keys(messages).length == 0">
+        <div id="empty-messages">
+          <div>
+            You will be able to request a lesson from <b>{{ activeRoom.User.Username }}</b> after you have sent them an
+            initial message
+          </div>
+        </div>
+      </div>
+      <div v-else-if="lessonView" class="lesson-container">
         <template v-for="lesson in lessons">
           <div
             v-if="completedView && lessonCompleted(lesson) && lessonActive(lesson)"
@@ -152,7 +183,6 @@
       <div v-else>
         <div class="lesson-container without-subnav">
           <h3>{{ activeRoom.User.Username }} offers these services</h3>
-          <p>You have {{ self.Minutes }} minutes available</p>
           <template v-for="service in services">
             <div>
               <label class="lesson-request-item" @click="newLessonRequest(service)">
@@ -440,6 +470,12 @@ export default {
 
 <style lang="scss">
 @import "@/assets/styles/mixins.scss";
+#empty-messages {
+  border: 1px dashed var(--green0);
+  border-radius: 3px;
+  padding: 10px;
+  margin-top: 20px;
+}
 #chat-container {
   display: flex;
   margin: 0 auto;
@@ -527,6 +563,7 @@ export default {
     }
     .flex-container-user {
       display: flex;
+      margin-left: 70px;
       justify-content: right;
       color: var(--blue0);
       h3 {
@@ -535,10 +572,11 @@ export default {
     }
     .flex-container-peer {
       display: flex;
+      margin-right: 70px;
       justify-content: left;
-      color: var(--orange);
+      color: var(--text2);
       h3 {
-        color: var(--orange);
+        color: var(--blue0);
       }
     }
     .flex-container-system {
@@ -554,6 +592,9 @@ export default {
       margin-bottom: 7px;
       padding: 5px 10px;
       background: var(--base3);
+    }
+    .flex-container-peer .message-item {
+      border: 2px solid var(--base2);
     }
     .message-item-system {
       margin: 5px 0px;
@@ -652,7 +693,7 @@ export default {
     overflow-y: scroll;
 
     h3 {
-      margin-bottom: 0px;
+      margin-bottom: 15px;
     }
     p {
       color: var(--text0);
@@ -676,6 +717,13 @@ export default {
   }
   .warning {
     border: 1px solid var(--red1);
+  }
+
+  #lessons-title {
+    margin-bottom: 12px;
+  }
+  #minutes-bubble {
+    margin-bottom: 10px;
   }
 }
 

@@ -126,7 +126,12 @@
         <div class="tooltip">
           <i class="fa-solid fa-circle-info"></i>
           <span class="tooltiptext bottomleft">
-            To earn more, you can <b><RouterLink to="/user/services">offer lessons to other students</RouterLink></b>
+            To earn more, you can
+            <b>
+              <RouterLink :to="{ path: 'discover', query: { page: 'giving-lessons' } }">
+                offer lessons to other students
+              </RouterLink>
+            </b>
           </span>
         </div>
       </div>

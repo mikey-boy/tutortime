@@ -71,7 +71,6 @@ export default {
 }
 .body-content {
   width: 90%;
-  min-width: 720px;
   max-width: 1440px;
   margin: auto;
 }

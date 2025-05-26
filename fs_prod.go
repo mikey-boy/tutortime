@@ -8,7 +8,7 @@ import (
 	"io/fs"
 )
 
-//go:embed ui/dist
+//go:embed frontend/dist
 var embedFrontend embed.FS
 
 func getFrontendAssets() fs.FS {

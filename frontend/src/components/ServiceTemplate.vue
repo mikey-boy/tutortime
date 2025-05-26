@@ -11,7 +11,7 @@
               </label>
             </td>
             <td class="flex-container">
-              <input type="text" v-model="service.title" name="title" required />
+              <input type="text" v-model="service.title" name="title" minlength="10" required />
               <div class="centered">
                 <div class="centered cancel-circle-button">
                   <i @click="$router.back()" class="fa-solid fa-xmark fa-xl"></i>
@@ -27,7 +27,14 @@
               </label>
             </td>
             <td>
-              <textarea v-model="service.description" rows="7" name="description" required></textarea>
+              <textarea
+                v-model="service.description"
+                id="service-description"
+                rows="7"
+                name="description"
+                minlength="120"
+                required
+              ></textarea>
             </td>
           </tr>
           <tr>
@@ -49,7 +56,7 @@
             </td>
           </tr>
           <tr>
-            <td>Upload images:</td>
+            <td>Upload image:</td>
             <td>
               <input type="file" name="image" accept="image/png, image/jpeg" />
             </td>
@@ -65,6 +72,14 @@
 </template>
 
 <script>
+var placeholder = `Explain how well you know this subject. Talk about:
+
+    •   What you are able to teach (i.e. intermediate French classes)
+    •   Why you are suited to teach this subject
+    •   How long you've been practicing
+    •   Who might benefit from your lessons (i.e. the skill level of your potential students)
+`;
+
 export default {
   data() {
     return {
@@ -77,6 +92,7 @@ export default {
     };
   },
   mounted() {
+    document.getElementById("service-description").placeholder = placeholder;
     this.getService();
   },
   methods: {

@@ -37,7 +37,7 @@ func UserFromRequest(request http.Request) (User, bool) {
 	return user, ok
 }
 
-func FetchSessionToken(endpointHandler func(writer http.ResponseWriter, request *http.Request)) http.HandlerFunc {
+func FetchSessionToken(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		cookies := request.CookiesNamed("Token")
 		if len(cookies) > 0 {
@@ -51,36 +51,17 @@ func FetchSessionToken(endpointHandler func(writer http.ResponseWriter, request 
 				}
 			}
 		}
-		endpointHandler(writer, request)
+		handler.ServeHTTP(writer, request)
 	})
 }
 
 func ValidateSessionToken(endpointHandler func(writer http.ResponseWriter, request *http.Request)) http.HandlerFunc {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		cookies := request.CookiesNamed("Token")
-		if len(cookies) > 0 {
-			session := Session{UUID: cookies[0].Value}
-			if err := session.Get(); err != nil {
-				http.Error(writer, invalidSessionToken.String(), http.StatusUnauthorized)
-				return
-			}
-
-			if session.Valid() {
-				// Add user to request context for later use
-				user := User{ID: session.UserID}
-				if err := user.Get(); err == nil {
-					ctx := context.WithValue(request.Context(), ContextUserKey, user)
-					request = request.WithContext(ctx)
-					endpointHandler(writer, request)
-				}
-			} else {
-				http.Error(writer, expiredSessionToken.String(), http.StatusUnauthorized)
-				return
-			}
-		} else {
+		if _, ok := UserFromRequest(*request); !ok {
 			http.Error(writer, missingSessionToken.String(), http.StatusUnauthorized)
 			return
 		}
+		endpointHandler(writer, request)
 	})
 }
 

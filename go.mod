@@ -7,6 +7,7 @@ toolchain go1.24.1
 require gopkg.in/yaml.v3 v3.0.1
 
 require (
+	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect

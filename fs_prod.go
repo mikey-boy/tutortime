@@ -6,6 +6,8 @@ package main
 import (
 	"embed"
 	"io/fs"
+
+	"github.com/mikey-boy/tutortime/api"
 )
 
 //go:embed frontend/dist
@@ -18,4 +20,8 @@ func getFrontendAssets() fs.FS {
 	}
 
 	return f
+}
+
+func newLogger() {
+	api.NewLogger(false)
 }

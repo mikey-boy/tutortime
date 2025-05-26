@@ -241,7 +241,7 @@ export default {
     this.fetchSelf();
     this.fetchContacts();
     this.getMyServices();
-    socket = new WebSocket("ws://localhost:8080/ws");
+    socket = new WebSocket(`ws://${window.location.host}/ws`);
     socket.onmessage = (event) => {
       const message = JSON.parse(event.data);
       const roomID = message.RoomID.toString();

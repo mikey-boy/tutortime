@@ -39,5 +39,8 @@ func RegisterCrons() {
 	// Check for expired lessons every minute
 	cron.AddFunc("*/1 * * * *", expireLessons)
 
+	// Rotate the logs every day
+	cron.AddFunc("0 0 * * *", LogRotate)
+
 	cron.Start()
 }

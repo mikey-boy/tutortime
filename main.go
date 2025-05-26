@@ -68,10 +68,21 @@ func main() {
 
 	mux.HandleFunc("GET /api/services", api.GetServices)
 	mux.HandleFunc("POST /api/services", api.ValidateSessionToken(api.AddService))
-	mux.HandleFunc("GET /api/services/{id}", api.FetchSessionToken(api.GetService))
+	mux.HandleFunc("GET /api/services/{id}", api.GetService)
 	mux.HandleFunc("PUT /api/services/{id}", api.ValidateSessionToken(api.UpdateService))
 
+	// Configure logging
+	newLogger()
+	defer api.LogClose()
+	api.LogRotate()
+
+	// Log every request, fetch session token on every request
+	var handler http.Handler = mux
+	handler = api.LogRequestHandler(handler)
+	handler = api.FetchSessionToken(handler)
+
+	// Start serving requests
 	addr := fmt.Sprintf("%s:%d", config.Webserver.Host, config.Webserver.Port)
 	fmt.Printf("Serving the application on http://%s\n", addr)
-	log.Fatal(http.ListenAndServe(addr, mux))
+	log.Fatal(http.ListenAndServe(addr, handler))
 }

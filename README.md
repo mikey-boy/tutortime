@@ -7,9 +7,17 @@ Tutortime is an online time-bank platform focused on learning. Each user plays t
 
 Tutortime is a platform where users can learn new skills at no monetary cost.
 
-## Setup
+## Local development setup
 
-### Configuring the database
+### Configuration file
+
+Configurations are specified in a YAML file, there is a sample [config.yaml](config.yaml.sample) that you can just use as-is for local development purposes:
+
+```shell
+cp config.yaml.sample config.yaml
+```
+
+### Starting the database
 
 Tutortime uses Postgresql to store data. For development purposes it is sufficient to run a postgresql database in docker and connect directly through localhost
 
@@ -23,7 +31,7 @@ docker build . -t tutortime-db:latest
 docker run -p 5432:5432/tcp -d tutortime-db
 ```
 
-Ensure that the information specified in the [Dockerfile](postgres/Dockerfile) matches the db stanza of the [config.yaml](config.yaml)
+Ensure that the information specified in the [Dockerfile](postgres/Dockerfile) matches the db stanza of your `config.yaml`
 
 ### Frontend
 

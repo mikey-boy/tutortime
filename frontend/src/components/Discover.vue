@@ -14,6 +14,9 @@
         <li :class="{ active: page == 'faq' }" @click="changePage('faq')">
           <span>FAQ</span>
         </li>
+        <li :class="{ active: page == 'friends' }" @click="changePage('friends')">
+          <span>Information for testers</span>
+        </li>
       </ul>
     </div>
     <div id="page-container">
@@ -171,6 +174,47 @@
         <p>
           You are not able to book a lesson unless you have sufficient minutes to do so. Only in rare circumstances will
           your balance enter the negative.
+        </p>
+      </div>
+      <div class="page" v-show="page == 'friends'">
+        <h3>Hello friends</h3>
+        <p>Thank you for taking the time to visit my site.</p>
+        <p>
+          I started working on this idea in my free time back in August 2023. The site was initially developed using
+          Python and Flask, as these were the frameworks comfortable to me at the time. After about 9 months of work I
+          built a site with functionality similar to what you will see today. However I decided to abondon that code
+          base as it was not very maintainable and the site itself would not scale well (i.e. if more users joined the
+          platform I would need to spend more and more money on infrastructure because my code was not very performant).
+        </p>
+        <p>
+          I ended up rewriting the entire code base using Golang and VueJS. These frameworks were new to me when I
+          started, however I understood that they would make my site more performant and therefore cheaper to run
+          (something that I care about if this site is going to be run off donations). I also thought that the struggle
+          of learning a new language and web development framework to build the site was more aligned with the ethos of
+          the platform; not taking the familiar path but instead putting in the effort to learn something new. What you
+          see today is the product of that effort, and indeed it still has a very long way to go. The code thus far is
+          available on <a href="https://github.com/mikey-boy/tutortime" target="_blank">Github</a>
+          if you are interested.
+        </p>
+
+        <h3>Testing</h3>
+        <p>
+          I encourage you to play around with the site. Create local accounts, create as many of them as you like. Try
+          creating a service, try messaging someone, try <RouterLink to="/services/1">booking a lesson</RouterLink>.
+          Click on all the buttons and see if their functionality is intuitive or not. Once you've gotten a feel for the
+          site, I would really appreciate any feedback you may have. You can provide this to me by either filling out
+          this
+          <a
+            href="https://docs.google.com/forms/d/e/1FAIpQLSfzewlad-ehZ07IGUa_lV2jSPNpypUz2HV2trnZzvpChKFNwQ/viewform?usp=sf_link"
+            target="_blank"
+            >Google Form</a
+          >
+          or just sending me a text.
+        </p>
+        <p>
+          Thank you again for visiting the site :) A good place to start is probably the
+          <RouterLink :to="{ path: 'discover', query: { page: 'how-it-works' } }">How it works</RouterLink> page and
+          then you can just explore from there!
         </p>
       </div>
     </div>

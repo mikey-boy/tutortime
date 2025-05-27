@@ -35,6 +35,12 @@ export default {
       theme = "light";
     }
     setTheme();
+
+    // Check if first time user, redirect them to information page if they are
+    if (!localStorage.getItem("previouslyVisited")) {
+      localStorage.setItem("previouslyVisited", "true");
+      this.$router.push({ path: `/discover`, query: { page: "friends" } });
+    }
   },
   components: {
     NavBar,

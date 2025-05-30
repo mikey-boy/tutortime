@@ -1,6 +1,7 @@
 <template>
   <div>
-    <form id="service-filter-box" @submit.prevent="getServices">
+    <h2>Lessons Available</h2>
+    <form id="service-filter-box" @submit.prevent="getServices(page)">
       <select v-model="category">
         <option value="">All</option>
         <option value="language">Language learning</option>
@@ -28,7 +29,7 @@
     </div>
     <div id="service-page-control">
       <template v-if="page > 1">
-        <button @click="getServices(page - 1)"><i class="fa-solid fa-chevron-left"></i> Previous</button>
+        <button @click="getServices(page - 1)"><i class="fa-solid fa-chevron-left"></i></button>
       </template>
 
       <template v-for="i in total_pages">
@@ -44,7 +45,7 @@
       </template>
 
       <template v-if="page < total_pages">
-        <button @click="getServices(page + 1)">Next<i class="fa-solid fa-chevron-right"></i></button>
+        <button @click="getServices(page + 1)"><i class="fa-solid fa-chevron-right"></i></button>
       </template>
     </div>
   </div>
@@ -63,7 +64,7 @@ export default {
   },
   mounted() {
     this.fetchServiceParams();
-    this.getServices();
+    this.getServices(this.page);
   },
   methods: {
     fetchServiceParams() {
@@ -71,9 +72,9 @@ export default {
       this.category = this.$route.query.category || "";
       this.query = this.$route.query.query || "";
     },
-    getServices() {
+    getServices(page) {
       const url = new URL("/api/services", window.location.origin);
-      const params = { category: this.category, query: this.query, page: this.page };
+      const params = { category: this.category, query: this.query, page: page };
       url.search = new URLSearchParams(params).toString();
       fetch(url)
         .then((response) => response.json())
@@ -81,9 +82,7 @@ export default {
           this.services = json.Services;
           this.page = json.Page;
           this.total_pages = json.TotalPages;
-          if (params.category != "" || params.query != "" || params.page != 1) {
-            this.$router.push({ path: "/", query: params });
-          }
+          this.$router.push({ path: "/", query: params });
         });
     },
   },
@@ -91,7 +90,7 @@ export default {
     $route: function (val, oldVal) {
       if (val.fullPath == "/") {
         this.fetchServiceParams();
-        this.getServices();
+        this.getServices(this.page);
       }
     },
   },
@@ -103,7 +102,7 @@ export default {
   padding: 15px;
   border-radius: 5px;
   border: 1px solid var(--green0);
-  background-color: var(--base1);
+  background-color: var(--base0);
 
   h2 {
     margin-top: 0px;
@@ -113,7 +112,7 @@ export default {
     color: var(--text0);
   }
   &.clickable:hover {
-    background-color: var(--base0);
+    background-color: var(--base1);
   }
 }
 .post-grid-container {
@@ -158,22 +157,23 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: larger;
   margin-bottom: 50px;
 
   button {
-    margin: 5px;
-    padding: 3px 10px;
-    font-size: large;
-    color: var(--text1);
-    border: 1px solid var(--green0);
+    margin: 3px;
+    padding: 5px 12px;
+    font-size: larger;
+    color: var(--text0);
+    background-color: var(--base0);
+    border: 2px solid var(--base0);
   }
   button:hover {
-    background-color: var(--base1);
+    border: 2px solid var(--green1);
+    background-color: var(--green1);
   }
   button.active-page {
     border-radius: 3px;
-    background-color: var(--green1);
+    border: 2px solid var(--green1);
   }
   .fa-ellipsis {
     color: var(--base2);

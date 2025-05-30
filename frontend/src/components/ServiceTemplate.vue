@@ -74,9 +74,8 @@
 <script>
 var placeholder = `Explain how well you know this subject. Talk about:
 
-    •   What you are able to teach (i.e. intermediate French classes)
+    •   What you are able to teach
     •   Why you are suited to teach this subject
-    •   How long you've been practicing
     •   Who might benefit from your lessons (i.e. the skill level of your potential students)
 `;
 

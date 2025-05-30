@@ -136,6 +136,7 @@ export default {
   #new-service-button {
     @include common-button();
     background-color: var(--green1);
+    font-size: medium;
     max-width: 130px;
   }
 }

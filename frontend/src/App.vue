@@ -6,6 +6,7 @@
   <button id="theme-switch" @click="themeToggle">
     <i class="fa-solid fa-moon fa-2xl"></i>
   </button>
+  <footer></footer>
 </template>
 
 <script>
@@ -57,6 +58,11 @@ export default {
 
 <style lang="scss">
 @import "@/assets/styles/globals.scss";
+
+footer {
+  width: 100%;
+  height: 100px;
+}
 
 #theme-switch {
   position: fixed;

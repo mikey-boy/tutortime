@@ -145,6 +145,14 @@
           solely on it's members and their ability to teach eachother.
         </p>
 
+        <h3>How do I earn minutes? Which subjects should I teach?</h3>
+        <p>
+          You can earn minutes by giving a lesson to another student. You don't need to be an expert to become a tutor!
+          Check out our post on
+          <RouterLink :to="{ path: 'discover', query: { page: 'giving-lessons' } }">Giving lessons</RouterLink> for more
+          details on how to give a lesson, and tips to help you out.
+        </p>
+
         <h3>How much is a minute worth?</h3>
         <p>
           The basic unit of measurement on Tutortime is a minute. For each minute you spend teaching another student you
@@ -163,13 +171,6 @@
           students.
         </p>
 
-        <h3>How do I earn minutes?</h3>
-        <p>
-          You can earn minutes by teaching a lesson. Check out
-          <RouterLink :to="{ path: 'discover', query: { page: 'giving-lessons' } }">Taking lessons</RouterLink> for more
-          details.
-        </p>
-
         <h3>Am I able to have a negative balance?</h3>
         <p>
           You are not able to book a lesson unless you have sufficient minutes to do so. Only in rare circumstances will
@@ -178,7 +179,27 @@
       </div>
       <div class="page" v-show="page == 'friends'">
         <h3>Hello friends</h3>
-        <p>Thank you for taking the time to visit my site.</p>
+        <p>Thank you for taking the time to visit and test the site.</p>
+        <p>
+          I encourage you to play around with the functionality. Create local accounts, create as many of them as you
+          like. Try creating a service, try
+          <RouterLink to="/services/1">messaging someone and booking a lesson</RouterLink>. Click on all the buttons and
+          see if their functionality is intuitive or not. Once you've gotten a feel for the site, I would really
+          appreciate any feedback you may have. You can provide this to me by either filling out this
+          <a
+            href="https://docs.google.com/forms/d/e/1FAIpQLSfzewlad-ehZ07IGUa_lV2jSPNpypUz2HV2trnZzvpChKFNwQ/viewform?usp=sf_link"
+            target="_blank"
+            >Google Form</a
+          >
+          or just sending me a text.
+        </p>
+        <p>
+          Thank you again for visiting the site :) A good place to start is probably the
+          <RouterLink :to="{ path: 'discover', query: { page: 'how-it-works' } }">How it works</RouterLink> page and
+          then you can just explore from there!
+        </p>
+
+        <h3>Background</h3>
         <p>
           I started working on this idea in my free time back in August 2023. The site was initially developed using
           Python and Flask, as these were the frameworks comfortable to me at the time. After about 9 months of work I
@@ -195,26 +216,6 @@
           see today is the product of that effort, and indeed it still has a very long way to go. The code thus far is
           available on <a href="https://github.com/mikey-boy/tutortime" target="_blank">Github</a>
           if you are interested.
-        </p>
-
-        <h3>Testing</h3>
-        <p>
-          I encourage you to play around with the site. Create local accounts, create as many of them as you like. Try
-          creating a service, try messaging someone, try <RouterLink to="/services/1">booking a lesson</RouterLink>.
-          Click on all the buttons and see if their functionality is intuitive or not. Once you've gotten a feel for the
-          site, I would really appreciate any feedback you may have. You can provide this to me by either filling out
-          this
-          <a
-            href="https://docs.google.com/forms/d/e/1FAIpQLSfzewlad-ehZ07IGUa_lV2jSPNpypUz2HV2trnZzvpChKFNwQ/viewform?usp=sf_link"
-            target="_blank"
-            >Google Form</a
-          >
-          or just sending me a text.
-        </p>
-        <p>
-          Thank you again for visiting the site :) A good place to start is probably the
-          <RouterLink :to="{ path: 'discover', query: { page: 'how-it-works' } }">How it works</RouterLink> page and
-          then you can just explore from there!
         </p>
       </div>
     </div>

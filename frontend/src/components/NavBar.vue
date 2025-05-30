@@ -80,11 +80,14 @@ export default {
 #nav-container {
   display: flex;
   justify-content: center;
-  background-color: var(--base1);
   height: 70px;
   width: 100%;
 
   #nav {
+    position: fixed;
+    top: 0;
+    height: 70px;
+    background-color: var(--base1);
     display: flex;
     flex-direction: row;
     text-align: center;

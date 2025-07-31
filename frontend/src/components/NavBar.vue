@@ -82,12 +82,11 @@ export default {
   justify-content: center;
   height: 70px;
   width: 100%;
+  position: sticky;
+  top: 0;
+  background-color: var(--base1);
 
   #nav {
-    position: fixed;
-    top: 0;
-    height: 70px;
-    background-color: var(--base1);
     display: flex;
     flex-direction: row;
     text-align: center;

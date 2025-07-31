@@ -21,19 +21,50 @@
     </div>
     <div id="page-container">
       <div class="page" v-show="page == 'how-it-works'">
-        <h2>How it works</h2>
-        <p>Tutortime is an online timebanking platform focused on learning.</p>
+        <h2>Overview</h2>
         <p>
-          Each user starts with a default set of minutes for their account. You can book a lesson with any tutor in a
-          subject you are interested in. Once the lesson has completed, the duration (in minutes) of the lesson is
-          deducted from your account and added to your tutor's account. For you to earn minutes you will need to become
-          the tutor and teach another student in a subject you are familiar with.
+          Tutortime is an online timebanking platform focused on learning. Each user starts with 60 minutes in their
+          account. They can use those minutes to schedule a lesson with a tutor on the platform. Once the lesson is
+          completed, the duration of the lesson (in minutes) is deducted from the student's account and added to the
+          tutor's account.
         </p>
+
         <p>
-          You don't need to be an expert to help other student's learn! Check out our post on
+          For a user to earn minutes on the platform they will need to teach other students in a subject they are
+          familiar with. Don't worry, you don't need to be an expert to help other students learn! Check out our post on
           <RouterLink :to="{ path: 'discover', query: { page: 'giving-lessons' } }">Giving lessons</RouterLink> for more
           details on how to give a lesson, and tips to help you out.
         </p>
+
+        <h2>Lesson flow</h2>
+        <ul id="lesson-flow">
+          <li>
+            A student browses the <RouterLink to="/">Take lessons</RouterLink> page and finds an offering they are
+            interested in
+          </li>
+          <li>
+            The student messages the tutor, discusses their learning objectives and availability, and sends a lesson
+            request. Minutes are withdrawn from the student's account immediately.
+          </li>
+          <li>
+            The tutor must accept the request. If the lesson request is rejected or expires, minutes are transferred
+            back to the student. Expiry times are as follows:
+            <ul>
+              <li>24h before lesson, for lessons booked 2 days in advance</li>
+              <li>Just before lesson, for lessons booked less than 2 days in advance</li>
+            </ul>
+          </li>
+          <li>
+            A meeting link (for <a href="https://talky.io/" target="_blank">talky.io</a>) is sent in the chat 15 minutes
+            before the scheduled lesson. Participants can use this link or another online platform if they wish.
+          </li>
+          <li>Both participants join the meeting and the lesson happens as planned.</li>
+          <li>
+            After the lesson has completed, both participants confirm the lesson through the <b>Lessons booked</b> tab
+            of their chat. Adjustments to the duration of the lesson can be made at this point.
+          </li>
+        </ul>
+
         <h2>Our values</h2>
         <p>On Tutortime, we want to build a community where:</p>
         <ul>
@@ -164,6 +195,12 @@
           minute on the platform for every minute spent tutoring.
         </p>
 
+        <h3>What if my student forgets to confirm our lesson?</h3>
+        <p>
+          If a lesson is not confirmed within 24 hour of it's completion, it will be confirmed automatically. The tutor
+          will receive the number of minutes that the lesson was originally scheduled for.
+        </p>
+
         <h3>Can I exchange minutes for dollars or vise-versa?</h3>
         <p>
           Tutortime does not allow for minutes to be exchanged for dollars, or vise-versa. It is a closed system where
@@ -194,7 +231,7 @@
           or just sending me a text.
         </p>
         <p>
-          Thank you again for visiting the site :) A good place to start is probably the
+          A good place to start is probably the
           <RouterLink :to="{ path: 'discover', query: { page: 'how-it-works' } }">How it works</RouterLink> page and
           then you can just explore from there!
         </p>
@@ -276,8 +313,12 @@ export default {
 }
 #page-container {
   flex: 12;
+}
 
-  .page {
+#lesson-flow {
+  line-height: 1.5;
+  li {
+    margin-bottom: 3px;
   }
 }
 </style>

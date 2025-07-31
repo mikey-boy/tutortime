@@ -7,7 +7,7 @@
     <div id="lessons"><h2>Lessons</h2></div>
   </div>
   <div v-else-if="activeRoom.Fetched && contacts.length == 0">
-    <div class="empty-container empty-service">
+    <div class="empty-container empty-chat">
       <div><p>Check out the lesson offerings and message a tutor to start chatting</p></div>
       <RouterLink to="/">
         <button>Browse lessons</button>
@@ -68,7 +68,20 @@
           </div>
           <div v-else class="flex-container-system">
             <span class="message-item-system">
-              {{ parseSystemMessage(message.Message) }}
+              <span v-if="message.Message.startsWith('lesson_completed')">
+                Your lesson has completed! Remember to <a @click="showCompletedLessons()">confirm your lesson</a> so
+                that minutes are transfered
+              </span>
+              <span v-else-if="message.Message.startsWith('lesson_upcoming')">
+                Your lesson is coming up in the next 15 minutes! You can use talky.io (<a
+                  :href="message.Message.split('|')[1]"
+                  target="_blank"
+                  >{{ message.Message.split("|")[1] }}</a
+                >) or any other online platform to meetup
+              </span>
+              <span v-else>
+                {{ parseSystemMessage(message.Message) }}
+              </span>
             </span>
           </div>
         </template>
@@ -162,6 +175,14 @@
         </div>
       </div>
       <div v-else-if="lessonView" class="lesson-container">
+        <template v-if="emptyLessons()">
+          <div v-if="completedView" class="empty-item">
+            You have no completed lessons with <b>{{ activeRoom.User.Username }}</b>
+          </div>
+          <div v-else class="empty-item">
+            You have no scheduled lessons with <b>{{ activeRoom.User.Username }}</b>
+          </div>
+        </template>
         <template v-for="lesson in lessons">
           <div
             v-if="completedView && lessonCompleted(lesson) && lessonActive(lesson)"
@@ -248,11 +269,12 @@ export default {
       const contactID = Number(this.$route.params.id);
 
       let mc = document.getElementById("message-container");
-      const atBottom = mc.scrollHeight - mc.clientHeight == mc.scrollTop;
+      const atBottom = mc.scrollTop - 5 < mc.scrollHeight - mc.clientHeight < mc.scrollTop + 5;
 
       // System message
       if (message.SenderID == 0) {
         this.rooms[roomID].Messages[message.ID] = message;
+        this.fetchSelf();
       }
       // Normal message
       else if (Object.keys(this.rooms).includes(roomID)) {
@@ -266,9 +288,6 @@ export default {
       else if (contactID == message.RecieverID) {
         this.rooms[roomID] = this.rooms[0];
         this.rooms[roomID].Messages[message.ID] = message;
-        if (message.Lesson) {
-          this.rooms[roomID].Lessons[message.Lesson.ID] = message.Lesson;
-        }
       }
       // A new person is  messaging me
       else if (store.UserID == message.RecieverID) {
@@ -443,6 +462,10 @@ export default {
         radios[i].checked = false;
       }
     },
+    showCompletedLessons() {
+      this.lessonView = true;
+      this.completedView = true;
+    },
     parseSystemMessage(message) {
       // Original: mike cancelled yoga practice scheduled for 2025-01-13T14:00:00Z
       // Parsed: mike cancelled yoga practice scheduled for 2025-01-13 @ 09:00AM
@@ -459,6 +482,17 @@ export default {
         return this.services[ID];
       }
       return this.myServices[ID];
+    },
+    emptyLessons() {
+      for (const lesson of Object.values(this.lessons)) {
+        if (this.completedView && this.lessonCompleted(lesson)) {
+          return false;
+        }
+        if (!this.completedView && !this.lessonCompleted(lesson)) {
+          return false;
+        }
+      }
+      return true;
     },
     displayInChat(lesson) {
       return lesson.Status.startsWith("accepted_");
@@ -603,6 +637,10 @@ export default {
     }
     .message-item-system {
       margin: 5px 0px;
+
+      &:hover {
+        cursor: pointer;
+      }
     }
   }
   #chat-lesson-request {

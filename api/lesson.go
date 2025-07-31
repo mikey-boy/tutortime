@@ -21,6 +21,8 @@ type Lesson struct {
 	Student          User
 	Tutor            User
 	Status           LessonStatus
+	LinkSent         bool `gorm:"default:false"`
+	ReminderSent     bool `gorm:"default:false"`
 }
 
 type LessonStatus string

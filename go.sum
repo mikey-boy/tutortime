@@ -23,6 +23,12 @@ github.com/robfig/cron/v3 v3.0.0/go.mod h1:eQICP3HwyT7UooqI/z+Ov+PtYAWygg1TEWWzG
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
+github.com/wordgen/wordlists v0.3.0 h1:Q9xIl5506DIvNy3INC6Q+4KQwjfczzh/PZye4Tkkw3c=
+github.com/wordgen/wordlists v0.3.0/go.mod h1:M74rW8w0qhadSpPYkCx/rBWWQWEXKCP4VFLaUEhrLs8=
+github.com/wordgen/wordlists/eff v0.3.0 h1:rYCBa4ntXBHDkuu904KCejK+alZsz4+Aue539pXsghE=
+github.com/wordgen/wordlists/eff v0.3.0/go.mod h1:hsLXGcWdZhzUQ9QXCMrXHl4euoclcCadzhQe2ERLL6w=
+github.com/wordgen/wordlists/names v0.3.0 h1:C0MOiqGisPE/KLabX4ZpJnmztF226xSlAbM++Z7anZc=
+github.com/wordgen/wordlists/names v0.3.0/go.mod h1:qpt/50GQaDbuQk+nXs0EuEdVcTywAcL6eDRrD4vikHY=
 golang.org/x/crypto v0.25.0 h1:ypSNr+bnYL2YhwoMt2zPxHFmbAN1KZs/njMG3hxUp30=
 golang.org/x/crypto v0.25.0/go.mod h1:T+wALwcMOSE0kXgUAnPAHqTLW+XHgcELELW8VaDgm/M=
 golang.org/x/oauth2 v0.29.0 h1:WdYw2tdTK1S8olAzWHdgeqfy+Mtm9XNhv/xJsY65d98=

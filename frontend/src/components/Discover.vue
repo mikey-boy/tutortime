@@ -36,6 +36,12 @@
           details on how to give a lesson, and tips to help you out.
         </p>
 
+        <div id="video-container" class="flex-container centered">
+          <video poster="/tutortime.png" controls>
+            <source src="/tutortime.mp4" type="video/mp4" />
+          </video>
+        </div>
+
         <h2>Lesson flow</h2>
         <ul id="lesson-flow">
           <li>
@@ -50,7 +56,7 @@
             The tutor must accept the request. If the lesson request is rejected or expires, minutes are transferred
             back to the student. Expiry times are as follows:
             <ul>
-              <li>24h before lesson, for lessons booked 2 days in advance</li>
+              <li>24h before lesson, for lessons booked atleast 2 days in advance</li>
               <li>Just before lesson, for lessons booked less than 2 days in advance</li>
             </ul>
           </li>
@@ -281,6 +287,14 @@ export default {
 </script>
 
 <style>
+#video-container {
+  padding: 5px;
+
+  video {
+    width: 600px;
+  }
+}
+
 #discover-container {
   display: flex;
   margin: 0 auto;

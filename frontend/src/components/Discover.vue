@@ -222,24 +222,23 @@
       </div>
       <div class="page" v-show="page == 'friends'">
         <h3>Hello friends</h3>
-        <p>Thank you for taking the time to visit and test the site.</p>
         <p>
-          I encourage you to play around with the functionality. Create local accounts, create as many of them as you
-          like. Try creating a service, try
-          <RouterLink to="/services/1">messaging someone and booking a lesson</RouterLink>. Click on all the buttons and
-          see if their functionality is intuitive or not. Once you've gotten a feel for the site, I would really
-          appreciate any feedback you may have. You can provide this to me by either filling out this
+          Thank you for taking the time to visit and test the site. I encourage you to play around with the
+          functionality. Create accounts, create as many of them as you like. Try creating a service, try
+          <RouterLink to="/services/1">messaging someone</RouterLink> and booking a lesson. Before the site officially
+          launches all data will be deleted.
+        </p>
+        <p>
+          Once you've gotten a feel for the site, I would really appreciate any feedback you may have. You can provide
+          this to me by either filling out this
           <a
             href="https://docs.google.com/forms/d/e/1FAIpQLSfzewlad-ehZ07IGUa_lV2jSPNpypUz2HV2trnZzvpChKFNwQ/viewform?usp=sf_link"
             target="_blank"
             >Google Form</a
           >
-          or just sending me a text.
-        </p>
-        <p>
-          A good place to start is probably the
+          or just sending me a text. A good place to start is the
           <RouterLink :to="{ path: 'discover', query: { page: 'how-it-works' } }">How it works</RouterLink> page and
-          then you can just explore from there!
+          then you can explore from there!
         </p>
 
         <h3>Background</h3>

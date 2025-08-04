@@ -28,11 +28,11 @@
       </thead>
       <tbody>
         <tr v-for="service in services" v-show="service.Status == status" :key="service.ID">
-          <RouterLink :to="{ path: `/services/${service.ID}` }">
-            <td class="truncated">
+          <td class="truncated">
+            <RouterLink :to="{ path: `/services/${service.ID}` }">
               <b>{{ service.Title }}</b>
-            </td>
-          </RouterLink>
+            </RouterLink>
+          </td>
           <td class="truncated">{{ service.Description }}</td>
           <td class="actions">
             <button @click="editService(service.ID)">
@@ -146,7 +146,7 @@ export default {
 
   thead tr {
     td:nth-child(1) {
-      width: 150px;
+      width: 300px;
     }
     td:nth-child(2) {
       width: auto;

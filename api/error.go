@@ -78,10 +78,3 @@ var resourceNotFound = ApiError{
 	Error:   "Resource not found",
 	Details: "The resource you were looking for was not found",
 }
-
-// Websocket errors
-
-var websocketUpgradeFailed = ApiError{
-	Error:   "Websocket connection failed",
-	Details: "Connection failed while trying to upgrade from HTTP to Websocket protocol",
-}

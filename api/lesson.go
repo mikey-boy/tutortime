@@ -60,7 +60,7 @@ func createLesson(sender_id uint, api_message *Message) (Lesson, bool) {
 		return Lesson{}, false
 	}
 
-	lesson := Lesson{ServiceID: service.ID, TutorID: service.UserID, Duration: api_message.Lesson.Duration, Datetime: api_message.Lesson.Datetime}
+	lesson := Lesson{ServiceID: service.ID, TutorID: service.UserID, Duration: api_message.Lesson.Duration, ModifiedDuration: api_message.Lesson.Duration, Datetime: api_message.Lesson.Datetime}
 	available := service.Status == SS_ACTIVE && lesson.Datetime.After(time.Now())
 	if service.UserID == sender_id && available {
 		lesson.StudentID = api_message.RecieverID
@@ -105,6 +105,7 @@ func (current *Lesson) merge(updated *Lesson, user_id uint) bool {
 		}
 		current.Datetime = updated.Datetime
 		current.Duration = updated.Duration
+		current.ModifiedDuration = updated.Duration
 	} else if (current.Status == LS_ACCEPTED || current.Status == LS_CONFIRMED_STUDENT || current.Status == LS_CONFIRMED_TUTOR) && updated.ModifiedDuration != current.ModifiedDuration && updated.Status == LS_MODIFIED {
 		// After lesson acceptance, participants can only modify duration
 		if user_id == current.TutorID && current.Status != LS_CONFIRMED_TUTOR {

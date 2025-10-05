@@ -56,18 +56,13 @@ func transferMinutes(tutor *User, student *User, service *Service, lesson *Lesso
 		student.Minutes += int(lesson.Duration)
 		student.Update()
 	} else if lesson.Status == LS_CONFIRMED {
-		if lesson.ModifiedDuration != 0 {
-			student.Minutes -= int(lesson.ModifiedDuration) - int(lesson.Duration)
-			student.Update()
-
-			tutor.Minutes += int(lesson.ModifiedDuration)
-			service.Minutes += lesson.ModifiedDuration
-		} else {
-			tutor.Minutes += int(lesson.Duration)
-			service.Minutes += lesson.Duration
-		}
-		tutor.Update()
 		service.Lessons += 1
+		service.Minutes += lesson.ModifiedDuration
+		student.Minutes -= int(lesson.ModifiedDuration) - int(lesson.Duration)
+		tutor.Minutes += int(lesson.ModifiedDuration)
+
+		student.Update()
+		tutor.Update()
 		service.Update()
 	}
 }

@@ -187,7 +187,7 @@
           <div
             v-if="completedView && lessonCompleted(lesson) && lessonActive(lesson)"
             class="lesson"
-            :class="{ warning: lesson.ModifiedDuration && lesson.Status != 'confirmed' }"
+            :class="{ warning: lesson.ModifiedDuration != lesson.Duration && lesson.Status != 'confirmed' }"
           >
             <Lesson
               @modify-lesson="sendModifiedLesson"
@@ -262,7 +262,12 @@ export default {
     this.fetchSelf();
     this.fetchContacts();
     this.getMyServices();
-    socket = new WebSocket(`ws://${window.location.host}/ws`);
+
+    if (import.meta.env.DEV) {
+      socket = new WebSocket(`ws://${window.location.host}/ws`);
+    } else {
+      socket = new WebSocket(`wss://${window.location.host}/ws`);
+    }
     socket.onmessage = (event) => {
       const message = JSON.parse(event.data);
       const roomID = message.RoomID.toString();

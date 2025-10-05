@@ -14,9 +14,6 @@
         <li :class="{ active: page == 'faq' }" @click="changePage('faq')">
           <span>FAQ</span>
         </li>
-        <li :class="{ active: page == 'friends' }" @click="changePage('friends')">
-          <span>Information for testers</span>
-        </li>
       </ul>
     </div>
     <div id="page-container">

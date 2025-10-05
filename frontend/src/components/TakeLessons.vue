@@ -114,6 +114,16 @@ export default {
   &.clickable:hover {
     background-color: var(--base1);
   }
+  h3.truncated-text {
+    line-clamp: 2;
+    -webkit-line-clamp: 2;
+    line-height: 1.5;
+    min-height: calc(1.5em * 2);
+  }
+  p.truncated-text {
+    line-height: 1.5;
+    min-height: calc(1.5em * 3);
+  }
 }
 .post-grid-container {
   display: grid;

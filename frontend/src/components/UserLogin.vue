@@ -9,17 +9,19 @@
           <div><img src="@/assets/img/signin-assets/google.svg" /></div>
           Login with Google
         </button>
-        <button class="login-button" @click="localAccount(0)">
-          <div><i class="fa-solid fa-user fa-xl" /></div>
-          Login with Local Account
-        </button>
+        <span v-if="testing">
+          <button class="login-button" @click="localAccount(0)">
+            <div><i class="fa-solid fa-user fa-xl" /></div>
+            Login with Local Account
+          </button>
 
-        <p>or</p>
+          <p>or</p>
 
-        <button class="login-button" @click="localAccount(1)">
-          <div><i class="fa-solid fa-user fa-xl" /></div>
-          Create a Local Account
-        </button>
+          <button class="login-button" @click="localAccount(1)">
+            <div><i class="fa-solid fa-user fa-xl" /></div>
+            Create a Local Account
+          </button>
+        </span>
       </div>
 
       <div v-show="loginOptions != -1" @submit.prevent>
@@ -46,10 +48,14 @@ export default {
       user: {},
       error: "",
       loginOptions: -1,
+      testing: false,
     };
   },
   created() {
     this.navigateView();
+    if (import.meta.env.DEV) {
+      this.testing = true;
+    }
   },
   methods: {
     navigateView() {

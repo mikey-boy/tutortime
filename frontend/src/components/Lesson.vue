@@ -17,17 +17,14 @@
     <span v-else>{{ parseTime(lesson.Datetime) }}</span>
   </div>
   <div>
-    <span v-if="lesson.ModifiedDuration && lesson.Status != 'confirmed'">
+    <span v-if="lesson.ModifiedDuration != lesson.Duration && lesson.Status != 'confirmed'">
       <div>Scheduled for: {{ lesson.Duration }} minutes</div>
       <span class="warning-text">Modified to: </span>
       <span class="warning-text" v-if="!modify">{{ lesson.ModifiedDuration }} minutes</span>
     </span>
-    <span v-else-if="lesson.ModifiedDuration && lesson.Status == 'confirmed'">
-      <span>Duration: {{ lesson.ModifiedDuration }} minutes</span>
-    </span>
     <span v-else>
       <span>Duration: </span>
-      <span v-if="!modify">{{ lesson.Duration }} minutes</span>
+      <span v-if="!modify">{{ lesson.ModifiedDuration }} minutes</span>
     </span>
 
     <span v-if="modify">

@@ -22,7 +22,7 @@ func expireLessons() {
 	for _, lesson := range append(scheduledEarly, scheduledLate...) {
 		db.Model(&lesson).Update("status", LS_EXPIRED)
 		room := Room{}
-		room.Get(lesson.TutorID, lesson.StudentID)
+		RoomGet(&room, lesson.TutorID, lesson.StudentID)
 
 		system_message := Message{RoomID: room.ID}
 		system_message.Message = fmt.Sprintf("'%s' scheduled for %s has expired", lesson.Service.Title, lesson.Datetime.UTC().Format(time.RFC3339))
@@ -43,7 +43,7 @@ func sendMeetupLink() {
 	for _, lesson := range lessons {
 		db.Model(&lesson).Update("link_sent", true)
 		room := Room{}
-		room.Get(lesson.TutorID, lesson.StudentID)
+		RoomGet(&room, lesson.TutorID, lesson.StudentID)
 
 		system_message := Message{RoomID: room.ID}
 		word1, word2, word3 := wordlists.EffLarge[rand.Intn(wl_len)], wordlists.EffLarge[rand.Intn(wl_len)], wordlists.EffLarge[rand.Intn(wl_len)]
@@ -60,7 +60,7 @@ func sendConfirmationReminder() {
 		if time.Now().After(lesson.Datetime.Add(time.Duration(lesson.Duration) * time.Minute)) {
 			db.Model(&lesson).Update("reminder_sent", true)
 			room := Room{}
-			room.Get(lesson.TutorID, lesson.StudentID)
+			RoomGet(&room, lesson.TutorID, lesson.StudentID)
 			system_message := Message{RoomID: room.ID, Message: "lesson_completed"}
 			system_message.Add()
 			sendMessage(lesson.StudentID, lesson.TutorID, system_message)
@@ -75,7 +75,7 @@ func confirmOldLessons() {
 		room := Room{}
 		service := Service{ID: lesson.ServiceID}
 		tutor, student := User{ID: lesson.TutorID}, User{ID: lesson.StudentID}
-		room.Get(lesson.TutorID, lesson.StudentID)
+		RoomGet(&room, lesson.TutorID, lesson.StudentID)
 		service.Get()
 		tutor.Get()
 		student.Get()

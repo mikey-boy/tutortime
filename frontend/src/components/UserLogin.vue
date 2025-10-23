@@ -101,9 +101,16 @@ export default {
               this.$router.push({ path: "/" });
             }
           }
+          if (response.headers.get("Content-Length") == 0) {
+            return null;
+          }
           return response.json();
         })
-        .then((data) => (this.error = data.details));
+        .then((data) => {
+          if (data) {
+            this.error = data.details;
+          }
+        });
     },
     localAccountCreate() {
       if (!this.user.username || !this.user.password) {

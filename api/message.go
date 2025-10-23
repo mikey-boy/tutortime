@@ -18,14 +18,15 @@ type Message struct {
 }
 
 type Room struct {
-	ID          uint
-	Messages    []Message
-	User1ID     uint
-	User1       User
-	User2ID     uint
-	User2       User
-	LastMessage string
-	UpdatedAt   time.Time
+	ID              uint
+	Messages        []Message
+	User1ID         uint
+	User1           User
+	User2ID         uint
+	User2           User
+	UnreadUser1     bool
+	UnreadUser2     bool
+	UnreadTimestamp time.Time
 }
 
 func parseSocketMessage(client_id uint, api_message Message) (ok bool, message Message) {
@@ -58,7 +59,7 @@ func parseSocketMessage(client_id uint, api_message Message) (ok bool, message M
 			}
 
 			var room Room
-			room.Get(message.SenderID, message.RecieverID)
+			RoomGet(&room, message.SenderID, message.RecieverID)
 			service := Service{ID: lesson.ServiceID}
 			service.Get()
 			system_message := Message{RoomID: room.ID, SenderID: 0, RecieverID: 0}
@@ -96,6 +97,12 @@ func parseSocketMessage(client_id uint, api_message Message) (ok bool, message M
 	} else if api_message.Message != "" {
 		message = Message{SenderID: client_id, RecieverID: api_message.RecieverID, Message: api_message.Message}
 		message.Add()
+	} else if api_message.RoomID != 0 {
+		// Simply acknowledge messages have been read, no need to send anything
+		room := Room{ID: api_message.RoomID}
+		room.Get()
+		room.AckMessages(client_id)
+		return false, Message{}
 	} else {
 		return false, Message{}
 	}

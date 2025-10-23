@@ -33,7 +33,10 @@
           <RouterLink to="/user/calendar"><i class="fa-solid fa-calendar-days fa-lg"></i></RouterLink>
         </li>
         <li>
-          <RouterLink to="/chat"><i class="fa-solid fa-paper-plane fa-lg"></i></RouterLink>
+          <RouterLink to="/chat">
+            <i v-if="unreadMessages" class="unreadMessages fa-solid fa-paper-plane fa-lg"></i>
+            <i v-else class="fa-solid fa-paper-plane fa-lg"></i>
+          </RouterLink>
         </li>
         <li>
           <span @click="modal = !modal"><i class="fa-solid fa-user fa-lg"></i></span>
@@ -59,8 +62,14 @@ export default {
   data() {
     return {
       modal: false,
+      unreadMessages: false,
       store,
     };
+  },
+  watch: {
+    $route(to, from) {
+      this.checkUnreadMessages();
+    },
   },
   methods: {
     navToProfile() {
@@ -71,6 +80,20 @@ export default {
       logoutUser();
       this.modal = false;
       this.$router.push({ path: "/" });
+    },
+    async checkUnreadMessages() {
+      if (store.UserID != 0) {
+        const response = await fetch("/api/rooms");
+        const tmp = await response.json();
+        this.unreadMessages = false;
+        tmp.forEach((room) => {
+          if (room.User1ID == store.UserID && room.UnreadUser1) {
+            this.unreadMessages = true;
+          } else if (room.User2ID == store.UserID && room.UnreadUser2) {
+            this.unreadMessages = true;
+          }
+        });
+      }
     },
   },
 };
@@ -122,6 +145,9 @@ export default {
         color: var(--text0);
       }
       i:hover {
+        color: var(--green0);
+      }
+      i.unreadMessages {
         color: var(--green0);
       }
     }

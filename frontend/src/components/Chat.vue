@@ -6,7 +6,7 @@
     </div>
     <div id="lessons"><h2>Lessons</h2></div>
   </div>
-  <div v-else-if="activeRoom.Fetched && contacts.length == 0">
+  <div v-else-if="activeRoom.Fetched && Object.keys(rooms).length == 0">
     <div class="empty-container empty-chat">
       <div><p>Check out the lesson offerings and message a tutor to start chatting</p></div>
       <RouterLink to="/">
@@ -17,9 +17,13 @@
   <div v-else id="chat-container">
     <div id="contacts">
       <h2>Contacts</h2>
-      <ul v-for="contact in contacts">
-        <li :class="{ active: contact.ID === activeRoom.User.ID }" @click="changeContact(contact.ID)">
-          <span>{{ contact.Username }}</span>
+      <ul v-for="(room, id) in rooms" :key="id">
+        <li
+          v-if="room.User"
+          :class="{ active: room.User.ID == activeRoom.User.ID, bold: room.unreadMessages }"
+          @click="changeContact(room.User.ID)"
+        >
+          <span>{{ room.User.Username }}</span>
         </li>
       </ul>
     </div>
@@ -243,7 +247,6 @@ export default {
       self: {},
       rooms: {},
       activeRoom: null,
-      contacts: [],
       messages: {},
       lessons: {},
       services: {},
@@ -260,7 +263,7 @@ export default {
   },
   created() {
     this.fetchSelf();
-    this.fetchContacts();
+    this.fetchRooms();
     this.getMyServices();
 
     if (import.meta.env.DEV) {
@@ -276,13 +279,8 @@ export default {
       let mc = document.getElementById("message-container");
       const atBottom = mc.scrollTop - 5 < mc.scrollHeight - mc.clientHeight < mc.scrollTop + 5;
 
-      // System message
-      if (message.SenderID == 0) {
-        this.rooms[roomID].Messages[message.ID] = message;
-        this.fetchSelf();
-      }
       // Normal message
-      else if (Object.keys(this.rooms).includes(roomID)) {
+      if (Object.keys(this.rooms).includes(roomID) && this.rooms[roomID].Fetched) {
         this.rooms[roomID].Messages[message.ID] = message;
         if (message.Lesson) {
           this.rooms[roomID].Lessons[message.Lesson.ID] = message.Lesson;
@@ -291,44 +289,56 @@ export default {
       }
       // I am messaging a new person
       else if (contactID == message.RecieverID) {
-        this.rooms[roomID] = this.rooms[0];
-        this.rooms[roomID].Messages[message.ID] = message;
+        this.rooms[roomID] = {};
+        this.rooms[roomID]["User"] = this.rooms[0]["User"];
+        this.initChat(roomID);
+        delete this.rooms[0];
       }
       // A new person is  messaging me
       else if (store.UserID == message.RecieverID) {
+        this.rooms[roomID] = {};
         fetch(`/api/users/${message.SenderID}`)
           .then((response) => response.json())
           .then((contact) => {
-            this.rooms[roomID] = {};
             this.rooms[roomID]["User"] = contact;
-            this.rooms[roomID]["Lessons"] = {};
-            this.rooms[roomID]["Messages"] = {};
-            this.contacts.push(contact);
           });
       }
 
+      if (message.SenderID != store.UserID) {
+        this.rooms[roomID]["unreadMessages"] = true;
+      }
       if (store.UserID == message.SenderID || atBottom) {
         this.scrollToBottom();
       }
     };
   },
+  beforeRouteLeave(to, from) {
+    if (this.activeRoom.User) {
+      for (const [roomID, room] of Object.entries(this.rooms)) {
+        if (room.User.ID == this.activeRoom.User.ID) {
+          let message = { RoomID: parseInt(roomID) };
+          socket.send(JSON.stringify(message));
+          break;
+        }
+      }
+    }
+    // socket.close();
+  },
   components: {
     Lesson,
   },
   methods: {
-    async initChat(userID, roomID) {
-      if (Object.keys(this.rooms[roomID]).includes("Fetched") == false) {
-        this.rooms[roomID]["Fetched"] = false;
-        this.rooms[roomID]["Services"] = {};
-        this.rooms[roomID]["Lessons"] = {};
-        this.rooms[roomID]["Messages"] = {};
-      }
+    async initChat(roomID) {
+      let userID = this.rooms[roomID].User.ID;
 
-      if (this.rooms[roomID].Fetched == false) {
+      if (Object.keys(this.rooms[roomID]).includes("Fetched") == false) {
+        this.rooms[roomID]["Services"] = {};
         this.getServices(userID, roomID);
+        this.rooms[roomID]["Lessons"] = {};
         this.getLessons(userID, roomID);
+        this.rooms[roomID]["Messages"] = {};
         await this.getMessages(userID, roomID);
-        this.rooms[roomID].Fetched = true;
+        this.rooms[roomID]["Fetched"] = true;
       }
       this.activeRoom = this.rooms[roomID];
       this.services = this.activeRoom.Services;
@@ -343,41 +353,34 @@ export default {
       const response = await fetch(`/api/users/me`);
       this.self = await response.json();
     },
-    async fetchContacts() {
-      let found = false;
+    async fetchRooms() {
       const contactID = Number(this.$route.params.id);
       const response = await fetch("/api/rooms");
       const tmp = await response.json();
 
+      var roomID = 0;
       tmp.forEach((room) => {
         this.rooms[room.ID] = {};
+        this.rooms[room.ID]["unreadMessages"] = this.checkUnreadMessages(room);
         if (room.User1ID == store.UserID) {
-          this.contacts.push(room.User2);
           this.rooms[room.ID]["User"] = room.User2;
-        } else {
-          this.contacts.push(room.User1);
+        } else if (room.User2ID == store.UserID) {
           this.rooms[room.ID]["User"] = room.User1;
         }
 
-        if (this.rooms[room.ID].User.ID == contactID) {
-          found = true;
-          this.initChat(this.rooms[room.ID].User.ID, room.ID);
+        if (this.rooms[room.ID].User.ID == contactID || (contactID == 0 && roomID == 0)) {
+          roomID = room.ID;
         }
       });
 
-      if (!found && contactID) {
+      if (roomID == 0 && contactID) {
         const response = await fetch(`/api/users/${contactID}`);
         const contact = await response.json();
         this.rooms[0] = {};
         this.rooms[0]["User"] = contact;
-        this.contacts.push(contact);
-        this.initChat(contactID, 0);
-      } else if (!found && Object.keys(this.rooms).length > 0) {
-        const roomID = Object.keys(this.rooms)[0];
-        this.initChat(this.rooms[roomID].User.ID, roomID);
-      } else if (!found) {
-        this.activeRoom = { Fetched: true };
       }
+
+      this.initChat(roomID);
     },
     async getMyServices() {
       const response = await fetch("/api/users/me/services");
@@ -409,15 +412,27 @@ export default {
       messageContainer.scrollTop = messageContainer.scrollHeight;
     },
     async changeContact(userID) {
+      this.activeRoom.unreadMessages = false;
       this.$router.push({ path: `/chat/${userID}` });
       for (const [roomID, room] of Object.entries(this.rooms)) {
+        if (room.User.ID == this.activeRoom.User.ID) {
+          let message = { RoomID: parseInt(roomID) };
+          socket.send(JSON.stringify(message));
+        }
         if (room.User.ID == userID) {
-          this.initChat(userID, roomID);
-          break;
+          this.initChat(roomID);
         }
       }
     },
 
+    checkUnreadMessages(room) {
+      if (room.UnreadUser1 && room.User1ID == store.UserID) {
+        return true;
+      } else if (room.UnreadUser2 && room.User2ID == store.UserID) {
+        return true;
+      }
+      return false;
+    },
     sendMessage() {
       if (this.text != "") {
         let message = { Message: this.text, RecieverID: this.activeRoom.User.ID };
@@ -549,6 +564,9 @@ export default {
   }
   li.active {
     background-color: var(--base1);
+  }
+  li.bold {
+    font-weight: bold;
   }
   li span.new-messages {
     color: var(--green0);

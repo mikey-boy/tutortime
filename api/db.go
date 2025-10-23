@@ -8,6 +8,7 @@ import (
 	"log"
 	"mime/multipart"
 	"os"
+	"time"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -164,9 +165,13 @@ func (message *Message) Add() error {
 		var room Room
 		if message.SenderID < message.RecieverID {
 			db.FirstOrCreate(&room, Room{User1ID: message.SenderID, User2ID: message.RecieverID})
+			room.UnreadUser2 = true
 		} else {
 			db.FirstOrCreate(&room, Room{User1ID: message.RecieverID, User2ID: message.SenderID})
+			room.UnreadUser1 = true
 		}
+		room.UnreadTimestamp = time.Now()
+		room.Update()
 		message.RoomID = room.ID
 	}
 	result := db.Create(message)
@@ -175,6 +180,23 @@ func (message *Message) Add() error {
 func (message *Message) Update() error {
 	result := db.Save(message)
 	return result.Error
+}
+
+func (room *Room) Get() error {
+	result := db.First(&room)
+	return result.Error
+}
+func (room *Room) Update() error {
+	result := db.Save(room)
+	return result.Error
+}
+func (room *Room) AckMessages(client_id uint) error {
+	if room.User1ID == client_id {
+		room.UnreadUser1 = false
+	} else if room.User2ID == client_id {
+		room.UnreadUser2 = false
+	}
+	return room.Update()
 }
 
 func Paginate(page int, page_size int) func(db *gorm.DB) *gorm.DB {
@@ -240,18 +262,18 @@ func OurLessonsGet(user User, other User, lessons *[]Lesson) {
 	db.Where("(tutor_id = ? AND student_id = ?) OR (tutor_id = ? AND student_id = ?)", user.ID, other.ID, other.ID, user.ID).Where("status != ? AND status != ?", LS_CANCELLED, LS_EXPIRED).Find(&lessons)
 }
 
-func (room *Room) Get(userID uint, otherID uint) {
+func MessagesGet(messages *[]Message, user User, other User) {
+	var room Room
+	RoomGet(&room, user.ID, other.ID)
+	db.Model(Message{}).Joins("Lesson").Where("room_id = ?", room.ID).Order("ID asc").Find(&messages)
+}
+
+func RoomGet(room *Room, userID uint, otherID uint) {
 	if userID < otherID {
 		db.Where("user1_id = ? AND user2_id = ?", userID, otherID).First(&room)
 	} else {
 		db.Where("user1_id = ? AND user2_id = ?", otherID, userID).First(&room)
 	}
-}
-
-func MessagesGet(messages *[]Message, user User, other User) {
-	var room Room
-	room.Get(user.ID, other.ID)
-	db.Model(Message{}).Joins("Lesson").Where("room_id = ?", room.ID).Order("ID asc").Find(&messages)
 }
 
 func RoomsGet(rooms *[]Room, user User) {
